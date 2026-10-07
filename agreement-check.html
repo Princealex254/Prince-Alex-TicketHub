@@ -1,0 +1,843 @@
+﻿<!DOCTYPE html><html><head><meta charset="utf-8"><title>organizer agreement check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){ var b=document.getElementById("out"); if(b) b.textContent = "JS ERROR: " + (e.message||"") + " @ " + (e.lineno||0); });
+window.addEventListener("unhandledrejection", function(e){ var b=document.getElementById("out"); if(b){ var r=e&&e.reason; b.textContent = "REJECTED: " + ((r&&(r.stack||r.message))||r); } });
+</script>
+<script type="module">
+/* ============================================================================
+   Prince Alex TicketHub - event publishing needs owner approval
+   ----------------------------------------------------------------------------
+   An organizer must not be able to put an event live: asking for "active" is
+   stored as "pending", the platform owner is emailed to approve, and only an
+   owner can move the event to "active" (which emails the organizer). This
+   harness drives the real Worker with a genuinely signed Firebase token (it
+   mints its own RSA key and serves the matching JWKS) against a small in-memory
+   D1, so the gate, the outbox rows and the owner/organizer boundary are all
+   exercised for real.
+
+   Serve the folder over http and open /approval-check.html, or run it headless:
+     powershell -ExecutionPolicy Bypass -File tools\run-check.ps1 -Page approval-check.html
+   ========================================================================== */
+const R = { tests: [] };
+const KEEP = setInterval(function(){
+  const box = document.getElementById("out");
+  if(box && String(box.textContent).indexOf("RESULTS_JSON:") === 0) clearInterval(KEEP);
+}, 100);
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out"); if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name; }
+function finish(){
+  if(R.done) return;
+  R.done = true;
+  try { clearTimeout(WATCHDOG); } catch(e){}
+  R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){} }
+
+const realFetch = window.fetch.bind(window);
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+const PROJECT = "prince-alex-tickethub";
+const KID = "harness-key-1";
+let W = null;
+const ctx = { waitUntil(){} };
+
+/* ----------------------------------------- a real (test) Firebase token ----
+   The same throwaway RSA key orders-detail-check.html uses: it signs tokens
+   this harness verifies against its own mocked JWKS and can never authenticate
+   anywhere else. Google's real JWKS is never consulted in this file. */
+const HARNESS_JWK = { "kty":"RSA", "kid":"harness-key-1", "alg":"RS256", "use":"sig", "n":"uBMNnY7q_88BFCRaEzk7UHiCC_jipYj4j1p8jKeqGj9Hy860AbB2SGwvJfe2p1PKPf4BEdcZyKf8w5esjiiZRlxE733cxLQQkxfmerxmbsNiZvwNBXGJtERoW3yl_Lr2_KamHeXPLcw9Jy8t44-EiUUj3UWRr5dx4NYhXnVnvjSodinvRC-Yit69WILIls360D89eEnF14Dy8VbbPBsNZYZUnXtN1sNFStsYU5i8fVTHTYC3-h8cfxNotzZZrmpCVlWGLMM2Zs_paOAXrL0O46BUqMsbL5Vnv-WnQAhXf6pHDqGENPuCLBVFi3kJoj01Ll68ypwilH7xDeGcpMGfhQ", "e":"AQAB" };;
+const HARNESS_PKCS8 = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4Ew2djur_zwEUJFoTOTtQeIIL-OKliPiPWnyMp6oaP0fLzrQBsHZIbC8l97anU8o9_gER1xnIp_zDl6yOKJlGXETvfdzEtBCTF-Z6vGZuw2Jm_A0FcYm0RGhbfKX8uvb8pqYd5c8tzD0nLy3jj4SJRSPdRZGvl3Hg1iFedWe-NKh2Ke9EL5iK3r1YgsiWzfrQPz14ScXXgPLxVts8Gw1lhlSde03Ww0VK2xhTmLx9VMdNgLf6Hxx_E2i3NlmuakJWVYYswzZmz-lo4BesvQ7joFSoyxsvlWe_5adACFd_qkcOoYQ0-4IsFUWLeQmiPTUuXrzKnCKUfvEN4ZykwZ-FAgMBAAECggEADYyZe_eBJMM_-ROT7cZQr2OvbuIrDLRAV4z5jgDpbHUr-7yDU3yBuGL-NXU-ZKKuSFHiEkYbB8IVwO_xK6WhYqR4DojdLz1x2uHvfSlRAOYw4BO9gaER2csPQ2yxayD3_TDnGVxJG73k4nV-kzmFL_V-5lKwnpQvNbWNTz6lHELz8aHXzfcEYB5Dlcy65I1OVlY1b7z4adjQBFKjHo-WSmUIyFS0Qm3gEPC2YBIzCs3519t3paLhpW0mookJqYd8Rrp9bXZbAeXPGwxTiWGFZurMi8QA2O6JGhUWh59ODOPUjjP5X6jqE961HgyudzsLSDr4M09LgZH1vPAvGXwjIQKBgQDsC5vl0_l46kMwOyqguCR_XY43ajci94eQ2cUqqYw2XpN23jhdl_aX007jrtaOo6GoKE1LRPh4Ru8shO2MF3Ei__-y1DPARsqAWV8LciEBm_bqogH76GmxQxdxvfz7549KEvp_nx_maVE7XQpWiS6nEdDTQzzOZ3Qcj4e0esqiEwKBgQDHorZK1AqyJBOAKaOwFJGN70Qj4crhWHrFKa8DS4P4CVHLoa1BYRME_GN8WZVv0E5CEqnmEZE9dp0Dv6zFz80WF5F3OPGBkwd62I5IosdrgWOa7Nv7WruGezQRK_oTMvbTRRIGg-fT-KQlhjexndvmqt6NfnvWCl06cUz0z8orBwKBgQCWshKld98dQvICKMPeN7GVXrUcy8LHoB_8agtmYTgSve6HRPfXSN01sMH8ufJgvjbGlHRESZQXtbGcSoEdnxmrrqQgFzmy138Q0f3L4OERlfDdevCpUoenk520EAcjC4J_V_5027IR98rUi2G-PXZ7UvRu6842N_X5BektX_dd4QKBgAWv6feJwOBATNnq1cHvZBIiDdPj2869oYm6XUT_wruvMEhXy8LADDWpJwBk4O_1hDU3qOVn_LY-icyQilB8UgBeHYPC-IZTdPQX9T22fW3fmsHQG5g2hn8XRW1zzkT7v7JXFmNfIJyWSb7T6wRBVgFlPr_TKZ34X52JmsKipMTDAoGAVGOouSIjwvYlpVj_rgpvDEBQPePrfITvsS5UI2j56AIXQ186H1wKB2RQSsEzED025qlnX-8LOmwfFm7CRxCSIk0l-ArjhGKN-_7YgZuZhy5aMovx0nh58Lgr-VVXP8om8X7DHnknuRW7vnMyE1wgc3r56dNF6QONK9XMJq1WZes";
+const b64u = (bytes) => btoa(String.fromCharCode.apply(null, new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const utf8 = (s) => new TextEncoder().encode(s);
+let signingKey = null, publicJwk = null;
+async function makeKey(){
+  const b64 = HARNESS_PKCS8.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  signingKey = await crypto.subtle.importKey("pkcs8", bytes, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  publicJwk = HARNESS_JWK;
+}
+async function mintToken(uid, email, extra){
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64u(utf8(JSON.stringify({ alg: "RS256", kid: KID, typ: "JWT" })));
+  const payload = b64u(utf8(JSON.stringify(Object.assign({
+    iss: "https://securetoken.google.com/" + PROJECT, aud: PROJECT, sub: uid,
+    email: email, iat: now, exp: now + 3600, email_verified: true
+  }, extra || {}))));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", signingKey, utf8(header + "." + payload));
+  return header + "." + payload + "." + b64u(sig);
+}
+/* ============================================================================
+   Prince Alex TicketHub - the organizer agreement is a precondition of publishing
+   ----------------------------------------------------------------------------
+   This harness drives the real Worker (its own Firebase key + JWKS, an in-memory
+   D1, no network) through the whole agreement lifecycle and asserts the rule the
+   feature exists for:
+
+     no organizer can publish any event until they have signed the version that
+     is currently in force - and the refusal is the WORKER's, on every path
+     (create, edit, owner approval), with no owner override and no override flag.
+
+     Serve the folder over http and open /agreement-check.html, or run it headless:
+       powershell -ExecutionPolicy Bypass -File tools\run-check.ps1 -Page agreement-check.html
+   ========================================================================== */
+const AGREEMENT_TEXT = "1. The organizer may publish events on TicketHub.\n2. These platform fee terms apply to every sale.\n3. Either side may end this agreement with notice.";
+const TEST_SIGNATURE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/pY8AAAAASUVORK5CYII=";
+
+function makeDb(seed){
+  const state = {
+    users: [
+      { id: 1, firebase_uid: "uid-organizer-1", full_name: "Amina Organizer", email: "amina@example.com", role: "organizer", status: "active", created_at: "2026-01-01 00:00:00" },
+      { id: 2, firebase_uid: "uid-organizer-2", full_name: "Brian Otieno", email: "brian@example.com", role: "organizer", status: "active", created_at: "2026-01-01 00:00:00" },
+      { id: 9, firebase_uid: "uid-owner-1", full_name: "Prince Alex", email: "owner@example.com", role: "owner", status: "active", created_at: "2026-01-01 00:00:00" }
+    ],
+    organizers: [
+      { id: 1, user_id: 1, business_name: "Sunrise Events", business_email: "hello@sunrise.test", business_phone: "+254700000001", logo_url: null, status: "active", updated_at: "2026-02-01 00:00:00" },
+      { id: 2, user_id: 2, business_name: "Bayo Sounds", business_email: "hello@bayo.test", business_phone: "+254700000002", logo_url: null, status: "active", updated_at: "2026-02-01 00:00:00" }
+    ],
+    /* event 10: a submission waiting for the platform owner; event 11: an event
+       that was already live before the agreement system existed (grandfathered). */
+    events: [
+      { id: 10, organizer_id: 1, title: "Nairobi Live 2027", slug: "nairobi-live-2027", status: "pending", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00", venue: "KICC", location: "Nairobi", category: "Music", description: "Live music.", poster_url: null, poster_key: null, is_featured: 0, agreement_id: null, agreement_version: null, created_at: "2026-01-01 00:00:00", updated_at: "2026-01-01 00:00:00" },
+      { id: 11, organizer_id: 1, title: "Legacy Fest 2026", slug: "legacy-fest-2026", status: "active", event_date: "2026-12-05", start_time: "12:00", end_time: "20:00", venue: "Uhuru Park", location: "Nairobi", category: "Music", description: "Old event.", poster_url: null, poster_key: null, is_featured: 0, agreement_id: null, agreement_version: null, created_at: "2026-01-01 00:00:00", updated_at: "2026-01-01 00:00:00" }
+    ],
+    ticket_types: [
+      { id: 11, event_id: 10, name: "Regular", price: 1500, quantity: 50, sold: 0, status: "active" },
+      { id: 12, event_id: 11, name: "Regular", price: 1000, quantity: 20, sold: 0, status: "active" }
+    ],
+    platform_agreements: seed && seed.no_agreement ? [] : [
+      { id: 1, version: "1.0", title: "TicketHub Organizer Agreement", content: AGREEMENT_TEXT, summary: null,
+        fee_config_json: JSON.stringify({ commission_percent: 5, commission_basis: "ticket_subtotal", payout_terms: "Weekly." }),
+        status: "active", effective_date: "2026-01-01", content_hash: "seedhash", created_by: 9,
+        activated_at: "2026-01-01 00:00:00", activated_by: 9, created_at: "2026-01-01 00:00:00", updated_at: "2026-01-01 00:00:00" }
+    ],
+    organizer_agreements: [], agreement_invitations: [], agreement_audit_log: [],
+    orders: [], order_items: [], payments: [], tickets: [],
+    email_outbox: [], rate_limits: [],
+    app_settings: [ { key: "email_from_email", value: "tickets@princealexdigital.com" }, { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "true" } ]
+  };
+  let nextEventId = 30, nextTicketId = 30, nextMailId = 1;
+  let nextAgreementId = 10, nextSigId = 10, nextInviteId = 10, nextAuditId = 10;
+  const unhandled = [];
+  const withOrganizer = (e) => {
+    const org = state.organizers.filter(o => String(o.id) === String(e.organizer_id))[0];
+    const live = state.ticket_types.filter(t => String(t.event_id) === String(e.id) && t.status === "active");
+    const prices = live.map(t => Number(t.price || 0));
+    return Object.assign({}, e, {
+      organizer_name: org ? org.business_name : null, organizer_logo: org ? org.logo_url : null,
+      organizer_status: org ? org.status : null,
+      starting_price: prices.length ? Math.min.apply(null, prices) : null,
+      available_total: live.length ? live.reduce((sum, t) => sum + Math.max(0, Number(t.quantity || 0) - Number(t.sold || 0)), 0) : null
+    });
+  };
+const rows = (sql, p) => {
+    const s = String(sql);
+/* D1 hands back fresh objects on every read; a shared reference would make an
+   UPDATE visible to a row the Worker read earlier and hide before/after checks. */
+  const cloneEvents = (list) => list.map(e => Object.assign({}, e));
+    /* --- agreement tables first: several of these queries also say organizers,
+       so they must be matched before the generic handlers below. --- */
+    /* The fan-out query is matched FIRST: it also mentions organizer_agreements
+       and a NOT EXISTS subquery, and it must return people, not a count. */
+    if(/FROM organizers og JOIN users u/.test(s)){
+      /* the reminder mode carries a NOT EXISTS filter: only organizers who have
+         not accepted THIS version may be targeted */
+      const reminderOnly = /NOT EXISTS/.test(s);
+      return state.organizers.filter(o => o.status === "active" && (!reminderOnly ||
+        !state.organizer_agreements.some(a => String(a.organizer_id) === String(o.id) && String(a.agreement_id) === String(p[0]) && a.status === "accepted"))).map(o => {
+        const u = state.users.filter(x => String(x.id) === String(o.user_id))[0] || {};
+        return { organizer_id: o.id, user_id: o.user_id, full_name: u.full_name || "", email: u.email || "",
+          signed_before: state.organizer_agreements.filter(a => String(a.organizer_id) === String(o.id) && a.status === "accepted").length };
+      });
+    }
+    if(/FROM organizers og LEFT JOIN users u/.test(s)){
+      return state.organizers.map(org => {
+        const user = state.users.filter(item => String(item.id) === String(org.user_id))[0] || {};
+        const latest = state.organizer_agreements.filter(item => String(item.organizer_id) === String(org.id) && item.status === "accepted")
+          .sort((a, b) => Number(b.id) - Number(a.id))[0];
+        return Object.assign({}, org, {
+          business_email: org.business_email || user.email || null,
+          business_phone: org.business_phone || null,
+          full_name: user.full_name || "",
+          user_email: user.email || "",
+          phone: user.phone || "",
+          signed_agreement_reference: latest ? latest.reference : null,
+          events_count: state.events.filter(event => String(event.organizer_id) === String(org.id)).length,
+          active_events: state.events.filter(event => String(event.organizer_id) === String(org.id) && event.status === "active").length,
+          revenue: 0
+        });
+      });
+    }
+    if(/AS organizers,/.test(s) && /COUNT\(\*\)/i.test(s)){
+      return [{ organizers: state.organizers.filter(o => o.status === "active").length,
+                signatures: state.organizer_agreements.filter(o => o.status === "accepted").length }];
+    }
+    if(/NOT EXISTS/.test(s) && /FROM organizers og/.test(s)){
+      return [{ n: state.organizers.filter(o => o.status === "active" &&
+        !state.organizer_agreements.some(a => String(a.organizer_id) === String(o.id) && String(a.agreement_id) === String(p[0]) && a.status === "accepted")).length }];
+    }
+    if(/FROM platform_agreements/.test(s)){
+      if(/WHERE version = \?/.test(s)) return state.platform_agreements.filter(a => a.version === p[0]);
+      if(/WHERE id = \?/.test(s)) return state.platform_agreements.filter(a => String(a.id) === String(p[0]));
+      if(/status = 'active'/.test(s)) return state.platform_agreements.filter(a => a.status === "active");
+      return state.platform_agreements.slice();
+    }
+    if(/FROM organizer_agreements/.test(s)){
+      const list = state.organizer_agreements;
+      if(/COUNT\(\*\)/i.test(s)){
+        const byAgreement = /WHERE agreement_id = \? AND status = 'accepted'/.test(s);
+        const base = byAgreement ? list.filter(o => String(o.agreement_id) === String(p[0])) : list;
+        return [{ n: base.filter(o => o.status === "accepted").length }];
+      }
+      if(/WHERE reference = \? AND organizer_id = \?/.test(s)) return list.filter(o => o.reference === p[0] && String(o.organizer_id) === String(p[1]));
+      if(/AND agreement_id = \? AND status = 'accepted'/.test(s)) return list.filter(o => String(o.organizer_id) === String(p[0]) && String(o.agreement_id) === String(p[1]) && o.status === "accepted");
+      if(/WHERE id = \?/.test(s)) return list.filter(o => String(o.id) === String(p[0]));
+      if(/organizer_id = \?/.test(s)) return list.filter(o => String(o.organizer_id) === String(p[0]));
+      if(/signature|agreement_version/.test(s)) return list.slice();
+      return list.slice();
+    }
+    if(/FROM agreement_invitations/.test(s)){
+      if(/WHERE token_hash = \?/.test(s)) return state.agreement_invitations.filter(i => i.token_hash === p[0]);
+      return state.agreement_invitations.slice();
+    }
+    if(/FROM agreement_audit_log/.test(s)){
+      if(/COUNT\(\*\)/i.test(s)) return [{ n: state.agreement_audit_log.length }];
+      if(/WHERE action = \?/.test(s)) return state.agreement_audit_log.filter(a => a.action === p[0]);
+      return state.agreement_audit_log.slice();
+    }
+    if(/FROM users/.test(s)){
+      if(/firebase_uid = \?/.test(s)) return state.users.filter(u => u.firebase_uid === p[0]);
+      if(/role = 'owner'/.test(s)) return state.users.filter(u => u.role === "owner" && u.status === "active");
+      if(/id = \?/.test(s)) return state.users.filter(u => String(u.id) === String(p[0]));
+      return state.users.slice();
+    }
+    if(/FROM organizers/.test(s)){
+      if(/user_id = \?/.test(s)) return state.organizers.filter(o => String(o.user_id) === String(p[0]));
+      if(/id = \?/.test(s)) return state.organizers.filter(o => String(o.id) === String(p[0]));
+      return state.organizers.slice();
+    }
+    if(/FROM events/.test(s)){
+      if(/COUNT\(\*\)/i.test(s)) return [{ n: state.events.length }];
+      if(/e\.status IN \('active','sold_out'\)/.test(s)) return cloneEvents(state.events.filter(e => e.status === "active" || e.status === "sold_out")).map(withOrganizer);
+      if(/e\.status = 'active'/.test(s)) return cloneEvents(state.events.filter(e => e.status === "active")).map(withOrganizer);
+      if(/WHERE e\.id = \?/.test(s)) return cloneEvents(state.events.filter(e => String(e.id) === String(p[0]))).map(withOrganizer);
+      if(/WHERE id = \?/.test(s)) return cloneEvents(state.events.filter(e => String(e.id) === String(p[0])));
+      if(/organizer_id = \?/.test(s) && /e\.status/.test(s)) return cloneEvents(state.events.filter(e => String(e.organizer_id) === String(p[0]))).map(withOrganizer);
+      if(/WHERE slug = \?/.test(s)) return cloneEvents(state.events.filter(e => e.slug === p[0]));
+      if(/WHERE e\.slug = \?/.test(s)) return cloneEvents(state.events.filter(e => e.slug === p[0])).map(withOrganizer);
+      return cloneEvents(state.events).map(withOrganizer);
+    }
+    if(/FROM ticket_types/.test(s)){
+      if(/COUNT\(\*\)/i.test(s)){
+        const hits = state.ticket_types.filter(t => String(t.event_id) === String(p[0]) && (!/status = 'active'/.test(s) || t.status === "active"));
+        return [{ n: hits.length }];
+      }
+      if(/event_id = \?/.test(s)) return state.ticket_types.filter(t => String(t.event_id) === String(p[0]));
+      return state.ticket_types.slice();
+    }
+    if(/FROM app_settings/.test(s)) return state.app_settings.slice();
+    if(/FROM email_outbox/.test(s)){
+      if(/WHERE template = \?/.test(s)) return state.email_outbox.filter(m => m.template === p[0] && String(m.to_email) === String(p[1]) && (m.status === "queued" || m.status === "sent"));
+      if(/status = 'queued'/.test(s)) return state.email_outbox.filter(m => m.status === "queued").slice(0, Number(p[0]) || 10);
+      return state.email_outbox.slice();
+    }
+    if(/FROM rate_limits/.test(s)) return [];
+    if(/FROM orders/.test(s)) return [];
+    unhandled.push(s.slice(0, 140));
+    return [];
+  };
+const write = (sql, p) => {
+    const s = String(sql);
+    /* D1 refuses a statement whose placeholder count differs from its bindings.
+       Modelling that here is what caught the signature INSERT shipping the wrong
+       column/literal layout: a mock that silently accepts anything hides it. */
+    const placeholders = (String(sql).match(/\?/g) || []).length;
+    if(placeholders !== p.length) throw new Error("bindings count mismatch (" + placeholders + " vs " + p.length + ")");
+    const mIns = /^INSERT INTO (\w+) \(([^)]+)\) VALUES \(([\s\S]+)\)\s*$/i.exec(s.trim());
+    if(mIns && /^(platform_agreements|organizer_agreements|agreement_invitations|agreement_audit_log)$/.test(mIns[1])){
+      const cols = mIns[2].split(",").map(c => c.trim()), parts = mIns[3].split(",").map(v => v.trim());
+      const row = {}; let pi = 0;
+      cols.forEach((c, i) => { const v = parts[i]; row[c] = (v === "?") ? p[pi++] : String(v).replace(/^'/, "").replace(/'$/, ""); });
+      /* The UNIQUE constraints of the schema, so a duplicate really fails. */
+      if(mIns[1] === "platform_agreements" && state.platform_agreements.some(a => a.version === row.version)){
+        throw new Error("UNIQUE constraint failed: platform_agreements.version");
+      }
+      if(mIns[1] === "organizer_agreements" && state.organizer_agreements.some(a => String(a.organizer_id) === String(row.organizer_id) && String(a.agreement_id) === String(row.agreement_id))){
+        throw new Error("UNIQUE constraint failed: organizer_agreements.organizer_id, agreement_id");
+      }
+      if(mIns[1] === "agreement_invitations" && state.agreement_invitations.some(a => a.token_hash === row.token_hash)){
+        throw new Error("UNIQUE constraint failed: agreement_invitations.token_hash");
+      }
+      if(mIns[1] === "platform_agreements") row.id = nextAgreementId++;
+      if(mIns[1] === "organizer_agreements") row.id = nextSigId++;
+      if(mIns[1] === "agreement_invitations") row.id = nextInviteId++;
+      if(mIns[1] === "agreement_audit_log") row.id = nextAuditId++;
+      row.created_at = row.created_at || "2026-05-01 09:00:00";
+      row.updated_at = row.updated_at || "2026-05-01 09:00:00";
+      state[mIns[1]].push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/^UPDATE platform_agreements/i.test(s)){
+      /* every shape binds the row id last: ... WHERE id = ? [AND status ...] */
+      const row = state.platform_agreements.filter(a => String(a.id) === String(p[p.length - 1]))[0];
+      if(/status = 'superseded'/.test(s)){
+        if(row && row.status === "active"){ row.status = "superseded"; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      if(/activated_at/.test(s) && /status = 'active'/.test(s)){
+        if(row && row.status !== "active"){ row.status = "active"; row.activated_at = p[0]; row.activated_by = p[1]; row.updated_at = p[2]; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      if(row){
+        const m = /SET\s+([\s\S]+?)\s+WHERE\s+id\s*=\s*\?$/i.exec(s.trim());
+        if(m) m[1].split(", ").forEach((a, i) => { row[a.split("=")[0].trim()] = p[i]; });
+        return { meta: { changes: 1 } };
+      }
+      return { meta: { changes: 0 } };
+    }
+    if(/^UPDATE agreement_invitations/i.test(s)){
+      if(/SET status = 'revoked'/.test(s)){
+        let changes = 0;
+        state.agreement_invitations.forEach(inv => {
+          if(inv.status === "pending" && String(inv.agreement_id) === String(p[0]) && String(inv.user_id) === String(p[1])){ inv.status = "revoked"; changes++; }
+        });
+        return { meta: { changes: changes } };
+      }
+      if(/SET status='used'/.test(s)){
+        const inv = state.agreement_invitations.filter(x => String(x.id) === String(p[1]))[0];
+        if(inv && inv.status === "pending" && inv.token_hash === p[2]){ inv.status = "used"; inv.used_at = p[0]; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      return { meta: { changes: 0 } };
+    }
+    if(/^UPDATE organizer_agreements/i.test(s)){
+      const row = state.organizer_agreements.filter(x => String(x.id) === String(p[p.length - 1]))[0];
+      if(!row) return { meta: { changes: 0 } };
+      if(/document_key/.test(s)){ row.document_key = p[0]; row.document_sha256 = p[1]; }
+      else if(/confirmation_email_status/.test(s)){ row.confirmation_email_status = p[0]; }
+      return { meta: { changes: 1 } };
+    }
+    if(/UPDATE events SET agreement_id/i.test(s)){
+      const ev = state.events.filter(e => String(e.id) === String(p[3]))[0];
+      if(ev && String(ev.agreement_id || "") !== String(p[0] || "")){ ev.agreement_id = p[0]; ev.agreement_version = p[1]; return { meta: { changes: 1 } }; }
+      return { meta: { changes: 0 } };
+    }
+    if(/INSERT INTO events/i.test(s)){
+      const row = {};
+      /\(([^)]+)\)/.exec(s)[1].split(",").forEach((c, i) => { row[c.trim()] = p[i]; });
+      row.id = nextEventId++; row.created_at = "2026-05-01 09:00:00"; row.updated_at = "2026-05-01 09:00:00";
+      state.events.push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/^UPDATE\s+events/i.test(s)){
+      const m = /^UPDATE\s+events\s+SET\s+([\s\S]+?)\s+WHERE\s+id\s*=\s*\?$/i.exec(s.trim());
+      const ev = state.events.filter(e => String(e.id) === String(p[p.length - 1]))[0];
+      if(ev && m) m[1].split(", ").forEach((a, i) => { ev[a.split("=")[0].trim()] = p[i]; });
+      return { meta: { changes: ev ? 1 : 0 } };
+    }
+    if(/INSERT INTO email_outbox/i.test(s)){
+      const row = { id: nextMailId++, to_email: p[0], subject: p[1], template: p[2], payload_json: p[3],
+        status: "queued", error: null, sent_at: null, created_at: "2026-05-01 09:00:00" };
+      state.email_outbox.push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/UPDATE email_outbox/i.test(s)){
+      const row = state.email_outbox.filter(m => String(m.id) === String(p[p.length - 1]))[0];
+      if(row){ row.status = p[0]; row.error = p[1]; row.payload_json = p[2]; if(row.status === "sent") row.sent_at = "2026-05-01 09:01:00"; }
+      return { meta: { changes: row ? 1 : 0 } };
+    }
+    return { meta: { changes: 0 } };
+  };
+const stmt = (sql, bound) => {
+    const p = bound || [];
+    return { bind: (...a) => stmt(sql, a),
+      all: async () => ({ results: rows(sql, p), success: true, meta: {} }),
+      first: async () => ({ result: rows(sql, p)[0] || null, success: true, meta: {} }),
+      run: async () => write(sql, p) };
+  };
+  return { DB: { prepare: sql => stmt(sql, []),
+      batch: async () => { throw new Error("no such table: rate_limits"); } },
+    state: state, unhandled: unhandled,
+    addTicket: (eventId, name) => state.ticket_types.push({ id: nextTicketId++, event_id: eventId,
+      name: name || "Regular", price: 1000, quantity: 50, sold: 0, status: "active" }),
+    mail: (template) => state.email_outbox.filter(m => m.template === template),
+    event: (id) => state.events.filter(e => String(e.id) === String(id))[0] || null };
+}
+function makeEnv(extra, seed){
+  const d = makeDb(seed);
+  const env = { DB: d.DB, FIREBASE_PROJECT_ID: PROJECT, ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital" };
+  for(const k of Object.keys(extra || {})) env[k] = String(extra[k]);
+  env.db = d;
+  return env;
+}
+
+/* ----------------------------------------------------------------- call ---- */
+let ipSeq = 0;
+function nextIp(){ ipSeq++; return "41.92." + Math.floor(ipSeq / 200) + "." + (1 + (ipSeq % 200)); }
+async function call(path, token, env, opts){
+  const o = opts || {};
+  const label = (o.method || "GET") + " " + path;
+  /* Watchdog: a Worker request that never answers must fail the harness with the
+     exact route named, instead of leaving the whole page waiting forever. */
+  const answer = (async function(){
+    const headers = { "CF-Connecting-IP": o.ip || nextIp() };
+    if(token) headers["Authorization"] = "Bearer " + token;
+    let body;
+    if(o.body !== undefined){ headers["Content-Type"] = "application/json"; body = JSON.stringify(o.body); }
+    const res = await W.default.fetch(new Request(API + path, { method: o.method || "GET", headers: headers, body: body }), env, ctx);
+    let parsed = null, text = null;
+    try { text = await res.clone().text(); } catch(e){ text = null; }
+    try { parsed = JSON.parse(text || "null"); } catch(e){ parsed = null; }
+    return { status: res.status, body: parsed || {}, text: text || "", headers: res.headers };
+  })();
+  const watchdog = new Promise(function(resolve){
+    setTimeout(function(){ resolve({ status: 0, body: { code: "HARNESS_TIMEOUT", error: label }, text: "", headers: new Headers() }); }, 8000);
+  });
+  return Promise.race([answer, watchdog]);
+}
+const newEvent = (title, extra) => Object.assign({ title: title, venue: "KICC", location: "Nairobi",
+  category: "Music", description: "A good night out.", event_date: "2027-03-20", start_time: "19:00" }, extra || {});
+const tokenOf = (url) => String(url || "").split("token=")[1] || "";
+const auditHas = (state, action) => state.agreement_audit_log.filter(a => a.action === action).length > 0;
+/* an ISO-ish UTC stamp from the API must be a real, near-future instant */
+function agreementMsOk(value){
+  const s = String(value || "");
+  const t = Date.parse(s.indexOf("T") > -1 ? s : s.replace(" ", "T") + "Z");
+  if(!Number.isFinite(t)) return false;
+  const hours = (t - Date.now()) / 3600000;
+  return hours > 0.5 && hours <= 24.5;
+}
+
+/* Page-level watchdog: whatever happens the run ends with a result - if a step
+   never completes, the last recorded check says exactly where it stopped. */
+const WATCHDOG = setTimeout(function(){
+  if(R.done) return;
+  const last = R.tests[R.tests.length - 1];
+  ck("the harness finished every group", false, "stopped after: " + (last ? last.name : "nothing ran"));
+  try { finish(); } catch(e){}
+}, 90000);
+
+(async () => {
+  const realError = console.error.bind(console);
+  console.error = (...a) => { (R.errors = R.errors || []).push(a.map(x => String(x)).join(" ")); };
+  try {
+    window.fetch = async (url, init) => {
+      const href = String(url && url.url ? url.url : url);
+      if(href.indexOf("googleapis.com") > -1 || href.indexOf("securetoken") > -1){
+        return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return realFetch(url, init);
+    };
+    await makeKey();
+    const src = await (await realFetch("./worker/worker.js")).text();
+    W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    ck("the Worker compiles with the agreement gate", typeof W.default.fetch === "function", "bytes " + src.length);
+  } catch(e){ ck("the Worker compiles with the agreement gate", false, (e && e.message) || String(e)); finish(); return; }
+
+  const T_ORG = await mintToken("uid-organizer-1", "amina@example.com");
+  const T_ORG2 = await mintToken("uid-organizer-2", "brian@example.com");
+  const T_OWNER = await mintToken("uid-owner-1", "owner@example.com");
+  const env = makeEnv();
+  const db = env.db;
+  const st = db.state;
+  let NEW_ID = null, sig = null, newId = null;
+
+  try {
+    /* -------- 1. an unsigned organizer simply cannot publish ------------- */
+    const blockedCreate = await call("/api/organizer/events", T_ORG, env,
+      { method: "POST", body: newEvent("Blocked Gig", { status: "active" }) });
+    ck("POST /api/organizer/events with status active is refused for an unsigned organizer",
+      blockedCreate.status === 403 && blockedCreate.body.code === "AGREEMENT_REQUIRED",
+      blockedCreate.status + " " + blockedCreate.body.code);
+    ck("the refusal explains itself and points at the agreement page",
+      String(blockedCreate.body.message || blockedCreate.body.error || "").length > 20 &&
+      blockedCreate.body.details && blockedCreate.body.details.agreement_required === true &&
+      blockedCreate.body.details.publication_blocked === true &&
+      String(blockedCreate.body.details.agreement_url || "") === "/organizer-agreement/",
+      JSON.stringify(blockedCreate.body.details || {}));
+    ck("the refusal says the organizer is unsigned, not that the request was malformed",
+      blockedCreate.body.details && blockedCreate.body.details.agreement_status === "pending",
+      String(blockedCreate.body.details && blockedCreate.body.details.agreement_status));
+    ck("nothing was created by the refused request",
+      st.events.filter(e => String(e.title) === "Blocked Gig").length === 0, "events " + st.events.length);
+    ck("the block is written to the audit trail", auditHas(st, "publication_blocked"),
+      JSON.stringify(st.agreement_audit_log.map(a => a.action)));
+
+    const draft = await call("/api/organizer/events", T_ORG, env, { method: "POST", body: newEvent("Draft Gig") });
+    ck("a plain draft is still allowed while unsigned", draft.status === 201 &&
+      String((draft.body.event || {}).status) === "draft", draft.status + " " + ((draft.body.event || {}).status));
+
+    const blockedEdit = await call("/api/organizer/events/" + (draft.body.event || {}).id, T_ORG, env,
+      { method: "PUT", body: { status: "active" } });
+    ck("submitting that draft for publication is refused while unsigned",
+      blockedEdit.status === 403 && blockedEdit.body.code === "AGREEMENT_REQUIRED",
+      blockedEdit.status + " " + blockedEdit.body.code);
+    const republish = await call("/api/organizer/events/11", T_ORG, env,
+      { method: "PUT", body: { status: "paused" } });
+    ck("pausing a live event never needs the agreement (sales stop, nothing is published)",
+      republish.status === 200 && String((republish.body.event || {}).status) === "paused",
+      republish.status + " " + (republish.body.code || ""));
+
+    const grandfatherEdit = await call("/api/organizer/events/11", T_ORG, env,
+      { method: "PUT", body: { title: "Legacy Fest 2026 (renamed)" } });
+    ck("an already-published event stays editable without re-signing (grandfathered)",
+      grandfatherEdit.status === 200, grandfatherEdit.status + " " + (grandfatherEdit.body.code || ""));
+
+    const approve = await call("/api/owner/events/10", T_OWNER, env, { method: "PUT", body: { status: "active" } });
+    ck("the platform owner cannot approve an unsigned organizer's event",
+      approve.status === 403 && approve.body.code === "AGREEMENT_REQUIRED",
+      approve.status + " " + approve.body.code);
+    ck("the refused approval left the event submitted",
+      String((db.event(10) || {}).status) === "pending", String((db.event(10) || {}).status));
+  } catch(e){ ck("group 1 (the publication gate)", false, (e && e.stack) || String(e)); }
+let TOKEN = "", OLD_TOKEN = "";
+  try {
+    /* -------- 2. reading the agreement and getting a signing link ---------- */
+    const read = await call("/api/organizer/agreement", T_ORG, env);
+    ck("GET /api/organizer/agreement reports the version in force and its text",
+      read.status === 200 && read.body.state.status === "pending" && read.body.state.required === true &&
+      String(read.body.agreement.version) === "1.0" && String(read.body.content || "").indexOf("platform fee terms") > -1,
+      read.status + " " + JSON.stringify(read.body.state || {}));
+    ck("the fee terms of that version are published with it",
+      read.body.fee && Array.isArray(read.body.fee.rows) && read.body.fee.rows.length > 0,
+      JSON.stringify((read.body.fee || {}).rows || []));
+    const light = await call("/api/organizer/agreement/status", T_ORG, env);
+    ck("GET /api/organizer/agreement/status is the light version of the same answer",
+      light.status === 200 && light.body.state && light.body.state.can_publish === false &&
+      String(light.text || "").indexOf("platform fee terms") === -1,
+      light.status + " " + JSON.stringify(light.body.state || {}));
+    ck("an organizer cannot read the admin list", (await call("/api/admin/agreements", T_ORG, env)).status === 403, "");
+    ck("the owner can read the admin list and its coverage",
+      (await call("/api/admin/agreements", T_OWNER, env)).status === 200, "");
+
+    const invite = await call("/api/organizer/agreement/invite", T_ORG, env, { method: "POST", body: {} });
+    ck("the organizer can request a single-use signing link", invite.status === 200 &&
+      String(invite.body.review_url || "").indexOf("token=") > -1,
+      invite.status + " " + (invite.body.code || ""));
+    ck("the invitation email is queued", db.mail("organizer_agreement_invitation").length >= 1,
+      "mails " + db.mail("organizer_agreement_invitation").length);
+    ck("the link expires within 24 hours", agreementMsOk(invite.body.expires_at), String(invite.body.expires_at));
+    ck("only the hash of the token is stored, never the token itself",
+      st.agreement_invitations.length === 1 && /^[0-9a-f]{64}$/.test(String(st.agreement_invitations[0].token_hash)) &&
+      JSON.stringify(st.agreement_invitations).indexOf(tokenOf(invite.body.review_url)) === -1,
+      JSON.stringify(st.agreement_invitations[0] || {}));
+    const invite2 = await call("/api/organizer/agreement/invite", T_ORG, env, { method: "POST", body: {} });
+    TOKEN = tokenOf(invite2.body.review_url);
+    OLD_TOKEN = tokenOf(invite.body.review_url);
+    ck("asking again replaces the previous link instead of leaving two live ones",
+      st.agreement_invitations.filter(i => i.status === "pending").length === 1 && TOKEN !== OLD_TOKEN,
+      "pending " + st.agreement_invitations.filter(i => i.status === "pending").length);
+    const revoked = await call("/api/organizer/agreement/verify?token=" + encodeURIComponent(OLD_TOKEN), T_ORG, env);
+    ck("the replaced link is refused", revoked.status === 409 &&
+      String(revoked.body.code || "") === "AGREEMENT_LINK_REVOKED", revoked.status + " " + revoked.body.code);
+    const stranger = await call("/api/organizer/agreement/verify?token=" + encodeURIComponent(TOKEN), T_ORG2, env);
+    ck("another organizer's account cannot use a link issued to someone else",
+      stranger.status === 403 && stranger.body.code === "FORBIDDEN", stranger.status + " " + stranger.body.code);
+    const verified = await call("/api/organizer/agreement/verify?token=" + encodeURIComponent(TOKEN), T_ORG, env);
+    ck("GET verify returns the exact text and fee terms behind the link",
+      verified.status === 200 && String(verified.body.content || "") === AGREEMENT_TEXT &&
+      String((verified.body.agreement || {}).version) === "1.0" && (verified.body.fee.rows || []).length > 0,
+      verified.status + " " + (verified.body.code || ""));
+  } catch(e){ ck("group 2 (the signing link)", false, (e && e.stack) || String(e)); }
+try {
+    /* -------- 3. signing it ---------------------------------------------- */
+    const noAgree = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN, signatory_name: "Amina Wanjiru", agreed: false } });
+    ck("signing without ticking the acceptance is refused",
+      noAgree.status === 422, noAgree.status + " " + noAgree.body.code);
+    const shortName = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN, signatory_name: "A", agreed: true } });
+    ck("a one-character name is refused", shortName.status === 422, shortName.status + " " + shortName.body.code);
+    const noToken = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { signatory_name: "Amina Wanjiru", agreed: true } });
+    ck("signing without a signing link is refused", noToken.status === 400, noToken.status + " " + noToken.body.code);
+    const noSignature = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN, signatory_name: "Amina Wanjiru", agreed: true } });
+    ck("handwritten signature is required", noSignature.status === 422, noSignature.status + " " + noSignature.body.code);
+    ck("none of those attempts recorded a signature", st.organizer_agreements.length === 0,
+      "signatures " + st.organizer_agreements.length);
+
+    const signed = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN, signatory_name: "Amina Wanjiru", signatory_role: "Director", signature_image: TEST_SIGNATURE_IMAGE, agreed: true } });
+    ck("a valid signing link records the signature",
+      signed.status === 201 && signed.body.state.status === "signed" && signed.body.state.can_publish === true &&
+      /^AGR-\d{4}-/.test(String((signed.body.signature || {}).reference || "")),
+      signed.status + " " + JSON.stringify(signed.body.state || {}) + " " + (signed.body.code || ""));
+    sig = st.organizer_agreements[0] || {};
+    ck("the signature keeps the exact text and fee configuration that were accepted",
+      String(sig.content_snapshot) === AGREEMENT_TEXT &&
+      String(sig.fee_snapshot_json).indexOf("commission_percent") > -1 &&
+      String(sig.signatory_name) === "Amina Wanjiru" && String(sig.signatory_role) === "Director" &&
+      String(sig.signature_image) === TEST_SIGNATURE_IMAGE && String(sig.status) === "accepted" && String(sig.agreement_version) === "1.0",
+      JSON.stringify({ v: sig.agreement_version, snapshot: String(sig.content_snapshot || "").slice(0, 24) }));
+    ck("the signature is bound to the authenticated account, not to the link alone",
+      Number(sig.user_id) === 1 && Number(sig.organizer_id) === 1 && String(sig.signatory_email) === "amina@example.com" &&
+      Number(sig.invitation_id) > 0, JSON.stringify({ u: sig.user_id, o: sig.organizer_id, i: sig.invitation_id }));
+    ck("the confirmation email is queued and the document hash is recorded",
+      db.mail("organizer_agreement_signed").length >= 1 && String(sig.document_sha256 || "").length === 64,
+      "mails " + db.mail("organizer_agreement_signed").length + " sha " + String(sig.document_sha256 || "").slice(0, 12));
+    ck("the signing instant and the invitation use are audited",
+      auditHas(st, "agreement_signed") && auditHas(st, "invitation_issued"),
+      JSON.stringify(st.agreement_audit_log.map(a => a.action)));
+    ck("the audit trail never stores a raw IP address",
+      st.agreement_audit_log.every(a => String(a.ip_hash || "").length === 0 || /^[0-9a-f]{48}$/.test(String(a.ip_hash))),
+      JSON.stringify(st.agreement_audit_log.slice(0, 2).map(a => a.ip_hash)));
+
+    const reuse = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN, signatory_name: "Amina Wanjiru", agreed: true } });
+    ck("the signing link cannot be used twice", reuse.status === 409, reuse.status + " " + reuse.body.code);
+    ck("still exactly one signature is stored", st.organizer_agreements.length === 1,
+      "signatures " + st.organizer_agreements.length);
+  } catch(e){ ck("group 3 (signing)", false, (e && e.stack) || String(e)); }
+try {
+    /* -------- 4. publishing works once the agreement is signed ------------ */
+    const submit = await call("/api/organizer/events", T_ORG, env,
+      { method: "POST", body: newEvent("Signed Gig", { status: "active" }) });
+    ck("with a signed agreement the same request is accepted (and queued for approval)",
+      submit.status === 201 && String((submit.body.event || {}).status) === "pending",
+      submit.status + " " + ((submit.body.event || {}).status) + " " + (submit.body.code || ""));
+    newId = (submit.body.event || {}).id;
+    db.addTicket(newId, "Regular");
+    const approved = await call("/api/owner/events/" + newId, T_OWNER, env, { method: "PUT", body: { status: "active" } });
+    ck("the owner can now approve and publish it", approved.status === 200 &&
+      String((approved.body.event || {}).status) === "active", approved.status + " " + (approved.body.code || ""));
+    const published = db.event(newId) || {};
+    ck("the published event records the agreement version that governed it",
+      Number(published.agreement_id) === 1 && String(published.agreement_version) === "1.0",
+      JSON.stringify({ id: published.agreement_id, v: published.agreement_version }));
+    ck("approval emails the organizer through the ordinary event template",
+      db.mail("event_published").length >= 1, "mails " + JSON.stringify(db.state.email_outbox.map(m => m.template)));
+
+    /* -------- 5. the signed document --------------------------------------- */
+    const doc = await call("/api/organizer/agreement/document", T_ORG, env);
+    ck("the organizer can download the document they signed",
+      doc.status === 200 && String(doc.headers.get("content-type") || "").indexOf("text/html") === 0 &&
+      String(doc.headers.get("content-disposition") || "").indexOf(sig.reference || "AGR-") > -1,
+      doc.status + " " + (doc.headers.get("content-disposition") || ""));
+    ck("the document carries the reference, the accepted text and its hash",
+      String(doc.text || "").indexOf(String(sig.reference || "")) > -1 &&
+      String(doc.text || "").indexOf("Amina Wanjiru") > -1 &&
+      String(doc.text || "").indexOf("platform fee terms") > -1,
+      "bytes " + String(doc.text || "").length);
+    ck("the signed document embeds the organizer's handwritten signature image",
+      String(doc.text || "").indexOf('class="signature-mark"') > -1 &&
+      String(doc.text || "").indexOf(TEST_SIGNATURE_IMAGE) > -1,
+      "signature image included " + String(doc.text || "").includes(TEST_SIGNATURE_IMAGE));
+    const ownerDoc = await call("/api/owner/organizers/1/agreement/document", T_OWNER, env);
+    ck("the owner can download the organizer's signed agreement",
+      ownerDoc.status === 200 && String(ownerDoc.headers.get("content-type") || "").indexOf("text/html") === 0 &&
+      String(ownerDoc.headers.get("content-disposition") || "").indexOf(sig.reference) > -1 &&
+      String(ownerDoc.text || "").indexOf(TEST_SIGNATURE_IMAGE) > -1,
+      ownerDoc.status + " " + (ownerDoc.body.code || ""));
+    const ownerRows = await call("/api/owner/organizers", T_OWNER, env);
+    const signedOwnerRow = (ownerRows.body.organizers || []).find(row => Number(row.id) === 1);
+    ck("the owner list includes the signed agreement reference for its download action",
+      String((signedOwnerRow || {}).signed_agreement_reference || "") === String(sig.reference),
+      String((signedOwnerRow || {}).signed_agreement_reference || "missing"));
+    const organizerOwnerDoc = await call("/api/owner/organizers/1/agreement/document", T_ORG, env);
+    ck("organizers cannot use the owner agreement download route",
+      organizerOwnerDoc.status === 403, organizerOwnerDoc.status + " " + organizerOwnerDoc.body.code);
+    ck("another organizer's download attempt returns their own, not this one's",
+      (await call("/api/organizer/agreement/document", T_ORG2, env)).status === 404, "");
+    const otherDoc = await call("/api/organizer/agreement/document?reference=" + encodeURIComponent(sig.reference), T_ORG2, env);
+    ck("a signature reference cannot be fetched by another organizer",
+      otherDoc.status === 404, otherDoc.status + " " + otherDoc.body.code);
+
+    /* -------- 6. owner-side records --------------------------------------- */
+    const sigs = await call("/api/admin/agreements/1/signatures", T_OWNER, env);
+    ck("the signature register lists who accepted, with the reference",
+      sigs.status === 200 && sigs.body.total === 1 && String(sigs.body.signatures[0].reference) === sig.reference &&
+      String(sigs.body.signatures[0].signatory_email) === "amina@example.com",
+      sigs.status + " " + sigs.body.total);
+    const auditApi = await call("/api/admin/agreements/audit?limit=200", T_OWNER, env);
+    const actions = (auditApi.body.entries || []).map(e => e.action);
+    ck("the audit API returns the trail the owner may read",
+      auditApi.status === 200 && actions.indexOf("agreement_signed") > -1 && actions.indexOf("publication_blocked") > -1,
+      JSON.stringify(actions));
+    ck("an organizer cannot read the audit trail", (await call("/api/admin/agreements/audit", T_ORG, env)).status === 403, "");
+  } catch(e){ ck("group 4 (publishing, document and records)", false, (e && e.stack) || String(e)); }
+try {
+    /* -------- 7. a new version replaces the one in force ------------------ */
+    const created = await call("/api/admin/agreements", T_OWNER, env, { method: "POST", body: {
+      version: "2.0", title: "TicketHub Organizer Agreement",
+      content: AGREEMENT_TEXT + "\n4. Version 2 raises the platform fee.",
+      summary: "Platform fee increased", effective_date: "2026-06-01",
+      fee_config: { commission_percent: 7.5, payout_terms: "Weekly.", refund_policy: "Refunds before the event." }
+    } });
+    NEW_ID = (created.body.agreement || {}).id;
+    ck("the owner creates a new DRAFT version", created.status === 201 && NEW_ID > 0 &&
+      String((created.body.agreement || {}).status) === "draft", created.status + " " + (created.body.code || ""));
+    const duplicate = await call("/api/admin/agreements", T_OWNER, env,
+      { method: "POST", body: { version: "2.0", title: "Copy", content: "x" } });
+    ck("a duplicate version number is refused", duplicate.status === 409, duplicate.status + " " + duplicate.body.code);
+    const patchDraft = await call("/api/admin/agreements/" + NEW_ID, T_OWNER, env,
+      { method: "PATCH", body: { summary: "Platform fee increased to 7.5%" } });
+    ck("a draft version can still be edited", patchDraft.status === 200 &&
+      String((patchDraft.body.agreement || {}).summary) === "Platform fee increased to 7.5%", patchDraft.status + " " + (patchDraft.body.code || ""));
+    const patchActive = await call("/api/admin/agreements/1", T_OWNER, env,
+      { method: "PATCH", body: { content: "rewritten after signatures" } });
+    ck("an activated version can never be edited afterwards",
+      patchActive.status === 409 && patchActive.body.code === "AGREEMENT_IMMUTABLE", patchActive.status + " " + patchActive.body.code);
+
+    const activated = await call("/api/admin/agreements/" + NEW_ID + "/activate", T_OWNER, env, { method: "POST", body: {} });
+    ck("activating the draft makes it the version in force and supersedes the old one",
+      activated.status === 200 && String((activated.body.superseded || {}).version) === "1.0" &&
+      String((db.state.platform_agreements[0] || {}).status) === "superseded",
+      activated.status + " " + (activated.body.code || ""));
+    ck("activation tells the organizers who have signed before to re-accept",
+      Number((activated.body.notifications || {}).updated) === 1 &&
+      db.mail("organizer_agreement_updated").length >= 1,
+      JSON.stringify(activated.body.notifications || {}));
+
+    const after = await call("/api/organizer/agreement/status", T_ORG, env);
+    ck("an organizer signed on the old version is now 'outdated', not signed",
+      after.body.state.status === "outdated" && after.body.state.can_publish === false &&
+      String(after.body.state.active_version) === "2.0" && String(after.body.state.signed_version) === "1.0",
+      JSON.stringify(after.body.state || {}));
+    const blockedOld = await call("/api/organizer/events", T_ORG, env,
+      { method: "POST", body: newEvent("After Upgrade", { status: "active" }) });
+    ck("publishing is blocked again until the new version is accepted",
+      blockedOld.status === 403 && blockedOld.body.code === "AGREEMENT_REQUIRED" &&
+      String((blockedOld.body.details || {}).agreement_status) === "outdated",
+      blockedOld.status + " " + JSON.stringify(blockedOld.body.details || {}));
+    const liveStill = db.event(newId) || {};
+    ck("the event published under version 1.0 keeps running untouched",
+      String(liveStill.status) === "active" && String(liveStill.agreement_version) === "1.0",
+      JSON.stringify({ s: liveStill.status, v: liveStill.agreement_version }));
+
+    const inviteV2 = await call("/api/organizer/agreement/invite", T_ORG, env, { method: "POST", body: {} });
+    const token2 = tokenOf(inviteV2.body.review_url);
+    ck("a new link can be issued for the new version", inviteV2.status === 200 && token2 && token2 !== TOKEN,
+      inviteV2.status + " " + (inviteV2.body.code || ""));
+    const signedV2 = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: token2, signatory_name: "Amina Wanjiru", signatory_role: "Director", signature_image: TEST_SIGNATURE_IMAGE, agreed: true } });
+    ck("accepting the new version signs it and unlocks publishing",
+      signedV2.status === 201 && signedV2.body.state.status === "signed" &&
+      String((signedV2.body.signature || {}).agreement_version) === "2.0",
+      signedV2.status + " " + JSON.stringify(signedV2.body.state || {}) + " " + (signedV2.body.code || ""));
+    ck("the earlier signature is kept: history is never overwritten",
+      st.organizer_agreements.length === 2 &&
+      String(st.organizer_agreements[0].agreement_version) === "1.0" &&
+      String(st.organizer_agreements[1].agreement_version) === "2.0",
+      "signatures " + st.organizer_agreements.length);
+    const again = await call("/api/organizer/events", T_ORG, env,
+      { method: "POST", body: newEvent("After Upgrade", { status: "active" }) });
+    ck("publishing works again after re-acceptance", again.status === 201, again.status + " " + (again.body.code || ""));
+    const reminders = await call("/api/admin/agreements/" + NEW_ID + "/remind", T_OWNER, env, { method: "POST", body: {} });
+    ck("a reminder only reaches organizers who still have not signed",
+      reminders.status === 200 && Number((reminders.body.notifications || {}).reminded) === 1,
+      JSON.stringify(reminders.body.notifications || {}));
+  } catch(e){ ck("group 5 (a new version of the agreement)", false, (e && e.stack) || String(e)); }
+try {
+    /* -------- 8. fail closed when no version is in force ------------------- */
+    const bare = makeEnv({}, { no_agreement: true });
+    const bareApprove = await call("/api/owner/events/10", T_OWNER, bare, { method: "PUT", body: { status: "active" } });
+    ck("with no active agreement at all, approval is refused rather than allowed",
+      bareApprove.status === 403 && bareApprove.body.code === "AGREEMENT_REQUIRED" &&
+      String((bareApprove.body.details || {}).agreement_status) === "not_configured",
+      bareApprove.status + " " + JSON.stringify(bareApprove.body.details || {}));
+    const bareCreate = await call("/api/organizer/events", T_ORG, bare,
+      { method: "POST", body: newEvent("No Terms Yet", { status: "active" }) });
+    ck("an organizer publishing into an unconfigured agreement is refused too",
+      bareCreate.status === 403 && bareCreate.body.code === "AGREEMENT_REQUIRED",
+      bareCreate.status + " " + bareCreate.body.code);
+    const bareDraft = await call("/api/organizer/events", T_ORG, bare, { method: "POST", body: newEvent("Still A Draft") });
+    ck("drafts keep working even when the agreement is unconfigured",
+      bareDraft.status === 201, bareDraft.status + " " + (bareDraft.body.code || ""));
+    const bareInvite = await call("/api/organizer/agreement/invite", T_ORG, bare, { method: "POST", body: {} });
+    ck("there is nothing to sign yet, and the page says so",
+      bareInvite.status === 409 && bareInvite.body.code === "AGREEMENT_NOT_CONFIGURED",
+      bareInvite.status + " " + bareInvite.body.code);
+  } catch(e){ ck("group 6 (fail closed)", false, (e && e.stack) || String(e)); }
+try {
+    /* -------- 9. formatted text survives, unsafe markup does not ----------- */
+    const RICH = '<h3>1. Definitions</h3>' +
+      '<p>The organizer may publish events and <strong>sell tickets</strong> on TicketHub, ' +
+      'subject to <em>these terms</em>, which are <u>binding</u>.</p>' +
+      '<ul><li>Platform fee: <strong>5%</strong> of the ticket subtotal.</li><li>Payouts weekly.</li></ul>' +
+      '<blockquote><p>Refunds are handled per the refund policy.</p></blockquote>' +
+      '<p><a href="https://tickethub.co/terms/">Read the public terms</a>.</p>' +
+      '<p onclick="steal()">Owner text</p><script>alert(1)<\\/script>' +
+      '<p><a href="javascript:alert(1)">bad link</a></p><iframe src="https://evil.test"></iframe>' +
+      '<p style="position:fixed">styled</p><img src=x onerror=alert(1)>';
+    const richVersion = await call("/api/admin/agreements", T_OWNER, env, { method: "POST", body: {
+      version: "3.0", title: "Formatted agreement",
+      content: RICH, summary: "Formatting round trip",
+      fee_config: { commission_percent: 5 }
+    } });
+    ck("a formatted agreement is accepted", richVersion.status === 201,
+      richVersion.status + " " + (richVersion.body.code || ""));
+    const storedRich = (richVersion.body.agreement || {}).content || "";
+    ck("bold, italic, underline, headings and lists are stored as written",
+      /<h3>1\. Definitions<\/h3>/.test(storedRich) && /<strong>sell tickets<\/strong>/.test(storedRich) &&
+      /<em>these terms<\/em>/.test(storedRich) && /<u>binding<\/u>/.test(storedRich) &&
+      /<li>/.test(storedRich) && /<blockquote>/.test(storedRich),
+      storedRich.slice(0, 120));
+    ck("a real https link is kept, with a safe rel",
+      /<a href="https:\/\/tickethub\.co\/terms\/" rel="noopener noreferrer">/.test(storedRich),
+      (storedRich.match(/<a[^>]*>/g) || []).join(" "));
+    ck("scripts, handlers, javascript: links and styles are stripped",
+      !/script|onclick|onerror|javascript:|style=|<iframe|<img/i.test(storedRich),
+      storedRich.replace(/</g, "&lt;").slice(0, 200));
+    ck("the words of a stripped element survive (no clause is silently deleted)",
+      /Owner text/.test(storedRich) && /styled/.test(storedRich) && /bad link/.test(storedRich), "");
+    ck("the stored version reports itself as formatted html",
+      String((richVersion.body.agreement || {}).content_format) === "html",
+      String((richVersion.body.agreement || {}).content_format));
+
+    const richId = (richVersion.body.agreement || {}).id;
+    const actRich = await call("/api/admin/agreements/" + richId + "/activate", T_OWNER, env, { method: "POST", body: {} });
+    ck("the formatted version can be activated", actRich.status === 200, actRich.status + " " + (actRich.body.code || ""));
+    const readRich = await call("/api/organizer/agreement", T_ORG, env);
+    ck("the organizer reads the SAME formatting, in the same order",
+      /<h3>1\. Definitions<\/h3>/.test(readRich.body.content || "") &&
+      /<strong>sell tickets<\/strong>/.test(readRich.body.content || "") &&
+      readRich.body.content_format === "html" &&
+      String(readRich.body.content).indexOf("<h3>") < String(readRich.body.content).indexOf("<ul>"),
+      String(readRich.body.content || "").slice(0, 120));
+    ck("the organizer's copy carries no script, handler or style either",
+      !/script|onclick|javascript:|style=|<iframe/i.test(readRich.body.content || ""), "");
+    const richPlain = await call("/api/organizer/agreement/verify?token=" + encodeURIComponent(TOKEN), T_ORG, env);
+    ck("a plain-text link still answers with paragraphs, not raw markup",
+      /<p>/.test(richPlain.body.content || "") && richPlain.body.content_format === "text",
+      String(richPlain.body.content_format));
+  } catch(e){ ck("group 7 (formatted agreement text)", false, (e && e.stack) || String(e)); }
+
+  try {
+    /* -------- 10. a mangled signing link is refused, plainly -------------- */
+    const mangled = await call("/api/organizer/agreement/verify?token=X2wYU76PpNg6L8CLArn7Ox3akrEB0undefinedundefinedePeX4Wewi", T_ORG, env);
+    ck("a token with junk pasted into it is refused as invalid (not as expired)",
+      mangled.status === 404 && mangled.body.code === "AGREEMENT_LINK_INVALID",
+      mangled.status + " " + mangled.body.code);
+    const signMangled = await call("/api/organizer/agreement/sign", T_ORG, env,
+      { method: "POST", body: { token: TOKEN + "undefined", signatory_name: "Amina Wanjiru", agreed: true } });
+    ck("the same mangled token cannot be used to sign", signMangled.status === 404,
+      signMangled.status + " " + signMangled.body.code);
+    const issued = await call("/api/organizer/agreement/invite", T_ORG2, env, { method: "POST", body: {} });
+    const freshToken = tokenOf(issued.body.review_url);
+    ck("an issued signing token is 43 URL-safe characters",
+      /^[A-Za-z0-9_-]{43}$/.test(freshToken), freshToken);
+  } catch(e){ ck("group 8 (mangled signing links)", false, (e && e.stack) || String(e)); }
+
+  /* The gate must be one shared function, not three copies: a future route that
+     forgets it is the failure mode this feature exists to prevent. */
+  const workerSrc = await (await realFetch("./worker/index.js")).text();
+  ck("the publication gate is one function called from every publication path",
+    (workerSrc.match(/requireAgreementForPublish\(env, request/g) || []).length === 4,
+    "call sites " + (workerSrc.match(/requireAgreementForPublish\(env, request/g) || []).length);
+  ck("the gate only passes when a signature exists, and otherwise throws",
+    /if\(!state\.required\) return state;/.test(workerSrc) && /throw failure;/.test(workerSrc) &&
+    /can_publish: false/.test(workerSrc), "");
+  ck("every event publication path is covered (create, edit, owner approval)",
+    /source: "event_create"/.test(workerSrc) && /source: "event_update"/.test(workerSrc) &&
+    /source: "owner_approval"/.test(workerSrc), "");
+
+  finish();
+})();
+</script>
+</body>
+</html>

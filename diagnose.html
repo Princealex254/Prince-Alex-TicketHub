@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign-in &amp; data self-check | Prince Alex TicketHub</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--okbg:#E8F7F1;--okink:#04674A;--warnbg:#FEF7E6;--warnink:#8A5A00;--err:#D92D20;--errbg:#FEECEB;--errink:#9B1C1C;--r:14px;--r-lg:20px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--max:960px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6}
+a{color:var(--brand-600)}
+h1,h2{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.4rem,3vw,1.9rem)}h2{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-bottom:16px}
+.pad{padding:20px}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.9rem;padding:10px 16px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:42px;text-decoration:none;margin:0 8px 8px 0}
+.btn-primary{background:var(--brand-600);color:#fff}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn[disabled]{opacity:.6;cursor:default}
+ul.check{list-style:none;padding:0;margin:0}
+ul.check li{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+ul.check li:last-child{border-bottom:0}
+.dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.68rem;font-weight:800;color:#fff;background:var(--faint)}
+.dot.ok{background:#0E9F6E}.dot.warn{background:#D99E0B}.dot.err{background:var(--err)}
+.row-title{font-weight:600}
+.row-detail{font-size:.84rem;color:var(--muted);word-break:break-word;white-space:pre-wrap}
+.verdict{border-radius:var(--r);padding:14px 16px;border:1px solid var(--line);background:#fff}
+.verdict.ok{background:var(--okbg);border-color:#BFE8D8;color:var(--okink)}
+.verdict.warn{background:var(--warnbg);border-color:#F3DFB0;color:var(--warnink)}
+.verdict.err{background:var(--errbg);border-color:#F5C6C2;color:var(--errink)}
+pre.report{background:#0B1220;color:#E6E8F0;border-radius:var(--r);padding:14px;font-size:.8rem;overflow:auto;max-height:340px;margin:0}
+footer{padding:24px 0;color:var(--faint);font-size:.8rem}
+</style>
+</head>
+<body>
+<main class="container" style="padding-top:32px">
+  <p class="eyebrow">Diagnostics</p>
+  <h1>Sign-in &amp; data self-check</h1>
+  <p class="muted small">
+    Checks every link in the chain an organizer area page depends on — Firebase SDK, your signed-in
+    session, the Cloudflare Worker API, your organizer profile and the dashboard data route — and says
+    exactly which link is broken. Open it in the same browser you use for the organizer pages. It
+    changes nothing and stores nothing.
+  </p>
+  <div class="card pad">
+    <div style="margin-bottom:14px">
+      <button class="btn btn-primary" type="button" id="runBtn">Run the check</button>
+      <button class="btn btn-ghost" type="button" id="copyBtn">Copy report</button>
+      <a class="btn btn-ghost" href="/login/">Sign in</a>
+      <span class="tiny muted" id="when"></span>
+    </div>
+    <div id="verdict" class="verdict">Not run yet.</div>
+    <ul class="check" id="results" style="margin-top:14px"></ul>
+  </div>
+  <div class="card pad">
+    <h2>Plain-text report</h2>
+    <p class="tiny muted">Paste this into the conversation if you want the problem diagnosed from the outside.</p>
+    <pre class="report" id="report">not run yet</pre>
+  </div>
+  <footer>Prince Alex TicketHub &middot; Powered by Prince Alex Digital</footer>
+</main>
+<script src="/firebase.js"></script>
+<script>
+/* ============================================================
+   Sign-in / data self-check
+   ------------------------------------------------------------
+   Reports, step by step, where the organizer area stops working:
+     1. how the page was opened (http(s):// or file://)
+     2. whether firebase.js + the Firebase SDK load
+     3. whether a Firebase session exists in this browser
+     4. whether a fresh Firebase ID token can be minted
+     5. whether the Worker answers at all (GET /api/health)
+     6. whether the Worker accepts the token (GET /api/me)
+     7. whether the dashboard route answers (GET /api/organizer/dashboard)
+   The Worker stays the only authority on data; this page only reports what
+   it observes from the browser.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const rows = [];
+
+function escHtml(v){ return String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+function addRow(state, title, detail){
+  rows.push({ state: state, title: title, detail: detail || "" });
+  const li = document.createElement("li");
+  const mark = state === "ok" ? "OK" : (state === "warn" ? "!" : (state === "err" ? "X" : "-"));
+  li.innerHTML = '<span class="dot ' + (state === "skip" ? "" : state) + '">' + mark + "</span>" +
+    "<div><div class=\"row-title\">" + escHtml(title) + "</div><div class=\"row-detail\">" + escHtml(detail) + "</div></div>";
+  document.getElementById("results").appendChild(li);
+}
+function verdict(kind, text){
+  const box = document.getElementById("verdict");
+  box.className = "verdict " + kind;
+  box.textContent = text;
+}
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+function withTimeout(p, ms){
+  return Promise.race([p, wait(ms).then(() => { throw new Error("timed out after " + ms + "ms"); })]);
+}
+function decodeJwtPart(part){
+  try {
+    const b = String(part).replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b + "===".slice((b.length + 3) % 4);
+    return JSON.parse(decodeURIComponent(escape(atob(pad))));
+  } catch (err){ return null; }
+}
+async function callWorker(path, token){
+  const headers = { Accept: "application/json" };
+  if(token) headers.Authorization = "Bearer " + token;
+  const started = Date.now();
+  const res = await withTimeout(fetch(API_BASE.replace(/\/+$/, "") + path, { headers: headers }), 12000);
+  const text = await res.text();
+  let body = null;
+  try { body = JSON.parse(text); } catch (err){ body = null; }
+  return { status: res.status, body: body, text: text, ms: Date.now() - started, cors: res.headers.get("access-control-allow-origin") };
+}
+async function run(){
+  document.getElementById("results").innerHTML = "";
+  rows.length = 0;
+  verdict("warn", "Running...");
+  document.getElementById("when").textContent = "run at " + new Date().toLocaleString();
+
+  /* 1. how was this page opened? */
+  const onFile = location.protocol === "file:";
+  addRow(onFile ? "warn" : "ok", "1. Page origin: " + location.origin,
+    onFile
+      ? "Opened straight from the filesystem (file://). Firebase sign-in and the Worker API are not reliable from file:// - serve the pages over http(s) (a static host, or a local web server) and retry."
+      : "Served over " + location.protocol + " - normal for a hosted or locally served copy.");
+
+  /* 2. firebase.js + the Firebase SDK */
+  if(!window.Auth){
+    addRow("err", "2. firebase.js + Firebase SDK", "window.Auth is missing: firebase.js did not load on this page. Make sure firebase.js sits next to the HTML file and the browser did not block it.");
+  } else {
+    try {
+      await withTimeout(Auth.init(), 12000);
+      addRow("ok", "2. firebase.js + Firebase SDK", "Loaded and initialised for project " + PAT_FIREBASE_CONFIG.projectId + ".");
+    } catch (err){
+      addRow("err", "2. firebase.js + Firebase SDK", "The Firebase SDK could not be loaded/initialised: " + (err && err.message) + ". Something is blocking the Firebase CDN.");
+    }
+  }
+
+  /* 3. session + 4. token */
+  let token = null, signedIn = false;
+  if(window.Auth){
+    try {
+      await withTimeout(Auth.ready(), 12000);
+      const user = Auth.user || (Auth._auth && Auth._auth.currentUser);
+      signedIn = !!user;
+      if(user) addRow("ok", "3. Firebase session", "Signed in as " + (user.email || user.uid) + " (uid " + user.uid + ").");
+      else addRow("warn", "3. Firebase session", "No Firebase session in this browser. Sign in at /login/ first, then run this check again from the same browser.");
+      token = await withTimeout(Auth.getIdToken(), 12000);
+      if(token){
+        const payload = decodeJwtPart(token.split(".")[1]) || {};
+        const audOk = payload.aud === PAT_FIREBASE_CONFIG.projectId;
+        const exp = payload.exp ? new Date(payload.exp * 1000).toLocaleString() : "-";
+        addRow(audOk ? "ok" : "err", "4. Firebase ID token",
+          "Minted. aud=" + payload.aud + ", iss=" + payload.iss + ", expires " + exp +
+          (audOk ? "" : "  <-- does not match the configured project id " + PAT_FIREBASE_CONFIG.projectId));
+      } else {
+        addRow(signedIn ? "err" : "warn", "4. Firebase ID token",
+          signedIn
+            ? "Auth.getIdToken() returned null even though a session exists, so no page can call the API. Sign out, sign in again, and make sure this browser is not blocking storage/cookies for this site."
+            : "No token because there is no session yet (expected while signed out).");
+      }
+    } catch (err){
+      addRow("err", "3. Firebase session", "Auth.ready() failed: " + (err && err.message));
+    }
+  }
+
+  /* 5. is the Worker reachable at all? */
+  try {
+    const h = await callWorker("/api/health", null);
+    addRow(h.status === 200 ? "ok" : "err", "5. Worker reachable",
+      "GET /api/health -> HTTP " + h.status + " in " + h.ms + "ms. A cross-origin call reached the API and its answer was readable, so the network and CORS are fine from this browser.");
+  } catch (err){
+    addRow("err", "5. Worker reachable", "Could not reach the Worker: " + (err && err.message) + ". If it is up for everyone else, this network/DNS, an extension or a firewall is blocking " + API_BASE + " (a blocked CORS preflight shows up here too).");
+  }
+
+  /* 6. does the Worker accept the token? */
+  let me = null;
+  if(token){
+    try {
+      const r = await callWorker("/api/me", token);
+      if(r.status === 200 && r.body){
+        me = r.body;
+        addRow("ok", "6. Worker accepted your sign-in", "GET /api/me -> HTTP 200. role=" + me.role + ", status=" + ((me.status || (me.user && me.user.status)) || "active") + ", organizer profile=" + (me.has_organizer_profile ? "yes" : "NO"));
+      } else {
+        addRow("err", "6. Worker accepted your sign-in", "GET /api/me -> HTTP " + r.status + " code=" + ((r.body && r.body.code) || "-") + ' message="' + ((r.body && r.body.error) || r.text.slice(0, 160)) + '"');
+      }
+    } catch (err){
+      addRow("err", "6. Worker accepted your sign-in", "GET /api/me could not be completed: " + (err && err.message));
+    }
+  } else {
+    addRow("skip", "6. Worker accepted your sign-in", "Skipped: no ID token available.");
+  }
+
+  /* 7. the dashboard route the organizer dashboard calls */
+  if(token){
+    try {
+      const r = await callWorker("/api/organizer/dashboard", token);
+      if(r.status === 200 && r.body){
+        const s = r.body.stats || r.body.summary || {};
+        addRow("ok", "7. Organizer dashboard data", "GET /api/organizer/dashboard -> HTTP 200. events=" + (s.total_events || 0) + ", active=" + (s.active_events || 0) + ", tickets sold=" + (s.tickets_sold || 0) + ", check-ins=" + (s.checked_in || 0) + ", recent events=" + ((r.body.recent_events || []).length));
+      } else {
+        addRow("err", "7. Organizer dashboard data", "GET /api/organizer/dashboard -> HTTP " + r.status + " code=" + ((r.body && r.body.code) || "-") + ' message="' + ((r.body && r.body.error) || r.text.slice(0, 160)) + '"');
+      }
+    } catch (err){
+      addRow("err", "7. Organizer dashboard data", "GET /api/organizer/dashboard could not be completed: " + (err && err.message));
+    }
+  } else {
+    addRow("skip", "7. Organizer dashboard data", "Skipped: no ID token available.");
+  }
+  finish(token, me);
+}
+function row(prefix){
+  const hit = rows.filter(r => r.title.indexOf(prefix) === 0)[0];
+  return hit || { state: "skip", title: prefix, detail: "" };
+}
+function codeOf(prefix){
+  const m = String(row(prefix).detail).match(/code=([A-Z_]+)/);
+  return m ? m[1] : "";
+}
+function finish(token, me){
+  const s2 = row("2. "), s5 = row("5. "), s6 = row("6. "), s7 = row("7. ");
+  let kind = "warn", text = "";
+
+  if(s2.state === "err"){
+    kind = "err";
+    text = "The Firebase SDK does not load on this device/browser, so nothing on the organizer side can work. Allow the Firebase CDN (www.gstatic.com), disable the blocking extension/network filter, or try another network.";
+  } else if(s5.state === "err"){
+    kind = "err";
+    text = "The Cloudflare Worker API is not reachable from this device. That is why signing in appears to do nothing and organizer pages stay empty. It is almost always a network/DNS/firewall/extension block on " + API_BASE + ".";
+  } else if(!token){
+    kind = "warn";
+    text = "This browser has no signed-in session, so the protected checks were skipped. Sign in at /login/ (organizer/staff), then run this check again from the same browser.";
+  } else if(s6.state === "err"){
+    const code = codeOf("6. ");
+    kind = "err";
+    if(code === "BAD_AUD" || code === "BAD_ISS"){
+      text = "The Worker rejected your Firebase token (" + code + "): the FIREBASE_PROJECT_ID secret on the Worker does not match the project this site signs in to (" + PAT_FIREBASE_CONFIG.projectId + "). Correct the secret in Cloudflare, redeploy the Worker, then sign in again.";
+    } else if(["TOKEN_EXPIRED","TOKEN_FUTURE","BAD_TOKEN","BAD_SIG","BAD_ALG","UNKNOWN_KID"].indexOf(code) > -1){
+      text = "The Worker rejected your Firebase token (" + code + "). Sign out and sign in again; if it repeats, check the device clock and the Worker's Firebase configuration.";
+    } else if(code === "ACCOUNT_INACTIVE"){
+      text = "Your Firebase sign-in works, but your row in the Cloudflare D1 users table is not active (status is not \"active\"). Set users.status = 'active' for this account in D1, then try again.";
+    } else if(code === "UNAUTHENTICATED"){
+      text = "The Worker never received the Authorization header (" + code + "). A proxy, an extension, or a blocked cross-site request is stripping it.";
+    } else {
+      text = "The Worker refused the sign-in check (code " + (code || "-") + "). Step 6 above shows the exact server message.";
+    }
+  } else if(s7.state === "err"){
+    const code = codeOf("7. ");
+    kind = "err";
+    if(code === "NO_ORGANIZER"){
+      text = "You are signed in and /api/me works, but no organizer profile is linked to your account in D1, so the dashboard has nothing to load. Open /organizer-settings/ and save your business details.";
+    } else if(code === "ORGANIZER_INACTIVE"){
+      text = "Your organizer profile exists but its status is not \"active\" (suspended/rejected), so every organizer route is refused. Reactivate it in the owner area.";
+    } else {
+      text = "The dashboard endpoint refused the request (code " + (code || "-") + "). Step 7 above shows the exact server message.";
+    }
+  } else if(me && me.has_organizer_profile === false){
+    kind = "warn";
+    text = "Sign-in, the token and the API all work, but this account has no organizer profile yet, so the dashboard shows an empty state. Open /organizer-settings/ and complete your business details.";
+  } else {
+    kind = "ok";
+    text = "Every link works from this browser: the SDK loaded, the session is valid, the Worker accepted the token and the dashboard endpoint returned data. If a page still shows nothing, hard-reload it (Ctrl+F5) to drop a cached copy, and check the browser console for errors on that page.";
+  }
+
+  verdict(kind, text);
+  document.getElementById("report").textContent =
+    "Prince Alex TicketHub sign-in / data self-check\n" +
+    "when: " + new Date().toISOString() + "\n" +
+    "page: " + location.href + "\n" +
+    "api: " + API_BASE + "\n" +
+    "project: " + (window.PAT_FIREBASE_CONFIG ? PAT_FIREBASE_CONFIG.projectId : "n/a") + "\n" +
+    "user agent: " + navigator.userAgent + "\n" +
+    "verdict: " + text + "\n" +
+    rows.map(r => "- [" + r.state.toUpperCase() + "] " + r.title + " :: " + r.detail).join("\n");
+  document.getElementById("runBtn").disabled = false;
+}
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("runBtn").addEventListener("click", () => {
+    document.getElementById("runBtn").disabled = true;
+    run();
+  });
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("copyBtn");
+    try { await navigator.clipboard.writeText(document.getElementById("report").textContent); btn.textContent = "Copied"; }
+    catch (err){ btn.textContent = "Select the text below"; }
+    setTimeout(() => { btn.textContent = "Copy report"; }, 2500);
+  });
+  run();
+});
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>turnstile check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){
+  var b = document.getElementById("out");
+  if(b) b.textContent = "JS ERROR: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || 0);
+});
+window.addEventListener("unhandledrejection", function(e){
+  var b = document.getElementById("out");
+  var r = e && e.reason;
+  if(b) b.textContent = "REJECTED: " + ((r && (r.stack || r.message)) || r);
+});
+</script>
+<script type="module">
+/* ============================================================================
+   Prince Alex TicketHub - Cloudflare Turnstile verification harness
+   ----------------------------------------------------------------------------
+   Loads the real Worker (worker/worker.js, the single-file build) and drives it
+   with mocked D1 + mocked Cloudflare Siteverify so every branch of the bot
+   protection can be exercised deterministically, then repeats the happy path
+   against the LIVE Siteverify endpoint using Cloudflare's documented test
+   secret (1x0000000000000000000000000000000AA + dummy token).
+
+   Serve the repository over http (python -m http.server 8000) and open
+   /turnstile-check.html - ES modules cannot be loaded from file://.
+   ========================================================================== */
+const R = { tests: [] };
+/* Keep the page busy until the results are in: headless --dump-dom snapshots
+   the DOM as soon as the page looks idle, which would be before the first
+   awaited check has run. */
+const KEEP = setInterval(function(){
+  const box = document.getElementById("out");
+  if(box && String(box.textContent).indexOf("RESULTS_JSON:") === 0) clearInterval(KEEP);
+}, 100);
+function ck(name, pass, detail){
+  R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out");
+  if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name;
+}
+function finish(){
+  R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+}
+const realFetch = window.fetch.bind(window);
+const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const TEST_SECRET = "1x0000000000000000000000000000000AA";      // Cloudflare: always passes
+const TEST_SECRET_FAIL = "2x0000000000000000000000000000000AA"; // Cloudflare: always fails
+const TEST_SECRET_SPENT = "3x0000000000000000000000000000000AA"; // Cloudflare: token already spent
+const DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+const PROD_SECRET = "0x4AAAAAAATestSecretValueNotReal";         // shape only, never leaves the harness
+const VALID_TOKEN = "0." + "A".repeat(700) + ".turnstile-test-token";
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+
+/* ---------------------------------------------------------------- mock D1 -- */
+function makeDb(){
+  const calls = [];
+  const state = {
+    events: [{ id: 1, organizer_id: 1, title: "Nairobi Live 2027", slug: "nairobi-live-2027", description: "Live music.",
+      category: "Music", venue: "KICC", location: "Nairobi", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00",
+      poster_url: null, status: "active", is_featured: 0, sales_start: null, sales_end: null, created_at: "2026-01-01 00:00:00" }],
+    ticket_types: [{ id: 11, event_id: 1, name: "Regular", price: 1500, quantity: 100, sold: 0, status: "active",
+      sales_start: null, sales_end: null, created_at: "2026-01-01 00:00:00" }],
+    orders: [], order_items: [], payments: [], tickets: [], contact_messages: [], email_outbox: [],
+    app_settings: [{ key: "email_from_email", value: "tickets@princealexdigital.com" },
+      { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "false" }]
+  };
+  const rows = (sql, p) => {
+    if(/FROM app_settings/.test(sql)) return state.app_settings.slice();
+    if(/FROM events/.test(sql)) return /(e\.id|id) = \?/.test(sql) ? state.events.filter(r => String(r.id) === String(p[0])) : state.events.slice();
+    if(/FROM ticket_types/.test(sql)){
+      if(/(^|\W)id = \?/.test(sql)) return state.ticket_types.filter(r => String(r.id) === String(p[0]));
+      return state.ticket_types.filter(r => String(r.event_id) === String(p[0]));
+    }
+    if(/FROM orders\b/.test(sql)){
+      if(/status = 'pending'/.test(sql)) return state.orders.filter(r => r.status === "pending" && String(r.created_at) < String(p[0]));
+      if(/order_number = \?/.test(sql)) return state.orders.filter(r => r.order_number === p[0]);
+      return state.orders.filter(r => String(r.id) === String(p[0]));
+    }
+    if(/FROM order_items/.test(sql)) return state.order_items.filter(r => String(r.order_id) === String(p[0]));
+    if(/FROM payments\b/.test(sql)) return state.payments.filter(r => String(r.order_id) === String(p[0]));
+    if(/FROM email_outbox/.test(sql)) return [];
+    return [];
+  };
+  const write = (sql, p) => {
+    let id = null;
+    if(/INSERT INTO contact_messages/.test(sql)) state.contact_messages.push({ id: state.contact_messages.length + 1, name: p[0], email: p[1], subject: p[2], message: p[3] });
+    else if(/INSERT INTO orders/.test(sql)){
+      id = state.orders.length + 1;
+      state.orders.push({ id: id, order_number: p[0], event_id: p[1], organizer_id: p[2], customer_name: p[3],
+        customer_email: p[4], customer_phone: p[5], total_amount: p[6], currency: p[7], status: "pending",
+        inventory_held: 1, created_at: new Date().toISOString().replace("T", " ").slice(0, 19) });
+    }
+    else if(/INSERT INTO order_items/.test(sql)) state.order_items.push({ id: state.order_items.length + 1, order_id: p[0], ticket_type_id: p[1], ticket_type_name: p[2], quantity: p[3], unit_price: p[4], subtotal: p[5] });
+    else if(/INSERT INTO payments/.test(sql)){
+      id = state.payments.length + 1;
+      state.payments.push({ id: id, order_id: p[0], provider: p[1], reference: p[2], amount: p[3], currency: p[4], status: "pending", provider_ref: null });
+    }
+    else if(/INSERT INTO email_outbox/.test(sql)) state.email_outbox.push({ id: state.email_outbox.length + 1, to_email: p[0], template: p[2] });
+    return { meta: { last_row_id: id, changes: 1 } };
+  };
+  const stmt = (sql, bound) => ({
+    bind: (...a) => stmt(sql, a),
+    all: async () => { calls.push({ kind: "all", sql: sql, params: bound }); return { results: rows(sql, bound) }; },
+    first: async () => { calls.push({ kind: "first", sql: sql, params: bound }); return rows(sql, bound)[0] || null; },
+    run: async () => { calls.push({ kind: "run", sql: sql, params: bound }); return write(sql, bound); }
+  });
+  return { db: { prepare: sql => stmt(sql, []) }, state: state, calls: calls };
+}
+/* ------------------------------------------------------------- mock env ---- */
+function makeEnv(opts){
+  const o = opts || {};
+  const d = makeDb();
+  const env = {
+    DB: d.db,
+    PAYSTACK_SECRET_KEY: "sk_test_fake",
+    FIREBASE_PROJECT_ID: "prince-alex-tickethub",
+    ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital"
+  };
+  if(o.secret !== undefined) env.TURNSTILE_SECRET = o.secret;
+  if(o.legacySecret) env.TURNSTILE_SECRET_KEY = o.legacySecret;
+  if(o.hostnames !== undefined) env.TURNSTILE_HOSTNAMES = o.hostnames;
+  env.__state = d.state; env.__calls = d.calls;
+  return env;
+}
+
+/* ------------------------------------------------- mocked Siteverify fetch -- */
+let siteverify = { mode: "ok", hostname: "tickethub.princealex.digital", action: "checkout", calls: [], seen: [] };
+function json(obj, status){
+  return new Response(JSON.stringify(obj), { status: status || 200, headers: { "Content-Type": "application/json" } });
+}
+function mockFetch(){
+  const impl = async (url, init) => {
+    const href = String(url && url.url ? url.url : url);
+    const out = init && init.body ? String(init.body) : "";
+    if(href.indexOf(SITEVERIFY) === 0){
+      siteverify.calls.push(out);
+      if(siteverify.mode === "network") throw new TypeError("Failed to fetch");
+      if(siteverify.mode === "hang") return new Promise((resolve, reject) => {
+        const sig = init && init.signal;
+        if(sig && sig.addEventListener) sig.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      });
+      if(siteverify.mode === "http500") return new Response("upstream error", { status: 500 });
+      if(siteverify.mode === "badjson") return new Response("<html>not json</html>", { status: 200, headers: { "Content-Type": "text/html" } });
+      if(siteverify.mode === "fail") return json({ success: false, "error-codes": ["invalid-input-response"] });
+      if(siteverify.mode === "spent") return json({ success: false, "error-codes": ["timeout-or-duplicate"] });
+      if(siteverify.mode === "wronghost") return json({ success: true, hostname: "evil.example.com", action: siteverify.action, "error-codes": [] });
+      if(siteverify.mode === "wrongaction") return json({ success: true, hostname: siteverify.hostname, action: "login-elsewhere", "error-codes": [] });
+      if(siteverify.mode === "noaction") return json({ success: true, hostname: siteverify.hostname, "error-codes": [] });
+      return json({ success: true, hostname: siteverify.hostname, action: siteverify.action, cdata: "tickethub", challenge_ts: new Date().toISOString(), "error-codes": [] });
+    }
+    if(href.indexOf("googleapis.com") > -1 || href.indexOf("securetoken") > -1) return json({}, 401);
+    if(href.indexOf("paystack.co") > -1) return json({ status: false, message: "mock provider" }, 400);
+    if(href.indexOf("api.brevo.com") > -1) return json({ messageId: "mock" }, 201);
+    if(href.indexOf("pesapal") > -1) return json({ status: false }, 400);
+    return json({ error: "unexpected_outbound_call", url: href }, 599);
+  };
+  window.fetch = impl;
+  return impl;
+}
+function resetSiteverify(mode, extra){
+  siteverify = Object.assign({ mode: mode, hostname: "tickethub.princealex.digital", action: "checkout", calls: [] }, extra || {});
+}
+let W = null;                 // the Worker module under test
+const ctx = { waitUntil(){} };
+/* Every request gets its own client IP: the Worker keeps an in-memory per-IP
+   rate limiter, and this harness deliberately fires far more requests per
+   "visitor" than a real one ever would. The checkout group passes one fixed IP
+   explicitly, because the receipt is bound to the client that created the order. */
+let ipSeq = 0, mailSeq = 0;
+function nextIp(){ ipSeq++; return "41.90." + Math.floor(ipSeq / 250) + "." + (1 + (ipSeq % 250)); }
+function post(path, body, headers){
+  const h = Object.assign({ "Content-Type": "application/json", "CF-Connecting-IP": nextIp() }, headers || {});
+  return new Request(API + path, { method: "POST", headers: h, body: JSON.stringify(body || {}) });
+}
+async function call(path, init, env, ip){
+  const base = Object.assign({}, init || {});
+  base.headers = Object.assign({}, base.headers || {}, { "CF-Connecting-IP": ip || nextIp() });
+  const res = await W.default.fetch(new Request(API + path, base), env || makeEnv({ secret: PROD_SECRET }), ctx);
+  let body = null;
+  try { body = await res.clone().json(); } catch(e){ body = null; }
+  return { status: res.status, body: body || {}, res: res };
+}
+function contactBody(token){
+  /* The contact endpoint is also rate limited per recipient (3/hour). This
+     suite exercises Turnstile, not the limiter, so every request uses its own
+     address and its own IP (see nextIp) and never trips a limit. */
+  mailSeq++;
+  return { name: "Jane Wanjiru", email: ("ts-box" + mailSeq + "@example.com"), phone: "+254700111222", subject: "Help",
+    message: "Please help me with my order PAT-1234567890.", turnstile_token: token };
+}
+function orderBody(token, extra){
+  return Object.assign({ event_id: 1, items: [{ ticket_type_id: 11, quantity: 2 }],
+    customer: { full_name: "Jane Wanjiru", email: "jane@example.com", phone: "+254700111222" },
+    turnstile_token: token }, extra || {});
+}
+/* ------------------------------------------------------------------ tests -- */
+let made = 0;
+function tok(label){ made++; return "0." + label.replace(/[^A-Za-z0-9-]/g, "-") + "x" + made + "." + "B".repeat(600) + ".token"; }
+const H = { "Content-Type": "application/json" };
+async function send(path, body, env, ip){
+  return call(path, { method: "POST", headers: H, body: JSON.stringify(body || {}) }, env, ip);
+}
+const warnings = [], errors = [];
+
+(async () => {
+  const realWarn = console.warn, realError = console.error;
+  console.warn = (...a) => warnings.push(a.map(x => String(x)).join(" "));
+  console.error = (...a) => errors.push(a.map(x => String(x)).join(" "));
+  try {
+    /* ---------------------------------------------------- 1. build checks -- */
+    try {
+      const src = await (await realFetch("./worker/worker.js")).text();
+      ck("worker/worker.js has no leftover ./emails.js import", !/from\s+["']\.\/emails\.js["']/.test(src), "bytes " + src.length);
+      W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+      ck("the deployed single-file Worker compiles as a module", typeof W.default.fetch === "function", "");
+    } catch(e){ ck("the deployed single-file Worker compiles as a module", false, (e && e.message) || String(e)); finish(); return; }
+    try {
+      const emailsSrc = await (await realFetch("./worker/emails.js")).text();
+      const url = URL.createObjectURL(new Blob([emailsSrc], { type: "text/javascript" }));
+      let idx = await (await realFetch("./worker/index.js")).text();
+      idx = idx.replace(/from\s+["']\.\/emails\.js["']/g, 'from "' + url + '"');
+      const two = await import(URL.createObjectURL(new Blob([idx], { type: "text/javascript" })));
+      ck("the wrangler layout (index.js + emails.js) compiles too", typeof two.default.fetch === "function", "");
+    } catch(e){ ck("the wrangler layout (index.js + emails.js) compiles too", false, (e && e.message) || String(e)); }
+
+    /* ---------------------------------- 2. unprotected routes carry on as before */
+    mockFetch(); resetSiteverify("ok");
+    const ev = await call("/api/events", { method: "GET", headers: H }, makeEnv({ secret: PROD_SECRET }));
+    const cat = await call("/api/categories", { method: "GET", headers: H }, makeEnv({ secret: PROD_SECRET }));
+    const health = await call("/api/health", { method: "GET", headers: H }, makeEnv({ secret: PROD_SECRET }));
+    ck("public event browsing needs no challenge (200 with zero Siteverify calls)",
+       ev.status === 200 && cat.status === 200 && health.status === 200 && siteverify.calls.length === 0,
+       "events " + ev.status + ", categories " + cat.status + ", health " + health.status + ", siteverify " + siteverify.calls.length);
+    const ipn = await send("/api/webhooks/paystack", {}, makeEnv({ secret: PROD_SECRET }));
+    const ipnGet = await call("/api/webhooks/pesapal", { method: "GET", headers: H }, makeEnv({ secret: PROD_SECRET }));
+    ck("payment callbacks / IPN never require a browser token",
+       ipn.status === 200 && ipn.body.ignored === "malformed_payload" && ipnGet.status !== 403 && siteverify.calls.length === 0,
+       "paystack " + ipn.status + " (" + ipn.body.ignored + "), pesapal " + ipnGet.status + ", siteverify " + siteverify.calls.length);
+  } catch(e){ ck("harness completed part 1a", false, (e && e.stack) || String(e)); }
+  await part1b();
+})();
+
+
+/* ---------------------------------------------- 3. valid token = action runs -- */
+const CONTACT = "/api/contact", ORDERS = "/api/orders", PAY = "/api/payments/paystack/initiate", AUTH_T = "/api/auth/turnstile";
+async function part1b(){
+  try {
+    resetSiteverify("ok", { action: "contact" });
+    const envOk = makeEnv({ secret: PROD_SECRET });
+    const okRes = await send(CONTACT, contactBody(tok("contact-valid")), envOk);
+    ck("valid token: the protected action completes (contact 201)",
+       okRes.status === 201 && envOk.__state.contact_messages.length === 1,
+       okRes.status + " / stored " + envOk.__state.contact_messages.length);
+    const sent = siteverify.calls[0] || "";
+    ck("Siteverify receives secret + response + remoteip + idempotency_key",
+       /(^|&)secret=/.test(sent) && /(^|&)response=/.test(sent) && sent.indexOf("remoteip=41.90.0.7") > -1 && /(^|&)idempotency_key=/.test(sent),
+       "fields: " + sent.split("&").map(x => x.split("=")[0]).join(","));
+
+    /* ------------------------------------------------ 4. missing / malformed -- */
+    const envMissing = makeEnv({ secret: PROD_SECRET });
+    const missing = await send(CONTACT, contactBody(""), envMissing);
+    const noField = await send(CONTACT, { name: "Jane Wanjiru", email: "jane@example.com", message: "A message with no token field at all." }, envMissing);
+    const short = await send(CONTACT, contactBody("abc"), envMissing);
+    const huge = await send(CONTACT, contactBody("0." + "A".repeat(3000) + ".x"), envMissing);
+    const junk = await send(CONTACT, contactBody("not a token with spaces and <script>"), envMissing);
+    ck("missing token: rejected with 400 and nothing stored",
+       missing.status === 400 && missing.body.code === "TURNSTILE_TOKEN_INVALID" && envMissing.__state.contact_messages.length === 0,
+       missing.status + " " + missing.body.code + " / stored " + envMissing.__state.contact_messages.length);
+    ck("absent turnstile_token field: rejected with 400", noField.status === 400 && noField.body.code === "TURNSTILE_TOKEN_INVALID", noField.status + " " + noField.body.code);
+    ck("undersized token: rejected with 400", short.status === 400 && short.body.code === "TURNSTILE_TOKEN_INVALID", short.status + " " + short.body.code);
+    ck("oversized token (>2048 chars): rejected with 400", huge.status === 400 && huge.body.code === "TURNSTILE_TOKEN_INVALID", huge.status + " " + huge.body.code);
+    ck("malformed token (spaces/markup): rejected with 400", junk.status === 400 && junk.body.code === "TURNSTILE_TOKEN_INVALID", junk.status + " " + junk.body.code);
+    ck("shape failures never reach Siteverify", siteverify.calls.length === 1, "siteverify calls " + siteverify.calls.length);
+
+    /* --------------------------------------------------- 5. refused tokens ---- */
+    resetSiteverify("fail"); const envFail = makeEnv({ secret: PROD_SECRET });
+    const fail = await send(CONTACT, contactBody(tok("invalid")), envFail);
+    ck("invalid token: Siteverify failure becomes 403 TURNSTILE_TOKEN_INVALID",
+       fail.status === 403 && fail.body.code === "TURNSTILE_TOKEN_INVALID" && envFail.__state.contact_messages.length === 0,
+       fail.status + " " + fail.body.code);
+    resetSiteverify("spent"); const envSpent = makeEnv({ secret: PROD_SECRET });
+    const spentTok = tok("expired-or-used");
+    const spent = await send(CONTACT, contactBody(spentTok), envSpent);
+    ck("expired / already-redeemed token: 403 TURNSTILE_TOKEN_REUSED",
+       spent.status === 403 && spent.body.code === "TURNSTILE_TOKEN_REUSED", spent.status + " " + spent.body.code);
+    resetSiteverify("spent"); const envSpent2 = makeEnv({ secret: PROD_SECRET });
+    const spent2 = await send(CONTACT, contactBody(spentTok), envSpent2);
+    ck("the token burned by that failure is refused locally without another Siteverify call",
+       spent2.status === 403 && spent2.body.code === "TURNSTILE_TOKEN_REUSED" && siteverify.calls.length === 0,
+       spent2.status + " " + spent2.body.code + " / siteverify " + siteverify.calls.length);
+
+    /* ---------------------------------------- 6. replay of a genuinely valid token */
+    resetSiteverify("ok", { action: "contact" });
+    const envReplay = makeEnv({ secret: PROD_SECRET });
+    const replayT = tok("replay");
+    const first = await send(CONTACT, contactBody(replayT), envReplay);
+    const second = await send(CONTACT, contactBody(replayT), envReplay);
+    ck("reused valid token: first call succeeds, the replay is refused",
+       first.status === 201 && second.status === 403 && second.body.code === "TURNSTILE_TOKEN_REUSED",
+       first.status + " then " + second.status + " " + second.body.code);
+    ck("a replay costs no extra Siteverify call", siteverify.calls.length === 1, "siteverify calls " + siteverify.calls.length);
+    ck("single use is enforced per token, not per request", envReplay.__state.contact_messages.length === 1, "stored " + envReplay.__state.contact_messages.length);
+  } catch(e){ ck("harness completed part 1b", false, (e && e.stack) || String(e)); }
+  await part1c();
+}
+/* --------------------------------------- 7. hostname + action binding ---- */
+async function part1c(){
+  try {
+    resetSiteverify("wronghost"); const envHost = makeEnv({ secret: PROD_SECRET });
+    const wrongHost = await send(CONTACT, contactBody(tok("wrong-host")), envHost);
+    ck("wrong hostname rejected with 403 TURNSTILE_HOSTNAME",
+       wrongHost.status === 403 && wrongHost.body.code === "TURNSTILE_HOSTNAME", wrongHost.status + " " + wrongHost.body.code);
+    resetSiteverify("ok", { action: "contact", hostname: "www.tickethub.princealex.digital" });
+    const envWd = makeEnv({ secret: PROD_SECRET, hostnames: "tickethub.princealex.digital" });
+    const wwwHost = await send(CONTACT, contactBody(tok("www-host")), envWd);
+    ck("www is not silently accepted (the TURNSTILE_HOSTNAMES allowlist is honoured)",
+       wwwHost.status === 403 && wwwHost.body.code === "TURNSTILE_HOSTNAME", wwwHost.status + " " + wwwHost.body.code);
+    resetSiteverify("ok", { action: "contact", hostname: "www.tickethub.princealex.digital" });
+    const envWd2 = makeEnv({ secret: PROD_SECRET, hostnames: "www.tickethub.princealex.digital, tickethub.princealex.digital" });
+    const wwwOk = await send(CONTACT, contactBody(tok("www-allowed")), envWd2);
+    ck("adding www to TURNSTILE_HOSTNAMES makes it acceptable when the site really uses it",
+       wwwOk.status === 201, wwwOk.status + " " + JSON.stringify(wwwOk.body).slice(0, 80));
+    resetSiteverify("wrongaction"); const envAct = makeEnv({ secret: PROD_SECRET });
+    const wrongAction = await send(CONTACT, contactBody(tok("wrong-action")), envAct);
+    ck("wrong action rejected with 403 TURNSTILE_ACTION",
+       wrongAction.status === 403 && wrongAction.body.code === "TURNSTILE_ACTION", wrongAction.status + " " + wrongAction.body.code);
+    resetSiteverify("noaction"); const envNoAct = makeEnv({ secret: PROD_SECRET });
+    const noAction = await send(CONTACT, contactBody(tok("no-action")), envNoAct);
+    ck("a token with no action is refused where an action is expected",
+       noAction.status === 403 && noAction.body.code === "TURNSTILE_ACTION", noAction.status + " " + noAction.body.code);
+    resetSiteverify("ok", { action: "contact" });
+    const envCross = makeEnv({ secret: PROD_SECRET });
+    const cross = await send(ORDERS, orderBody(tok("contact-action-on-checkout")), envCross);
+    ck("an action issued for contact cannot be spent on checkout",
+       cross.status === 403 && cross.body.code === "TURNSTILE_ACTION" && envCross.__state.orders.length === 0,
+       cross.status + " " + cross.body.code);
+  } catch(e){ ck("harness completed part 1c", false, (e && e.stack) || String(e)); }
+  await part2();
+}
+/* ----------------------------------------- 8. Siteverify outages fail safe -- */
+async function part2(){
+  try {
+    const modes = [["http500", "Siteverify answers 500"],
+                   ["badjson", "Siteverify answers a non-JSON body"],
+                   ["network", "the Siteverify network call fails"]];
+    for(const pair of modes){
+      resetSiteverify(pair[0]);
+      const envOut = makeEnv({ secret: PROD_SECRET });
+      const out = await send(CONTACT, contactBody(tok("outage-" + pair[0])), envOut);
+      ck(pair[1] + " -> protected action fails safely with 503 TURNSTILE_UNAVAILABLE",
+         out.status === 503 && out.body.code === "TURNSTILE_UNAVAILABLE" && envOut.__state.contact_messages.length === 0,
+         out.status + " " + out.body.code + " / stored " + envOut.__state.contact_messages.length);
+    }
+    resetSiteverify("hang");
+    const envHang = makeEnv({ secret: PROD_SECRET });
+    const t0 = Date.now();
+    const hang = await send(CONTACT, contactBody(tok("outage-timeout")), envHang);
+    const took = Date.now() - t0;
+    ck("Siteverify that never answers times out (<9s) and fails safely with 503",
+       hang.status === 503 && hang.body.code === "TURNSTILE_UNAVAILABLE" && took < 9000 && envHang.__state.contact_messages.length === 0,
+       hang.status + " " + hang.body.code + " after " + took + "ms");
+  } catch(e){ ck("harness completed part 2a", false, (e && e.stack) || String(e)); }
+  await part2b();
+}
+/* ------------------------------------------ 9. checkout + payment receipt -- */
+async function part2b(){
+  try {
+    resetSiteverify("ok", { action: "checkout" });
+    const envOrder = makeEnv({ secret: PROD_SECRET });
+    /* One fixed client IP for the whole checkout: the receipt is bound to it. */
+    const ip = "41.90.200.7";
+    const order = await send(ORDERS, orderBody(tok("checkout-valid")), envOrder, ip);
+    ck("valid token: order is created (201) with the server-calculated amount",
+       order.status === 201 && envOrder.__state.orders.length === 1 && JSON.stringify(order.body).indexOf("3000") > -1,
+       order.status + " / amount 3000 present: " + (JSON.stringify(order.body).indexOf("3000") > -1));
+    const proof = order.body.checkout_proof || "";
+    ck("the order response carries a short-lived checkout receipt (not the token)",
+       /^p1\.\d{13}\.[0-9a-f]{64}$/.test(proof), proof.slice(0, 10) + "...(" + proof.length + " chars)");
+    const ref = envOrder.__state.orders[0].order_number;
+    ck("the reference is a server-issued order number", /^PAT-[A-Z0-9]{10}$/.test(ref), ref);
+    const payNoProof = await send(PAY, { reference: ref, order_id: 1 }, envOrder, ip);
+    ck("payment initiation with neither receipt nor token is refused",
+       payNoProof.status === 400 && payNoProof.body.code === "TURNSTILE_TOKEN_INVALID", payNoProof.status + " " + payNoProof.body.code);
+    /* Flip the last hex character deterministically, so the tampering is real
+       whatever the signature happens to end with. */
+    const tampered = proof.slice(0, -1) + (proof.slice(-1) === "0" ? "1" : "0");
+    const payBadProof = await send(PAY, { reference: ref, checkout_proof: tampered }, envOrder, ip);
+    ck("a tampered receipt is refused",
+       payBadProof.body.code !== "PAYSTACK_INIT_FAILED", payBadProof.status + " " + payBadProof.body.code);
+    const pay = await send(PAY, { reference: ref, order_id: 1, checkout_proof: proof }, envOrder, ip);
+    ck("the receipt from order creation authorises the payment step (no second challenge)",
+       pay.body.code === "PAYSTACK_INIT_FAILED",
+       pay.status + " " + pay.body.code + " (provider layer reached, bot gate passed)");
+    resetSiteverify("ok", { action: "checkout" });
+    const fresh = await send(PAY, { reference: ref, order_id: 1, turnstile_token: tok("checkout-fresh") }, envOrder, ip);
+    ck("a direct caller with a fresh token is also accepted on the payment route",
+       fresh.body.code === "PAYSTACK_INIT_FAILED", fresh.status + " " + fresh.body.code);
+    const envOther = makeEnv({ secret: PROD_SECRET });
+    const other = await send(PAY, { reference: "PAT-NOTTHISONE", checkout_proof: proof }, envOther, ip);
+    ck("a receipt cannot be used for an order that does not exist", other.status === 404, other.status + " " + other.body.code);
+    const envWrongIp = makeEnv({ secret: PROD_SECRET });
+    resetSiteverify("ok", { action: "checkout" });
+    const wrongIp = await send(PAY, { reference: ref, order_id: 1, checkout_proof: proof }, envWrongIp, "41.90.201.9");
+    ck("a receipt is not valid from a different client IP",
+       wrongIp.body.code !== "PAYSTACK_INIT_FAILED", wrongIp.status + " " + wrongIp.body.code);
+  } catch(e){ ck("harness completed part 2b", false, (e && e.stack) || String(e)); }
+  await part3();
+}
+/* ------------------------------- 10. auth flows, register, event creation -- */
+async function part3(){
+  try {
+    resetSiteverify("ok", { action: "login" });
+    const envLogin = makeEnv({ secret: PROD_SECRET });
+    const login = await send(AUTH_T, { action: "login", turnstile_token: tok("login-valid") }, envLogin);
+    ck("login challenge: POST /api/auth/turnstile verifies server-side and answers verified:true",
+       login.status === 200 && login.body.verified === true && login.body.action === "login" && login.body.enforced === true,
+       login.status + " verified=" + login.body.verified + " enforced=" + login.body.enforced);
+    ck("the login response never echoes the token", JSON.stringify(login.body).indexOf("B".repeat(50)) === -1, "");
+    const noAct = await send(AUTH_T, { turnstile_token: tok("login-no-action") }, makeEnv({ secret: PROD_SECRET }));
+    ck("login challenge without an action is refused (422)",
+       noAct.status === 422 && noAct.body.code === "VALIDATION", noAct.status + " " + noAct.body.code);
+    const badAct = await send(AUTH_T, { action: "sign-in-and-wipe", turnstile_token: tok("login-bad-action") }, makeEnv({ secret: PROD_SECRET }));
+    ck("login challenge with an unknown action is refused (422)",
+       badAct.status === 422 && badAct.body.code === "VALIDATION", badAct.status + " " + badAct.body.code);
+    const loginNoToken = await send(AUTH_T, { action: "login" }, makeEnv({ secret: PROD_SECRET }));
+    ck("login challenge with no token is refused (400)",
+       loginNoToken.status === 400 && loginNoToken.body.code === "TURNSTILE_TOKEN_INVALID", loginNoToken.status + " " + loginNoToken.body.code);
+    resetSiteverify("ok", { action: "password-reset" });
+    const reset = await send(AUTH_T, { action: "password-reset", turnstile_token: tok("reset-valid") }, makeEnv({ secret: PROD_SECRET }));
+    ck("password-reset challenge verifies with its own action",
+       reset.status === 200 && reset.body.action === "password-reset", reset.status + " " + reset.body.action);
+    resetSiteverify("fail");
+    const resetFail = await send(AUTH_T, { action: "password-reset", turnstile_token: tok("reset-fail") }, makeEnv({ secret: PROD_SECRET }));
+    ck("password-reset challenge is refused when Cloudflare says no",
+       resetFail.status === 403 && resetFail.body.code === "TURNSTILE_TOKEN_INVALID", resetFail.status + " " + resetFail.body.code);
+
+    /* Organizer registration: the gate runs BEFORE Firebase verification. */
+    resetSiteverify("ok", { action: "register" });
+    const regNoToken = await send("/api/auth/register", { full_name: "Jane Wanjiru", email: "jane@example.com", phone: "+254700111222" }, makeEnv({ secret: PROD_SECRET }));
+    ck("organizer registration without a token is refused before Firebase verification (400, not 401)",
+       regNoToken.status === 400 && regNoToken.body.code === "TURNSTILE_TOKEN_INVALID", regNoToken.status + " " + regNoToken.body.code);
+    const regOk = await send("/api/auth/register", { full_name: "Jane Wanjiru", email: "jane@example.com", phone: "+254700111222", turnstile_token: tok("register-valid") }, makeEnv({ secret: PROD_SECRET }));
+    ck("organizer registration with a valid token still requires Firebase auth (401 UNAUTHENTICATED)",
+       regOk.status === 401 && regOk.body.code === "UNAUTHENTICATED", regOk.status + " " + regOk.body.code);
+
+    /* Event creation */
+    resetSiteverify("ok", { action: "event-create" });
+    const evNo = await send("/api/organizer/events", { title: "Spam", venue: "X", location: "Y", event_date: "2027-01-01", start_time: "10:00" }, makeEnv({ secret: PROD_SECRET }));
+    ck("event creation without a token is refused (400/403, not 401)",
+       (evNo.status === 400 || evNo.status === 403) && String(evNo.body.code).indexOf("TURNSTILE") === 0, evNo.status + " " + evNo.body.code);
+    const evOk = await send("/api/organizer/events", { title: "Nairobi Live", venue: "KICC", location: "Nairobi", event_date: "2027-01-01", start_time: "10:00", turnstile_token: tok("event-valid") }, makeEnv({ secret: PROD_SECRET }));
+    ck("event creation with a valid token still requires organizer auth (401)",
+       evOk.status === 401 && evOk.body.code === "UNAUTHENTICATED", evOk.status + " " + evOk.body.code);
+    const evWrongAct = await send("/api/organizer/events", Object.assign({ title: "Nairobi Live", venue: "KICC", location: "Nairobi", event_date: "2027-01-01", start_time: "10:00" }, { turnstile_token: tok("event-wrong-action") }), makeEnv({ secret: PROD_SECRET, hostnames: "" }));
+    ck("event creation is bound to its own action", evWrongAct.status === 401 || evWrongAct.status === 403, evWrongAct.status + " " + evWrongAct.body.code);
+  } catch(e){ ck("harness completed part 3", false, (e && e.stack) || String(e)); }
+  await part4();
+}
+/* ------------------------- 11. secret handling, test keys, no leakage ---- */
+async function part4(){
+  try {
+    /* TURNSTILE_SECRET is the configured name; the legacy name still works. */
+    resetSiteverify("ok", { action: "contact", hostname: "tickethub.princealex.digital" });
+    const envLegacy = makeEnv({ legacySecret: PROD_SECRET });
+    const legacy = await send(CONTACT, contactBody(tok("legacy-secret")), envLegacy);
+    ck("the Worker reads TURNSTILE_SECRET and still honours the legacy TURNSTILE_SECRET_KEY",
+       legacy.status === 201, legacy.status + " " + JSON.stringify(legacy.body).slice(0, 70));
+
+    /* No secret: the deployment has not enabled enforcement (documented state). */
+    resetSiteverify("ok", { action: "contact" });
+    const envOff = makeEnv({ secret: "" });
+    const off = await send(CONTACT, { name: "Jane Wanjiru", email: "jane@example.com", message: "No challenge configured on this environment." }, envOff);
+    ck("with no secret configured the action still works and enforcement is reported as off",
+       off.status === 201 && siteverify.calls.length === 0, off.status + " / siteverify " + siteverify.calls.length);
+
+    /* Cloudflare dummy keys must make the hostname/action checks dev-friendly. */
+    resetSiteverify("ok", { action: "test", hostname: "localhost" });
+    const envTest = makeEnv({ secret: TEST_SECRET });
+    const dev = await send(CONTACT, contactBody(DUMMY_TOKEN), envTest);
+    ck("Cloudflare always-pass TEST secret accepts the dummy token on localhost (action checks relaxed for dummy keys only)",
+       dev.status === 201, dev.status + " " + JSON.stringify(dev.body).slice(0, 70));
+    resetSiteverify("fail");
+    const envTestFail = makeEnv({ secret: TEST_SECRET_FAIL });
+    const devFail = await send(CONTACT, contactBody(DUMMY_TOKEN), envTestFail);
+    ck("Cloudflare always-fail TEST secret still refuses the action",
+       devFail.status === 403 && devFail.body.code === "TURNSTILE_TOKEN_INVALID", devFail.status + " " + devFail.body.code);
+    resetSiteverify("spent");
+    const envTestSpent = makeEnv({ secret: TEST_SECRET_SPENT });
+    const devSpent = await send(CONTACT, contactBody(DUMMY_TOKEN), envTestSpent);
+    ck("Cloudflare token-already-spent TEST secret is refused as reuse",
+       devSpent.status === 403 && devSpent.body.code === "TURNSTILE_TOKEN_REUSED", devSpent.status + " " + devSpent.body.code);
+
+    /* Log hygiene: no secret, no token, no ID token in the security logs. */
+    const logs = warnings.concat(errors).join(" | ");
+    const leakSecret = logs.indexOf(PROD_SECRET) > -1 || logs.indexOf(TEST_SECRET) > -1;
+    const leakToken = /B{50,}/.test(logs) || logs.indexOf("DUMMY.TOKEN") > -1;
+    ck("security logs never contain the Turnstile secret", !leakSecret, "");
+    ck("security logs never contain a full Turnstile token", !leakToken, "");
+    ck("security rejections are logged as TICKETHUB_SECURITY events",
+       warnings.concat(errors).some(l => l.indexOf("TICKETHUB_SECURITY") > -1 && l.indexOf("turnstile_rejected") > -1), "");
+  } catch(e){ ck("harness completed part 4", false, (e && e.stack) || String(e)); }
+  await part5();
+}
+/* ------------------- 12. live Siteverify reachability from a browser -----
+   Cloudflare's Siteverify API sends no CORS headers, which is exactly why it
+   must only ever be called from the Worker. A browser page therefore cannot
+   verify a token itself - so this section records the *expected* fail-safe
+   behaviour and leaves the real end-to-end key test to the deployed Worker
+   (see the TEST KEYS section of worker/README.md).                     */
+async function part5(){
+  try {
+    window.fetch = realFetch;                       // real network from here on
+    const livePass = await send(CONTACT, contactBody("XXXX.DUMMY.TOKEN.XXXX"), makeEnv({ secret: TEST_SECRET }));
+    ck("Siteverify is only reachable from the Worker: a browser-side call fails safely (503, never a silent pass)",
+       livePass.status === 503 && livePass.body.code === "TURNSTILE_UNAVAILABLE",
+       "browser call -> " + livePass.status + " " + livePass.body.code);
+    const liveSame = await send(CONTACT, contactBody("XXXX.DUMMY.TOKEN.XXXX"), makeEnv({ secret: TEST_SECRET_FAIL }));
+    ck("an unreachable Siteverify never falls through to success",
+       liveSame.status === 503 && liveSame.body.code === "TURNSTILE_UNAVAILABLE",
+       liveSame.status + " " + liveSame.body.code);
+    R.live = {
+      attempted: 2,
+      note: "Live key verification must be run against the deployed Worker (server side): set " +
+            "TURNSTILE_SECRET=1x0000000000000000000000000000000AA, use the dummy sitekey, then submit each protected form."
+    };
+  } catch(e){ ck("harness completed part 5", false, (e && e.stack) || String(e)); }
+  await part6();
+}
+/* ---------------------------- 13. frontend wiring (static page checks) --- */
+const SITE_KEY = "0x4AAAAAAFFfPC7TnnFT83yZ";
+const PAGES = [["register/index.html", "register"], ["login/index.html", "login"],
+  ["forgot-password/index.html", "password-reset"], ["contact/index.html", "contact"], ["checkout/index.html", "checkout"],
+  ["create-event/index.html", "event-create"]];
+async function part6(){
+  try {
+    const key = [], placeholder = [], action = [], host = [], store = [], noMount = [];
+    for(const pair of PAGES){
+      let html = "";
+      try { html = await (await realFetch("./" + pair[0])).text(); } catch(e){ html = ""; }
+      if(!html) { key.push(pair[0] + " (unreadable)"); continue; }
+      if(html.indexOf(SITE_KEY) === -1) key.push(pair[0]);
+      if(html.indexOf("YOUR_TURNSTILE_SITE_KEY") > -1) placeholder.push(pair[0]);
+      if(html.indexOf('TURNSTILE_ACTION = "' + pair[1] + '"') === -1) action.push(pair[0]);
+      if(html.indexOf('id="turnstileHost"') === -1) host.push(pair[0]);
+      if(/localStorage\.setItem\([^)]*turnstile/i.test(html) || /sessionStorage\.setItem\([^)]*turnstile/i.test(html)) store.push(pair[0]);
+      if(html.indexOf("Turnstile.mount") === -1) noMount.push(pair[0]);
+    }
+    ck("every protected page carries the production Turnstile site key",
+       key.length === 0, key.length ? "missing: " + key.join(", ") : PAGES.length + " pages");
+    ck("no page still ships the YOUR_TURNSTILE_SITE_KEY placeholder",
+       placeholder.length === 0, placeholder.length ? "placeholder: " + placeholder.join(", ") : "");
+    ck("every protected page renders the widget with its own action identifier",
+       action.length === 0, action.length ? "wrong action: " + action.join(", ") : PAGES.map(p => p[1]).join(", "));
+    ck("every protected page has a widget host element and mounts it",
+       host.length === 0 && noMount.length === 0,
+       (host.length ? "no host: " + host.join(", ") : "") + (noMount.length ? " no mount: " + noMount.join(", ") : ""));
+    ck("no page stores a Turnstile token in web storage (it is not a credential)",
+       store.length === 0, store.length ? "stores token: " + store.join(", ") : "");
+    let browseMount = [];
+    for(const page of ["index.html", "events/index.html", "event/index.html", "ticket/index.html"]){
+      let html = "";
+      try { html = await (await realFetch("./" + page)).text(); } catch(e){ html = ""; }
+      if(html.indexOf("Turnstile.mount") > -1) browseMount.push(page);
+    }
+    ck("public browsing pages never require a challenge",
+       browseMount.length === 0, browseMount.length ? "mounts on: " + browseMount.join(", ") : "index/events/event/ticket clean");
+    /* Parse-only syntax check: `new Function` compiles without running, so a
+       broken patch on any page is caught here instead of in a browser console. */
+    const syntax = [], checked = [];
+    for(const page of PAGES.map(p => p[0]).concat(["index.html", "events/index.html", "event/index.html", "ticket/index.html", "checkout/index.html"])){
+      let src = "";
+      try { src = await (await realFetch("./" + page)).text(); } catch(e){ continue; }
+      if(!src) continue;
+      const blocks = (src.match(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/gi) || [])
+        .map(b => b.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, ""));
+      for(const block of blocks){
+        if(!block || !block.trim()) continue;
+        checked.push(page);
+        try { new Function(block); }
+        catch(err){
+          if(/await is only valid|Unexpected reserved word/.test(String(err && err.message))){
+            try { new Function("return (async function(){ " + block + " })"); } catch(err2){ syntax.push(page + " -> " + err2.message); }
+          } else syntax.push(page + " -> " + err.message);
+        }
+      }
+    }
+    ck("every patched page's inline JavaScript still compiles",
+       syntax.length === 0, syntax.length ? syntax.join(" | ") : checked.length + " inline scripts parsed");
+  } catch(e){ ck("harness completed part 6", false, (e && e.stack) || String(e)); }
+  window.fetch = realFetch;
+  finish();
+}
+
+</script>
+</body></html>

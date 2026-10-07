@@ -1,0 +1,139 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>bundle check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script type="module">
+const R = { tests: [] };
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) }); }
+function finish(){
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){}
+}
+const SAMPLE = {
+  links: { ticket_base: "https://x//ticket/?t=", home: "https://x/", support: "mailto:s@x" },
+  customer: { name: "Jane Wanjiru", email: "jane@example.com", phone: "+254700111222" },
+  order: { number: "PAT-1001", reference: "REF-1", status: "paid", currency: "KES", amount: 4500 },
+  event: { title: "Nairobi Live 2026", category: "Music", date: "2026-10-05", time: "18:00",
+    venue: "KICC", location: "Nairobi", organizer_name: "Prince Alex Events", url: "https://x//event/" },
+  items: [{ name: "VIP", quantity: 2, unit_price: 2000, subtotal: 4000 }],
+  tickets: [{ number: "PAT-1001A", type: "VIP", attendee: "Jane Wanjiru", status: "valid", qr_base64: "iVBORw0KGgo=" }],
+  message: { name: "Peter", email: "peter@example.com", subject: "Help", body: "Refund please." },
+  organizer: { business_name: "Prince Alex Events", email: "org@example.com", status: "active" },
+  amount: 4500, refund_reference: "RF-9", channel: "Paystack dashboard", reason: "Postponed",
+  status: "active", requested_by: "owner@example.com", template_count: 15,
+  meta: { refund_reference: "RF-9", channel: "Paystack dashboard", requested_by: "owner@example.com" }
+};
+const FACTS = ["ticket_ready","ticket_resend","order_pending","payment_failed","welcome","new_sale",
+  "contact_message","contact_ack","event_cancelled","event_published","event_pending_approval",
+  "event_changes_requested","organizer_status","refund_processed","test_email"];
+
+function makeEnv(rows){
+  const SETTINGS = [{ key: "email_from_email", value: "tickets@princealexdigital.com" },
+    { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "true" }];
+  const store = rows.slice();
+  const select = (sql, p) => {
+    if(sql.indexOf("FROM app_settings") > -1) return SETTINGS.slice();
+    if(sql.indexOf("GROUP BY status") > -1){
+      const m = {}; for(const r of store) m[r.status] = (m[r.status] || 0) + 1;
+      return Object.keys(m).map(k => ({ status: k, n: m[k] }));
+    }
+    if(sql.indexOf("FROM email_outbox WHERE status = 'queued'") > -1)
+      return store.filter(r => r.status === "queued").slice(0, Number(p[0]) || 10);
+    if(sql.indexOf("FROM email_outbox") > -1) return store.slice();
+    return [];
+  };
+  const write = (sql, p) => {
+    if(sql.indexOf("INSERT INTO email_outbox") > -1){
+      store.push({ id: store.length + 1, to_email: p[0], subject: p[1], template: p[2], payload_json: p[3], status: "queued" });
+      return { meta: { last_row_id: store.length } };
+    }
+    if(sql.indexOf("UPDATE email_outbox") > -1){
+      const row = store.filter(r => String(r.id) === String(p[p.length - 1]))[0];
+      if(row){ row.status = p[0]; row.error = p[1]; row.payload_json = p[2]; if(row.status === "sent") row.sent_at = "now"; }
+      return { meta: {} };
+    }
+    return { meta: {} };
+  };
+  const stmt = (sql, bound) => ({ bind: (...a) => stmt(sql, a), all: async () => ({ results: select(sql, bound) }),
+    first: async () => (select(sql, bound)[0] || null), run: async () => write(sql, bound) });
+  return { env: { DB: { prepare: sql => stmt(sql, []) }, BREVO_API_KEY: "xkeysib-test",
+    ALLOWED_ORIGINS: "https://app.example.com" } };
+}
+function queuedRow(template){
+  return { id: 1, to_email: "buyer@example.com", subject: "test subject", template: template,
+    payload_json: JSON.stringify(Object.assign({}, SAMPLE, { _email: { attempts: 0, to_name: "Jane" } })),
+    status: "queued", error: null, sent_at: null, created_at: "2026-09-23 10:00:00" };
+}
+
+(async () => {
+  const realFetch = window.fetch.bind(window);
+  let bundle = null, twoFile = null;
+  try {
+    const src = await (await fetch("./worker/worker.js")).text();
+    const hasImportStatement = /^\s*import\s/m.test(src) || /from\s*["']\.\/emails\.js["']/.test(src);
+    ck("worker/worker.js has no module imports left",
+       !hasImportStatement && src.indexOf("EMAILS_MODULE") > -1, "bytes " + src.length);
+    bundle = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    ck("the single-file build compiles as an ECMAScript module", true);
+  } catch(e){ ck("the single-file build compiles as an ECMAScript module", false, e.message); finish(); return; }
+  try {
+    const emailsSrc = await (await fetch("./worker/emails.js")).text();
+    const emailsUrl = URL.createObjectURL(new Blob([emailsSrc], { type: "text/javascript" }));
+    let idx = await (await fetch("./worker/index.js")).text();
+    idx = idx.replace(/from\s+["']\.\/emails\.js["']/g, 'from "' + emailsUrl + '"');
+    twoFile = await import(URL.createObjectURL(new Blob([idx], { type: "text/javascript" })));
+    ck("the two-file layout still compiles (wrangler deploy path)", true);
+  } catch(e){ ck("the two-file layout still compiles (wrangler deploy path)", false, e.message); finish(); return; }
+
+  ck("both builds export fetch and scheduled",
+     typeof bundle.default.fetch === "function" && typeof bundle.default.scheduled === "function" &&
+     typeof twoFile.default.fetch === "function" && typeof twoFile.default.scheduled === "function");
+
+  const ctx = { waitUntil(){} };
+  const healthB = await bundle.default.fetch(new Request("https://api.example.com/api/health"), makeEnv([]).env, ctx);
+  const healthT = await twoFile.default.fetch(new Request("https://api.example.com/api/health"), makeEnv([]).env, ctx);
+  ck("both builds answer GET /api/health 200", healthB.status === 200 && healthT.status === 200,
+     healthB.status + " / " + healthT.status);
+  const guardB = await bundle.default.fetch(new Request("https://api.example.com/api/owner/emails"), makeEnv([]).env, ctx);
+  ck("the bundle still guards the owner email routes", guardB.status === 401, "status " + guardB.status);
+  const resendB = await bundle.default.fetch(new Request("https://api.example.com/api/tickets/send-email", { method: "POST" }), makeEnv([]).env, ctx);
+  const resendT = await twoFile.default.fetch(new Request("https://api.example.com/api/tickets/send-email", { method: "POST" }), makeEnv([]).env, ctx);
+  ck("both builds reject an empty resend body identically",
+     resendB.status === resendT.status && resendB.status === 400, resendB.status + " / " + resendT.status);
+  const jsonBody = () => new Request("https://api.example.com/api/tickets/send-email",
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  const resendJson = await bundle.default.fetch(jsonBody(), makeEnv([]).env, ctx);
+  ck("the bundle validates an empty JSON resend body with 422", resendJson.status === 422, "status " + resendJson.status);
+
+  /* Byte-for-byte equivalence: every template, both builds. */
+  const calls = [];
+  window.fetch = async (url, init) => {
+    calls.push(JSON.parse((init && init.body) || "{}"));
+    return new Response(JSON.stringify({ messageId: "<m@brevo>" }), { status: 201, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    let identical = 0; const mismatches = [], thin = [];
+    for(const key of FACTS){
+      const a = makeEnv([queuedRow(key)]), b = makeEnv([queuedRow(key)]);
+      calls.length = 0;
+      await twoFile.default.scheduled({}, a.env, ctx);
+      const first = calls[0];
+      calls.length = 0;
+      await bundle.default.scheduled({}, b.env, ctx);
+      const second = calls[0];
+      if(!first || !second){ mismatches.push(key + " (no send)"); continue; }
+      if(JSON.stringify(first) === JSON.stringify(second)) identical++; else mismatches.push(key);
+      if(!first.htmlContent || first.htmlContent.indexOf("<!DOCTYPE") !== 0 || first.htmlContent.length < 4000) thin.push(key);
+    }
+    ck("all 15 templates produce identical output in both builds", identical === FACTS.length,
+       identical + "/" + FACTS.length + " identical" + (mismatches.length ? " - differs: " + mismatches.join(", ") : ""));
+    ck("every template sends a full HTML document plus a text alternative", thin.length === 0,
+       thin.length ? "thin: " + thin.join(", ") : "all 15 full");
+  } finally { window.fetch = realFetch; }
+
+  R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  finish();
+})().catch(e => { ck("harness completed", false, (e && e.stack) || String(e)); finish(); });
+</script>
+</body></html>
+

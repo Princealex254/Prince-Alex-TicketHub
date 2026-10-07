@@ -1,0 +1,68 @@
+# =============================================================================
+#  Prince Alex TicketHub - legacy URL redirects (Cloudflare Pages)
+#  ---------------------------------------------------------------------------
+#  Every page now lives in its own folder (sell-your-tickets/index.html) and is
+#  served at a clean folder URL (/sell-your-tickets/). These rules 301 old
+#  .html links - from search engines, old emails and bookmarks - to the new
+#  locations. Query strings (e.g. ?reference= on payment pages) are preserved
+#  automatically by Cloudflare Pages.
+# =============================================================================
+
+# =============================================================================
+#  Hardening: nothing under /worker or /tools is part of the public site, and
+#  the dev/test harnesses must never be readable from it - several of them
+#  embed or import the entire Worker source (worker/index.js, worker/worker.js)
+#  and the schema. Cloudflare Pages has no 404/410 status for _redirects, so a
+#  200 proxy to the homepage is used: the file is simply never handed out.
+#  Rules execute in order and the first match wins, so these stay first.
+# =============================================================================
+
+/worker/*                    /                    200
+/tools/*                     /                    200
+/cors-check.html             /                    200
+/frontend-check.html         /                    200
+/syntax-check.html           /                    200
+/bundle-check.html           /                    200
+/approval-check.html         /                    200
+/rate-limit-check.html       /                    200
+/turnstile-check.html        /                    200
+/order-lookup-check.html     /                    200
+/orders-detail-check.html    /                    200
+/payhero-check.html          /                    200
+/diagnose.html               /                    200
+/wout.html                   /                    200
+/werr.txt                    /                    200
+
+/index.html                  /                    301
+
+/about.html                  /about/              301
+/attendees.html              /attendees/          301
+/check-in.html               /check-in/           301
+/checkout.html               /checkout/           301
+/contact.html                /contact/            301
+/create-event.html           /create-event/       301
+/edit-event.html             /edit-event/         301
+/event.html                  /event/              301
+/events.html                 /events/             301
+/forgot-password.html        /forgot-password/    301
+/login.html                  /login/              301
+/orders.html                 /orders/             301
+/organizer-dashboard.html    /organizer-dashboard/ 301
+/organizer-events.html       /organizer-events/   301
+/organizer-settings.html     /organizer-settings/ 301
+/organizer.html              /organizer/          301
+/owner-dashboard.html        /owner-dashboard/    301
+/owner-events.html           /owner-events/       301
+/owner-login.html            /login/              301
+/owner-login/                /login/              301
+/owner-orders.html           /owner-orders/       301
+/owner-organizers.html       /owner-organizers/   301
+/owner-settings.html         /owner-settings/     301
+/payment-failed.html         /payment-failed/     301
+/payment-success.html        /payment-success/    301
+/privacy.html                /privacy/            301
+/register.html               /register/           301
+/sell-your-tickets.html      /sell-your-tickets/  301
+/terms.html                  /terms/              301
+/ticket-types.html           /ticket-types/       301
+/ticket.html                 /ticket/             301

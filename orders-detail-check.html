@@ -1,0 +1,262 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>orders detail check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){ var b=document.getElementById("out"); if(b) b.textContent = "JS ERROR: " + (e.message||"") + " @ " + (e.lineno||0); });
+window.addEventListener("unhandledrejection", function(e){ var b=document.getElementById("out"); var r=e&&e.reason; if(b) b.textContent = "REJECTED: " + ((r&&(r.stack||r.message))||r); });
+</script>
+<script type="module">
+/* ============================================================================
+   Prince Alex TicketHub - GET /api/organizer/orders/:id
+   ----------------------------------------------------------------------------
+   The "Details" drawer on orders/index.html calls /api/organizer/orders/<id>,
+   which the Worker never implemented, so the drawer answered "That endpoint does
+   not exist." This harness drives the new route with a genuinely signed Firebase
+   token (the harness mints its own RSA key and serves the matching JWKS), so the
+   happy path, the validation and - most importantly - the organizer
+   ownership boundary are all exercised for real.
+
+   Serve the folder over http and open /orders-detail-check.html.
+   ========================================================================== */
+const R = { tests: [] };
+const KEEP = setInterval(function(){
+  const box = document.getElementById("out");
+  if(box && String(box.textContent).indexOf("RESULTS_JSON:") === 0) clearInterval(KEEP);
+}, 100);
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out"); if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name; }
+function finish(){ R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+  /* Same hand-off as the other check pages: serve.ps1 writes this to the file
+     run-check.ps1 polls, so the runner never relies on a DOM snapshot. */
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){}
+}
+const realFetch = window.fetch.bind(window);
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+const PROJECT = "prince-alex-tickethub";
+const KID = "harness-key-1";
+let W = null;
+const ctx = { waitUntil(){} };
+
+/* ----------------------------------------- a real (test) Firebase token ----
+   Generated once with .NET and embedded as constants, so the harness does no
+   key generation at all (that is far too slow for a headless runner). This is a
+   THROWAWAY key: it only signs tokens that this harness verifies against its own
+   mocked JWKS, so it can never authenticate anywhere else. The Worker's real
+   Google JWKS is never consulted in this file.
+   iat is in the past and exp in 2100, so the token stays valid for the test. */
+const HARNESS_JWK = { "kty":"RSA", "kid":"harness-key-1", "alg":"RS256", "use":"sig", "n":"uBMNnY7q_88BFCRaEzk7UHiCC_jipYj4j1p8jKeqGj9Hy860AbB2SGwvJfe2p1PKPf4BEdcZyKf8w5esjiiZRlxE733cxLQQkxfmerxmbsNiZvwNBXGJtERoW3yl_Lr2_KamHeXPLcw9Jy8t44-EiUUj3UWRr5dx4NYhXnVnvjSodinvRC-Yit69WILIls360D89eEnF14Dy8VbbPBsNZYZUnXtN1sNFStsYU5i8fVTHTYC3-h8cfxNotzZZrmpCVlWGLMM2Zs_paOAXrL0O46BUqMsbL5Vnv-WnQAhXf6pHDqGENPuCLBVFi3kJoj01Ll68ypwilH7xDeGcpMGfhQ", "e":"AQAB" };
+const HARNESS_PKCS8 = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4Ew2djur_zwEUJFoTOTtQeIIL-OKliPiPWnyMp6oaP0fLzrQBsHZIbC8l97anU8o9_gER1xnIp_zDl6yOKJlGXETvfdzEtBCTF-Z6vGZuw2Jm_A0FcYm0RGhbfKX8uvb8pqYd5c8tzD0nLy3jj4SJRSPdRZGvl3Hg1iFedWe-NKh2Ke9EL5iK3r1YgsiWzfrQPz14ScXXgPLxVts8Gw1lhlSde03Ww0VK2xhTmLx9VMdNgLf6Hxx_E2i3NlmuakJWVYYswzZmz-lo4BesvQ7joFSoyxsvlWe_5adACFd_qkcOoYQ0-4IsFUWLeQmiPTUuXrzKnCKUfvEN4ZykwZ-FAgMBAAECggEADYyZe_eBJMM_-ROT7cZQr2OvbuIrDLRAV4z5jgDpbHUr-7yDU3yBuGL-NXU-ZKKuSFHiEkYbB8IVwO_xK6WhYqR4DojdLz1x2uHvfSlRAOYw4BO9gaER2csPQ2yxayD3_TDnGVxJG73k4nV-kzmFL_V-5lKwnpQvNbWNTz6lHELz8aHXzfcEYB5Dlcy65I1OVlY1b7z4adjQBFKjHo-WSmUIyFS0Qm3gEPC2YBIzCs3519t3paLhpW0mookJqYd8Rrp9bXZbAeXPGwxTiWGFZurMi8QA2O6JGhUWh59ODOPUjjP5X6jqE961HgyudzsLSDr4M09LgZH1vPAvGXwjIQKBgQDsC5vl0_l46kMwOyqguCR_XY43ajci94eQ2cUqqYw2XpN23jhdl_aX007jrtaOo6GoKE1LRPh4Ru8shO2MF3Ei__-y1DPARsqAWV8LciEBm_bqogH76GmxQxdxvfz7549KEvp_nx_maVE7XQpWiS6nEdDTQzzOZ3Qcj4e0esqiEwKBgQDHorZK1AqyJBOAKaOwFJGN70Qj4crhWHrFKa8DS4P4CVHLoa1BYRME_GN8WZVv0E5CEqnmEZE9dp0Dv6zFz80WF5F3OPGBkwd62I5IosdrgWOa7Nv7WruGezQRK_oTMvbTRRIGg-fT-KQlhjexndvmqt6NfnvWCl06cUz0z8orBwKBgQCWshKld98dQvICKMPeN7GVXrUcy8LHoB_8agtmYTgSve6HRPfXSN01sMH8ufJgvjbGlHRESZQXtbGcSoEdnxmrrqQgFzmy138Q0f3L4OERlfDdevCpUoenk520EAcjC4J_V_5027IR98rUi2G-PXZ7UvRu6842N_X5BektX_dd4QKBgAWv6feJwOBATNnq1cHvZBIiDdPj2869oYm6XUT_wruvMEhXy8LADDWpJwBk4O_1hDU3qOVn_LY-icyQilB8UgBeHYPC-IZTdPQX9T22fW3fmsHQG5g2hn8XRW1zzkT7v7JXFmNfIJyWSb7T6wRBVgFlPr_TKZ34X52JmsKipMTDAoGAVGOouSIjwvYlpVj_rgpvDEBQPePrfITvsS5UI2j56AIXQ186H1wKB2RQSsEzED025qlnX-8LOmwfFm7CRxCSIk0l-ArjhGKN-_7YgZuZhy5aMovx0nh58Lgr-VVXP8om8X7DHnknuRW7vnMyE1wgc3r56dNF6QONK9XMJq1WZes";
+const TOKEN_VALID = "eyAiYWxnIjoiUlMyNTYiLCAia2lkIjoiaGFybmVzcy1rZXktMSIsICJ0eXAiOiJKV1QiIH0.eyAiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3ByaW5jZS1hbGV4LXRpY2tldGh1YiIsICJhdWQiOiJwcmluY2UtYWxleC10aWNrZXRodWIiLCAic3ViIjoidWlkLW9yZ2FuaXplci0xIiwgImVtYWlsIjoiYW1pbmFAZXhhbXBsZS5jb20iLCAiaWF0IjoxNzAwMDAwMDAwLCAiZXhwIjo0MTAyNDQ0ODAwLCAiZW1haWxfdmVyaWZpZWQiOnRydWUgfQ.Fe9csJGHKuc-0pDtJnygzwTWPwVZDNB5GEmT_sA_-WQmVD91Z1qmxv925DvMuKBuBvuZcv1xqmapuJANAHGFWsOermLVc7_gr2a6lW95XxIi45wFoPeJGEdotr-4QSZtoCjnxh0Ok1mI45huuOCIACXoigG-4raqvi-DqhY8ozghFdDbLk6WEIR-Rvy3udc-qK727_8OxvhHYx86DqnHAweK8_XdIIsbAkLSyBFxxFCT0vFBV8x78Kp0wRdZyJ4wFT8CMGoTd3Bzo3DXR3hL92qjyNqO3bgkQAIsNZGdEZ6BEUJUlCjIghiCPtZWUzJtzOye7l-wtvVXqNltBE3tWA";
+const TOKEN_EXPIRED = "eyAiYWxnIjoiUlMyNTYiLCAia2lkIjoiaGFybmVzcy1rZXktMSIsICJ0eXAiOiJKV1QiIH0.eyAiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3ByaW5jZS1hbGV4LXRpY2tldGh1YiIsICJhdWQiOiJwcmluY2UtYWxleC10aWNrZXRodWIiLCAic3ViIjoidWlkLW9yZ2FuaXplci0xIiwgImVtYWlsIjoiYW1pbmFAZXhhbXBsZS5jb20iLCAiaWF0IjoxNzAwMDAwMDAwLCAiZXhwIjoxNzAwMDAwMDYwLCAiZW1haWxfdmVyaWZpZWQiOnRydWUgfQ.NVW6ldyQryvpwqRZKxweGf1slmxqY8JMYj4D6hm3QgvWYLnPT3QLZlzPhq8OuT8B52FxPNFdBS96jZZJ-aK4EMZvHc5ZRijl2QFPZEi0ShV9LopsN6SmJD49zxU8HUWbUq1YFmNEqpOatZAFUl4_KL0uhU4ItRnL4X2-3bFz8fEI-RlOUaWmAkws33wdctfqSPPqyUwGN8zSKEhEpXScXLPsktQicDpPBkdTyPYXtrqDhr_DdzcQlTqQAsHAbDMK4dxrfEW8qDCMWANDA2LMmTYabWWoEciKV61ZQ6Jx1GEIyghKoLJUH1RH6qAQ1B_96wci6GLhYlDUtydymUNxNg";
+const b64u = (bytes) => btoa(String.fromCharCode.apply(null, new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const utf8 = (s) => new TextEncoder().encode(s);
+let signingKey = null, publicJwk = null;
+async function makeKey(){
+  const b64 = HARNESS_PKCS8.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  signingKey = await crypto.subtle.importKey("pkcs8", bytes, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  publicJwk = HARNESS_JWK;
+}
+async function mintToken(uid, email, extra){
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64u(utf8(JSON.stringify({ alg: "RS256", kid: KID, typ: "JWT" })));
+  const payload = b64u(utf8(JSON.stringify(Object.assign({
+    iss: "https://securetoken.google.com/" + PROJECT, aud: PROJECT, sub: uid,
+    email: email, iat: now, exp: now + 3600, email_verified: true
+  }, extra || {}))));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", signingKey, utf8(header + "." + payload));
+  return header + "." + payload + "." + b64u(sig);
+}
+
+/* ------------------------------------------------------------------ D1 ----
+   Two organizers: 1 owns event 10 (order 100), 2 owns event 20 (order 200). */
+function makeDb(){
+  const state = {
+    users: [{ id: 1, firebase_uid: "uid-organizer-1", full_name: "Amina Organizer", email: "amina@example.com", role: "organizer", status: "active", created_at: "2026-01-01 00:00:00" }],
+    organizers: [{ id: 1, user_id: 1, business_name: "Sunrise Events", business_email: "hello@sunrise.test", business_phone: "+254700000001", logo_url: null, status: "active", updated_at: "2026-02-01 00:00:00" }],
+    events: [{ id: 10, organizer_id: 1, title: "Nairobi Live 2027", slug: "nairobi-live-2027", status: "active", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00", venue: "KICC", location: "Nairobi", category: "Music", description: "Live music.", poster_url: null, is_featured: 0, sales_start: null, sales_end: null, created_at: "2026-01-01 00:00:00" }],
+    orders: [
+      { id: 100, order_number: "PAT-AAAAA11111", event_id: 10, organizer_id: 1, customer_name: "Jane Wanjiru", customer_email: "jane@example.com", customer_phone: "+254700111222", total_amount: 3000, currency: "KES", status: "paid", paid_at: "2026-03-01 10:05:00", created_at: "2026-03-01 10:00:00", inventory_held: 0 },
+      { id: 200, order_number: "PAT-BBBBB22222", event_id: 20, organizer_id: 2, customer_name: "Someone Else", customer_email: "other@example.com", customer_phone: "+254700999999", total_amount: 9000, currency: "KES", status: "paid", paid_at: "2026-03-02 10:05:00", created_at: "2026-03-02 10:00:00", inventory_held: 0 }
+    ],
+    order_items: [{ id: 1, order_id: 100, ticket_type_id: 11, ticket_type_name: "Regular", quantity: 2, unit_price: 1500, subtotal: 3000 }],
+    payments: [{ id: 1, order_id: 100, provider: "paystack", reference: "PAT-AAAAA11111", amount: 3000, currency: "KES", status: "success", provider_ref: "PS-1" }],
+    tickets: [
+      { id: 1, order_id: 100, event_id: 10, ticket_type_id: 11, attendee_name: "Jane Wanjiru", attendee_email: "jane@example.com", ticket_number: "PAT-AAAAA11111-A", qr_token: "qr-1", status: "valid", checked_in: 0, checked_in_at: null, created_at: "2026-03-01 10:05:00" },
+      { id: 2, order_id: 100, event_id: 10, ticket_type_id: 11, attendee_name: "Jane Wanjiru", attendee_email: "jane@example.com", ticket_number: "PAT-AAAAA11111-B", qr_token: "qr-2", status: "used", checked_in: 1, checked_in_at: "2026-03-01 18:30:00", created_at: "2026-03-01 10:05:00" }
+    ],
+    ticket_types: [{ id: 11, event_id: 10, name: "Regular", price: 1500, quantity: 50, sold: 2, status: "active" }],
+    rate_limits: [], email_outbox: [],
+    app_settings: [{ key: "email_from_email", value: "tickets@princealexdigital.com" }, { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "false" }]
+  };
+  const stmt = (sql, bound) => {
+    const p = bound || [];
+    const rows = () => {
+      if(/FROM users/.test(sql)) return /firebase_uid = \?/.test(sql) ? state.users.filter(u => u.firebase_uid === p[0]) : state.users.slice();
+      if(/FROM organizers/.test(sql)) return /user_id = \?/.test(sql) ? state.organizers.filter(o => String(o.user_id) === String(p[0])) : state.organizers.slice();
+      if(/FROM events/.test(sql)) return /(e\.id|id) = \?/.test(sql) ? state.events.filter(e => String(e.id) === String(p[0])) : state.events.slice();
+      if(/FROM orders\b/.test(sql)){
+        /* honours the ownership scope the route adds: organizer_id = ? */
+        let out = state.orders;
+        if(/organizer_id = \?/.test(sql)) out = out.filter(o => String(o.organizer_id) === String(p[0]));
+        if(/event_id IN/.test(sql)) out = [];
+        if(/AND o\.id = \?/.test(sql)) out = out.filter(o => String(o.id) === String(p[p.length - 1]));
+        if(/order_number = \?/.test(sql)) out = out.filter(o => o.order_number === p[0]);
+        /* the detail route LEFT JOINs the event, so mirror the joined title */
+        if(/e\.title AS event_title/.test(sql)){
+          out = out.map(o => { const ev = state.events.filter(e => String(e.id) === String(o.event_id))[0];
+            return Object.assign({}, o, { event_title: ev ? ev.title : null, event_date: ev ? ev.event_date : null,
+              start_time: ev ? ev.start_time : null, venue: ev ? ev.venue : null, location: ev ? ev.location : null }); });
+        }
+        return out;
+      }
+      if(/FROM order_items/.test(sql)) return state.order_items.filter(r => String(r.order_id) === String(p[0]));
+      if(/FROM payments\b/.test(sql)) return state.payments.filter(r => String(r.order_id) === String(p[0]));
+      if(/FROM tickets/.test(sql)) return state.tickets.filter(t => /order_id = \?/.test(sql) ? String(t.order_id) === String(p[0]) : true);
+      if(/FROM ticket_types/.test(sql)) return state.ticket_types.slice();
+      if(/FROM rate_limits/.test(sql)) return [];
+      if(/FROM event_staff/.test(sql)) return [];
+      if(/FROM app_settings/.test(sql)) return state.app_settings.slice();
+      if(/FROM email_outbox/.test(sql)) return [];
+      return [];
+    };
+    return {
+      sql: sql, params: p,
+      bind: (...a) => stmt(sql, a),
+      all: async () => ({ results: rows() }),
+      first: async () => rows()[0] || null,
+      run: async () => ({ meta: { changes: 0, last_row_id: null } })
+    };
+  };
+  return { db: { prepare: sql => stmt(sql, []), batch: async () => [{ results: [] }, { results: [] }] }, state: state };
+}
+function makeEnv(extra){
+  const d = makeDb();
+  const env = { DB: d.db, FIREBASE_PROJECT_ID: PROJECT, ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital" };
+  for(const k of Object.keys(extra || {})) env[k] = String(extra[k]);
+  env.__state = d.state;
+  return env;
+}
+
+
+
+/* ----------------------------------------------------------------- call ---- */
+let ipSeq = 0;
+function nextIp(){ ipSeq++; return "41.90." + Math.floor(ipSeq / 200) + "." + (1 + (ipSeq % 200)); }
+async function get(path, token, env, ip){
+  const headers = { "CF-Connecting-IP": ip || nextIp() };
+  if(token) headers["Authorization"] = "Bearer " + token;
+  const res = await W.default.fetch(new Request(API + path, { method: "GET", headers: headers }), env || makeEnv(), ctx);
+  let body = null;
+  try { body = await res.clone().json(); } catch(e){ body = null; }
+  return { status: res.status, body: body || {} };
+}
+
+(async () => {
+  const marks = [];
+  const mark = (m) => { const b = document.getElementById("out"); if(b) b.textContent = "MARK " + m;
+    try { fetch("/progress", { method: "POST", body: String(m) }); } catch(e){} };
+  mark("module started");
+  const realWarn = console.warn, realError = console.error;
+  console.warn = (...a) => marks.push("W " + a.map(x => String(x)).join(" "));
+  console.error = (...a) => marks.push("E " + a.map(x => String(x)).join(" "));
+  try {
+    /* the JWKS the Worker will fetch, signed with the harness key. Everything
+       else (including this page's own /report hand-off) goes to the network. */
+    window.fetch = async (url, init) => {
+      const href = String(url && url.url ? url.url : url);
+      if(href.indexOf("googleapis.com") > -1 || href.indexOf("securetoken") > -1){
+        return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return realFetch(url, init);
+    };
+    await makeKey();
+    mark("key ready");
+    const src = await (await realFetch("./worker/worker.js")).text();
+    mark("source fetched " + src.length);
+    W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    mark("worker imported");
+    ck("the Worker compiles with the new route registered", typeof W.default.fetch === "function", "bytes " + src.length);
+  } catch(e){ ck("the Worker compiles with the new route registered", false, (e && e.message) || String(e)); finish(); return; }
+
+  try {
+    const token = TOKEN_VALID;
+    const env = makeEnv();
+    const ip = "41.90.50.10";
+    const ok = await get("/api/organizer/orders/100", token, env, ip);
+    const o = ok.body.order || ok.body;
+    ck("GET /api/organizer/orders/100 answers 200 for the owning organizer",
+       ok.status === 200, ok.status + " " + (ok.body.code || ""));
+    ck("it returns the fields the drawer renders",
+       o.order_number === "PAT-AAAAA11111" && o.customer_name === "Jane Wanjiru" &&
+       o.customer_email === "jane@example.com" && o.amount === 3000 && o.status === "paid" &&
+       o.event_title === "Nairobi Live 2027" && !!o.created_at && !!o.paid_at,
+       JSON.stringify({ n: o.order_number, a: o.amount, s: o.status, e: o.event_title }));
+    ck("it includes the order lines and the issued tickets",
+       (o.items || []).length === 1 && (o.tickets || []).length === 2 &&
+       o.tickets[0].ticket_number === "PAT-AAAAA11111-A" && o.tickets[0].attendee_name === "Jane Wanjiru" &&
+       !!o.tickets[1].checked_in_at,
+       "items " + (o.items || []).length + ", tickets " + (o.tickets || []).length);
+    ck("the payload is exposed both as .order and flat (the page reads either)",
+       !!ok.body.order && ok.body.order_number === "PAT-AAAAA11111", "");
+    const qr = (o.tickets || [])[0] ? String(o.tickets[0].qr_image_url || "") : "";
+    ck("the QR url is built by the server and never carries the opaque token",
+       /\/api\/tickets\/PAT-AAAAA11111-A\/qr\.png$/.test(qr) && JSON.stringify(o).indexOf("qr-1") === -1, qr);
+  } catch(e){ ck("harness completed group 1", false, (e && e.stack) || String(e)); }
+  await group2(TOKEN_VALID, marks);
+})();
+
+/* --------------- 2. ownership, authentication, validation, limits --------- */
+async function group2(token, marks){
+  try {
+    const ip = "41.90.50.10";
+    const other = await get("/api/organizer/orders/200", token, makeEnv(), ip);
+    ck("another organizer's order is not readable (404, no cross-tenant data)",
+       other.status === 404 && other.body.code === "NOT_FOUND" &&
+       JSON.stringify(other.body).indexOf("Someone Else") === -1,
+       other.status + " " + other.body.code);
+    const unknown = await get("/api/organizer/orders/999", token, makeEnv(), ip);
+    ck("an order id that does not exist is 404", unknown.status === 404, unknown.status + " " + unknown.body.code);
+
+    const anon = await get("/api/organizer/orders/100", null, makeEnv(), ip);
+    ck("without a Firebase token the route answers 401 (not 404, not 200)",
+       anon.status === 401 && anon.body.code === "UNAUTHENTICATED", anon.status + " " + anon.body.code);
+    const garbage = await get("/api/organizer/orders/100", "not.a.jwt", makeEnv(), ip);
+    ck("a malformed token is refused with 401", garbage.status === 401, garbage.status + " " + garbage.body.code);
+    const tampered = await get("/api/organizer/orders/100", token.slice(0, -4) + "AAAA", makeEnv(), ip);
+    ck("a token with a broken signature is refused with 401", tampered.status === 401, tampered.status + " " + tampered.body.code);
+    const expired = TOKEN_EXPIRED;
+    const stale = await get("/api/organizer/orders/100", expired, makeEnv(), ip);
+    ck("an expired token is refused with 401", stale.status === 401, stale.status + " " + stale.body.code);
+
+    const bad = await get("/api/organizer/orders/abc", token, makeEnv(), ip);
+    ck("a non-numeric order id is rejected with 422", bad.status === 422, bad.status + " " + bad.body.code);
+
+    /* the new route is rate limited like everything else */
+    const envLimited = makeEnv({ RATE_ORDER_DETAIL_LIMIT: "2", RATE_ORDER_DETAIL_WINDOW: "600" });
+    const limitedIp = "41.90.51.1";
+    const codes = [];
+    for(let i = 0; i < 3; i++) codes.push((await get("/api/organizer/orders/100", token, envLimited, limitedIp)).status);
+    ck("the new route honours its rate limit (2 allowed, 3rd is 429)",
+       codes.join(",") === "200,200,429", codes.join(","));
+
+    /* the page and the API agree on the path, and nothing secret was logged */
+    const html = await (await realFetch("./orders/index.html")).text();
+    ck("orders/index.html still requests /api/organizer/orders/<id>",
+       /api\("\/api\/organizer\/orders\/" \+ encodeURIComponent\(id\)\)/.test(html), "");
+    ck("the drawer now prefers issued tickets over order lines",
+       /const issued = normList\(o, "tickets"\)/.test(html) && /issued\.length \? issued : normList\(o, "items"\)/.test(html), "");
+    const noLeak = marks.join(" | ");
+    ck("nothing secret or opaque was logged while serving the order",
+       noLeak.indexOf(token.slice(-12)) === -1 && noLeak.indexOf("qr-1") === -1, "");
+  } catch(e){ ck("harness completed group 2", false, (e && e.stack) || String(e)); }
+  window.fetch = realFetch;
+  finish();
+}
+</script>
+</body></html>

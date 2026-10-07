@@ -1,0 +1,299 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>frontend check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){
+  var b = document.getElementById("out");
+  if(b) b.textContent = "JS ERROR: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || 0);
+});
+window.addEventListener("unhandledrejection", function(e){
+  var b = document.getElementById("out");
+  var r = e && e.reason;
+  if(b) b.textContent = "REJECTED: " + ((r && (r.stack || r.message)) || r);
+});
+</script>
+<script>
+/* ===========================================================================
+   Prince Alex TicketHub - frontend page harness
+   -----------------------------------------------------------------------
+   The backend has payhero-check.html; this page covers the HTML pages, whose
+   inline JavaScript is otherwise never executed anywhere. It fetches each
+   edited page, compiles every inline script with new Function (a syntax
+   error fails the run) and asserts the wiring the owner-payment work depends
+   on: functions defined exactly once, called from DOMContentLoaded, form
+   fields present and collected into the API payloads.
+
+   Serve the repository over http (tools\serve.ps1) and open
+   /frontend-check.html - fetch() does not work from file://.
+   ========================================================================= */
+var R = { tests: [], notes: [] };
+var realFetch = window.fetch.bind(window);
+var KEEP = setInterval(function(){ }, 100);
+function ck(name, pass, detail){
+  R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  var box = document.getElementById("out");
+  if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name;
+}
+function note(text){ R.notes.push(String(text)); }
+var STEP = "start";
+function step(text){ STEP = text; var b = document.getElementById("out"); if(b) b.textContent = "STEP: " + text; }
+function finish(){
+  R.step = STEP;
+  R.summary = { total: R.tests.length, passed: R.tests.filter(function(t){ return t.pass; }).length,
+                failed: R.tests.filter(function(t){ return !t.pass; }).length };
+  clearInterval(KEEP);
+  var text = "RESULTS_JSON:" + JSON.stringify(R);
+  document.getElementById("out").textContent = text;
+  try { realFetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){ }
+}
+/* ---------------------------------------------------------------- helpers -- */
+var PAGES = {};
+async function loadPage(name){
+  step("fetch " + name);
+  var res = await realFetch("./" + name);
+  var html = await res.text();
+  PAGES[name] = html;
+  return html;
+}
+/* Every inline classic script on the page (src= and unknown type= skipped). */
+function inlineScripts(html){
+  var out = [], re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi, m;
+  while((m = re.exec(html))){
+    var attrs = m[1] || "";
+    if(/\bsrc\s*=/i.test(attrs)) continue;
+    var t = attrs.match(/\btype\s*=\s*["']([^"']+)["']/i);
+    if(t && !/javascript|module/i.test(t[1])) continue;
+    out.push(m[2]);
+  }
+  return out;
+}
+/* Compiles only - the script body never runs, so no DOM is needed. */
+function compileAll(name){
+  var html = PAGES[name] || "";
+  var scripts = inlineScripts(html);
+  if(!scripts.length) return { ok: false, detail: "no inline script found" };
+  for(var i = 0; i < scripts.length; i++){
+    try { new Function(scripts[i]); }
+    catch(e){ return { ok: false, detail: "script #" + (i + 1) + " failed to compile: " + (e.message || String(e)) }; }
+  }
+  return { ok: true, detail: scripts.length + " inline scripts compiled" };
+}
+function count(html, needle){
+  var n = 0, i = 0;
+  while((i = html.indexOf(needle, i)) !== -1){ n++; i += needle.length; }
+  return n;
+}
+/* Markup only: script bodies and comments hold id="..." strings of their own. */
+function markup(html){
+  return html.replace(/<script\b[\s\S]*?<\/script>/gi, "").replace(/<!--[\s\S]*?-->/g, "");
+}
+function duplicateIds(name){
+  var mk = markup(PAGES[name] || "");
+  var seen = {}, dups = [];
+  var re = /\bid\s*=\s*["']([^"']+)["']/gi, m;
+  while((m = re.exec(mk))){
+    if(seen[m[1]]){ if(dups.indexOf(m[1]) < 0) dups.push(m[1]); } else seen[m[1]] = 1;
+  }
+  return dups;
+}
+/* The script block that installs the page's boot handler. */
+function bootScript(name){
+  var scripts = inlineScripts(PAGES[name] || "");
+  for(var i = 0; i < scripts.length; i++) if(scripts[i].indexOf("DOMContentLoaded") !== -1) return scripts[i];
+  return "";
+}
+/* ------------------------------------------------------------------- run ---- */
+(async function(){
+  try {
+    step("load pages");
+    await loadPage("owner-settings/index.html");
+    await loadPage("organizer-settings/index.html");
+    await loadPage("create-event/index.html");
+    await loadPage("edit-event/index.html");
+    await loadPage("checkout/index.html");
+    await loadPage("event/index.html");
+
+    /* ---- 1. every page compiles (the chunked inserts are the real risk) ---- */
+    ["owner-settings/index.html", "organizer-settings/index.html", "create-event/index.html",
+     "edit-event/index.html", "checkout/index.html", "event/index.html"].forEach(function(name){
+      var r = compileAll(name);
+      ck("inline JavaScript compiles: " + name, r.ok, r.detail);
+    });
+
+    /* ---- 2. owner-settings: panel markup + JS wiring ---- */
+    var ow = PAGES["owner-settings/index.html"];
+    ck("owner-settings has the owner payment panel", /id="paymentPanel"/.test(ow) && /id="opCards"/.test(ow) && /id="opEnabled"/.test(ow));
+    ck("owner-settings defines the owner payment helpers once",
+      count(ow, "const OP_PROVIDERS") === 1 && count(ow, "let OP_STATE") === 1
+        && count(ow, "function opLoad()") === 1 && count(ow, "function opWire()") === 1
+        && count(ow, "function opPaint(") === 1 && count(ow, "function opAction(") === 1,
+      "OP_PROVIDERS=" + count(ow, "const OP_PROVIDERS") + " OP_STATE=" + count(ow, "let OP_STATE")
+        + " opLoad=" + count(ow, "function opLoad()") + " opWire=" + count(ow, "function opWire()")
+        + " opPaint=" + count(ow, "function opPaint("));
+    var owBoot = bootScript("owner-settings/index.html");
+    ck("owner-settings boots the owner payment section",
+      /opWire\(\);/.test(owBoot) && /await opLoad\(\);/.test(owBoot),
+      owBoot ? "boot script " + owBoot.length + " chars" : "no boot script");
+    ck("owner-settings has no leftover partial edit", ow.indexOf("resafeDraft") === -1 && count(ow, "function opWire") === 1);
+    var owDups = duplicateIds("owner-settings/index.html");
+    ck("owner-settings has no duplicate element ids", owDups.length === 0, owDups.join(", "));
+    ck("owner-settings paints the API response shape it asks for",
+      /active_provider/.test(ow) && /owner_payment_enabled/.test(ow) && count(ow, "function opShowAlert") === 1);
+
+    /* ---- 3. organizer-settings: account-wide default ---- */
+    var os = PAGES["organizer-settings/index.html"];
+    ck("organizer-settings has the account-wide owner payment toggle", count(os, 'id="useOwnerPayments"') === 1,
+      "found " + count(os, 'id="useOwnerPayments"') + "x");
+    ck("organizer-settings sends use_owner_payments on profile save", /fields\.use_owner_payments = ownerDefault/.test(os));
+    ck("organizer-settings saves the toggle as soon as it changes", /use_owner_payments: ownerToggle\.value/.test(os));
+    ck("organizer-settings shows and keeps the toggle in step with the profile",
+      /ownerToggle\.value = org\.use_owner_payments/.test(os) && /ownerToggle\.disabled = true/.test(os)
+        && /ownerToggle\.disabled = false/.test(os));
+    var osDups = duplicateIds("organizer-settings/index.html");
+    ck("organizer-settings has no duplicate element ids", osDups.length === 0, osDups.join(", "));
+
+    /* ---- 4. create-event: per-event payment mode ---- */
+    var ce = PAGES["create-event/index.html"];
+    ck("create-event offers the payment mode choice", count(ce, 'id="payment_mode"') === 1
+      && /value="owner"/.test(ce) && /value="own"/.test(ce));
+    ck("create-event sends payment_mode when creating", /payment_mode: \$\("#payment_mode"\)/.test(ce));
+    ck("create-event explains which default applies", /Default - owner payment mode \(my account setting\)/.test(ce));
+    var ceDups = duplicateIds("create-event/index.html");
+    ck("create-event has no duplicate element ids", ceDups.length === 0, ceDups.join(", "));
+
+    /* ---- 5. edit-event: per-event payment mode ---- */
+    var ee = PAGES["edit-event/index.html"];
+    ck("edit-event offers the payment mode choice", count(ee, 'id="payment_mode"') === 1
+      && /value="owner"/.test(ee) && /value="own"/.test(ee));
+    ck("edit-event loads and saves payment_mode",
+      /payment_mode === "owner"/.test(ee) && /payment_mode: \$\("#payment_mode"\)/.test(ee));
+    var eeDups = duplicateIds("edit-event/index.html");
+    ck("edit-event has no duplicate element ids", eeDups.length === 0, eeDups.join(", "));
+
+    /* ---- 6. checkout: owner-mode copy ---- */
+    var co = PAGES["checkout/index.html"];
+    ck("checkout knows about owner payment mode", /payment_mode/.test(co) && /ownerMode/.test(co));
+    ck("checkout never hardcodes the gateway when the owner collects", /const key = ownerMode \? ""/.test(co));
+    var coDups = duplicateIds("checkout/index.html");
+    ck("checkout has no duplicate element ids", coDups.length === 0, coDups.join(", "));
+/* ---- 7. checkout: free-ticket email verification ---- */
+    ck("checkout has the verification and success blocks",
+      count(co, 'id="otpBlock"') === 1 && count(co, 'id="doneBlock"') === 1 && count(co, 'id="otpCode"') === 1
+        && count(co, 'id="otpVerifyBtn"') === 1 && count(co, 'id="otpResendBtn"') === 1
+        && count(co, 'id="otpBackBtn"') === 1 && count(co, 'id="otpEmail"') === 1,
+      "otpBlock=" + count(co, 'id="otpBlock"') + " doneBlock=" + count(co, 'id="doneBlock"'));
+    ck("checkout keeps the whole payment UI in one wrapper it can hide",
+      count(co, 'id="payBlock"') === 1 && /<div id="payBlock">[\s\S]*?id="payTrust2"[\s\S]*?<\/div>/.test(co)
+        && count(co, 'id="summaryNote"') === 1 && count(co, 'id="termsLine"') === 1);
+    ck("checkout only enters free mode for an all-zero selection",
+      /function isFreeSelection\(\)\{[\s\S]*?ITEMS\.every\(i => priceOfType\(i\.ticket_type_id\) === 0\)/.test(co)
+        && /if\(isFreeSelection\(\)\) enterFreeMode\(\);/.test(co));
+    ck("checkout calls the three free-ticket endpoints",
+      count(co, "/api/tickets/free/verify/request") === 2 && count(co, "/api/tickets/free/verify/confirm") === 1
+        && count(co, "/api/tickets/free/register") === 1,
+      "request=" + count(co, "/api/tickets/free/verify/request") + " confirm=" + count(co, "/api/tickets/free/verify/confirm")
+        + " register=" + count(co, "/api/tickets/free/register"));
+    ck("checkout sends exactly the fields the free endpoints require",
+      /quantity: ITEMS\[0\]\.quantity/.test(co) && /ticket_type_id: OTP_TYPE_ID/.test(co)
+        && /session_token: OTP_SESSION, otp: code/.test(co)
+        && /continue_token: continueToken, phone: \$\("#phone"\)\.value\.trim\(\)/.test(co));
+    ck("checkout only sends the Turnstile token on the step that sends the email",
+      /turnstile_token: token/.test(co)
+        && !/session_token: OTP_SESSION, otp: code[\s\S]{0,200}?turnstile_token/.test(co));
+    ck("checkout honours the server's resend cooldown",
+      /startResendCooldown\(Number\(res\.resend_after/.test(co) && /"Resend in " \+ left \+ "s"/.test(co)
+        && /startResendCooldown\(Number\(err\.retryAfter/.test(co));
+    ck("checkout reveals a ticket only from the Worker's own answer",
+      /const tickets = res\.tickets \|\| order\.tickets \|\| \[\]/.test(co) && /function showDone\(res\)/.test(co)
+        && /qr_image_url/.test(co));
+    var coBoot2 = bootScript("checkout/index.html");
+    ck("checkout boots the free-ticket flow",
+      /addEventListener\("click", onPrimaryAction\)/.test(coBoot2) && /addEventListener\("click", confirmOtp\)/.test(coBoot2)
+        && /addEventListener\("click", resendOtp\)/.test(coBoot2) && /addEventListener\("click", backToDetails\)/.test(coBoot2),
+      coBoot2 ? "boot script " + coBoot2.length + " chars" : "no boot script");
+    ck("checkout defines each free-ticket helper exactly once",
+      count(co, "function isFreeSelection()") === 1 && count(co, "function enterFreeMode()") === 1
+        && count(co, "async function startFreeVerification()") === 1 && count(co, "async function resendOtp()") === 1
+        && count(co, "async function confirmOtp()") === 1 && count(co, "function showDone(") === 1
+        && count(co, "function backToDetails()") === 1 && count(co, "function digits(") === 1,
+      "isFreeSelection=" + count(co, "function isFreeSelection()") + " confirmOtp=" + count(co, "async function confirmOtp()"));
+
+    /* ---- 8. the organizer controls for free tickets ---- */
+    ck("edit-event exposes every free-ticket setting",
+      count(ee, 'id="free_otp_enabled"') === 1 && count(ee, 'id="ip_abuse_enabled"') === 1
+        && count(ee, 'id="free_ticket_limit"') === 1 && count(ee, 'id="free_otp_ip_limit"') === 1
+        && count(ee, 'id="free_otp_ip_window"') === 1 && count(ee, 'id="free_register_ip_limit"') === 1
+        && count(ee, 'id="free_register_ip_window"') === 1,
+      "free_otp_enabled=" + count(ee, 'id="free_otp_enabled"') + " free_ticket_limit=" + count(ee, 'id="free_ticket_limit"'));
+    ck("edit-event loads and saves every free-ticket setting",
+      /ev\.free_otp_enabled !== false/.test(ee) && /ev\.ip_abuse_enabled !== false/.test(ee)
+        && /free_otp_enabled: \$\("#free_otp_enabled"\) \? \$\("#free_otp_enabled"\)\.checked : true/.test(ee)
+        && /free_ticket_limit: \$\("#free_ticket_limit"\) \? Number/.test(ee)
+        && /free_ticket_config: freeConfigPayload\(\)/.test(ee));
+    ck("edit-event only sends the four documented thresholds",
+      /\["free_otp_ip_limit","free_otp_ip_window","free_register_ip_limit","free_register_ip_window"\]\.forEach/.test(ee)
+        && count(ee, "function freeConfigPayload()") === 1 && count(ee, "function intOrNull(") === 1);
+    ck("edit-event reports the free-ticket counts it is given",
+      /ev\.free_ticket_stats/.test(ee) && count(ee, 'id="freeStats"') === 1 && /free_tickets_issued/.test(ee));
+    ck("create-event sets the same free-ticket defaults",
+      count(ce, 'id="free_otp_enabled"') === 1 && count(ce, 'id="ip_abuse_enabled"') === 1
+        && count(ce, 'id="free_ticket_limit"') === 1
+        && /free_otp_enabled: \$\("#free_otp_enabled"\) \? \$\("#free_otp_enabled"\)\.checked : true/.test(ce));
+    /* ---- 9. the event page: the gateway note under the checkout button ----
+       The public payload only carries the event's own payment_provider (null =
+       "the organizer's active provider applies") plus payment_mode, so the note
+       must name a gateway only when the payload really says which one. */
+    var evp = PAGES["event/index.html"];
+    ck("event page has exactly one payNote target", count(evp, 'id="payNote"') === 1,
+      "count=" + count(evp, 'id="payNote"'));
+    var evDups = duplicateIds("event/index.html");
+    ck("event page has no duplicate element ids", evDups.length === 0, evDups.join(", "));
+    ck("event page never claims one hardcoded gateway",
+      !/Payments are processed by Paystack\. /.test(evp), "stale Paystack-only note is back");
+    ck("event page lists every supported gateway in its fallback copy",
+      /Paystack, Pesapal or PayHero/.test(evp), "fallback copy missing");
+    ck("event page defines paintPayNote once",
+      count(evp, "function paintPayNote(ev)") === 1, "count=" + count(evp, "function paintPayNote(ev)"));
+    ck("event page wires paintPayNote into renderEvent",
+      /paintPayNote\(ev\);\s*\n\s*renderPoster\(ev\);/.test(evp), "not called from renderEvent");
+
+    /* Execute the real function body against every payload shape. */
+    var paintSrc = "";
+    var pm = /function paintPayNote\(ev\)\{[\s\S]*?\n\}/.exec(evp);
+    if(pm) paintSrc = pm[0];
+    ck("paintPayNote source can be extracted", !!paintSrc, paintSrc ? paintSrc.length + " chars" : "not found");
+    function paintWith(payload){
+      if(!paintSrc) return null;
+      var note = { textContent: "" };
+      var build = new Function("ev", "$", paintSrc + "\nreturn paintPayNote;");
+      build(payload, function(){ return note; })(payload);
+      return note.textContent;
+    }
+    var nPs = paintWith({ payment_provider: "paystack", payment_mode: "own" });
+    var nPp = paintWith({ payment_provider: "pesapal", payment_mode: null });
+    var nPh = paintWith({ payment_provider: "payhero" });
+    var nAny = paintWith({ payment_provider: null, payment_mode: null });
+    var nOwn = paintWith({ payment_provider: "paystack", payment_mode: "owner" });
+    ck("paintPayNote names Paystack when the event pins Paystack",
+      !!nPs && /by Paystack\./.test(nPs) && !/Pesapal|PayHero/.test(nPs), nPs);
+    ck("paintPayNote names Pesapal when the event pins Pesapal",
+      !!nPp && /by Pesapal\./.test(nPp) && !/Paystack\.|PayHero/.test(nPp), nPp);
+    ck("paintPayNote names PayHero when the event pins PayHero",
+      !!nPh && /by PayHero\./.test(nPh) && !/Paystack\.|Pesapal/.test(nPh), nPh);
+    ck("paintPayNote stays honest when the gateway is only inherited",
+      !!nAny && /Paystack, Pesapal or PayHero/.test(nAny), nAny);
+    ck("paintPayNote avoids a gateway name in owner payment mode",
+      !!nOwn && /platform's payment partner/.test(nOwn) && !/by Paystack\.|by Pesapal\.|by PayHero\./.test(nOwn), nOwn);
+    ck("paintPayNote always promises the QR ticket",
+      [nPs, nPp, nPh, nAny, nOwn].every(function(s){
+        return !!s && /digital ticket with a QR code after payment is confirmed/.test(s);
+      }), nPs);
+    ck("paintPayNote treats owner mode differently to a pinned gateway", nOwn !== nPs, nOwn + " | " + nPs);
+  } catch (e){
+    ck("harness ran to completion", false, (e && (e.stack || e.message)) || String(e));
+  }
+  finish();
+})();
+</script>
+</body></html>

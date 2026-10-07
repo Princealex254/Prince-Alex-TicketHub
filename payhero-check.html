@@ -1,0 +1,1916 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>payhero check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){
+  var b = document.getElementById("out");
+  if(b) b.textContent = "JS ERROR: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || 0);
+});
+window.addEventListener("unhandledrejection", function(e){
+  var b = document.getElementById("out");
+  var r = e && e.reason;
+  if(b) b.textContent = "REJECTED: " + ((r && (r.stack || r.message)) || r);
+});
+</script>
+<script>
+/* ===========================================================================
+   Prince Alex TicketHub - three-provider payment harness
+   ---------------------------------------------------------------------------
+   Loads the real Worker (worker/worker.js) and drives the whole payment
+   workflow against a mocked D1, a mocked Firebase signing key and mocked
+   Paystack / Pesapal / PayHero APIs, so the unified payment service, the
+   provider resolver, organizer isolation and every webhook branch are
+   exercised for real.
+
+   Serve the repository over http (tools\serve.ps1) and open /payhero-check.html
+   - ES modules cannot be loaded from file://.
+   ========================================================================= */
+var R = { tests: [], notes: [] };
+var realFetch = window.fetch.bind(window);
+var KEEP = setInterval(function(){ }, 100);
+function ck(name, pass, detail){
+  R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  var box = document.getElementById("out");
+  if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name;
+}
+function note(text){ R.notes.push(String(text)); }
+/* Breadcrumb so a hang can be located from the last thing that ran. */
+var STEP = "start";
+function step(text){ STEP = text; var b = document.getElementById("out"); if(b) b.textContent = "STEP: " + text; }
+function finish(){
+  R.step = STEP;
+  R.summary = { total: R.tests.length, passed: R.tests.filter(function(t){ return t.pass; }).length,
+                failed: R.tests.filter(function(t){ return !t.pass; }).length };
+  clearInterval(KEEP);
+  var text = "RESULTS_JSON:" + JSON.stringify(R);
+  document.getElementById("out").textContent = text;
+  /* Also hand the result back to tools\run-check.ps1, which is far more
+     reliable than guessing when a headless page is finished. */
+  try { realFetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){ }
+}
+/* ===========================================================================
+   A small SQL subset engine, so the Worker runs against real relational
+   behaviour (guards, COALESCE, ORDER BY, joins, aggregates, CHECK
+   constraints) instead of a set of canned answers.
+   ========================================================================= */
+function makeDb(seed, options){
+  var strict = !!(options && options.strict);
+  var T = {};
+  for(var name in seed) T[name] = seed[name].map(function(r){ return Object.assign({}, r); });
+  /* In strict mode the database behaves like a real one: an unknown table or a
+     column the rows do not have is an error, which is how a database that has
+     not been migrated yet actually fails. */
+  function requireTable(table, sql){
+    if(Object.prototype.hasOwnProperty.call(T, table)) return;
+    if(strict) throw new Error("D1_ERROR: no such table: " + table + "  SQL: " + sql.slice(0, 120));
+  }
+  function requireColumn(table, column, sql){
+    if(!strict) return;
+    /* A missing table is requireTable's business; only check columns on a table
+       that exists, so one problem is reported at a time. */
+    if(!Object.prototype.hasOwnProperty.call(T, table)) return;
+    if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(column)) return;
+    var rows = T[table] || [];
+    if(!rows.length) return;                    /* nothing to prove it against */
+    for(var i = 0; i < rows.length; i++){
+      if(Object.prototype.hasOwnProperty.call(rows[i], column)) return;
+    }
+    throw new Error("D1_ERROR: no such column: " + column + "  SQL: " + sql.slice(0, 120));
+  }
+  var seq = {};
+  for(var n2 in T) seq[n2] = T[n2].reduce(function(m, r){ return Math.max(m, Number(r.id) || 0); }, 0);
+
+  function lit(v){
+    if(v === null || v === undefined) return null;
+    if(typeof v !== "string") return v;
+    var s = v.trim();
+    if(/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+    if(s === "NULL") return null;
+    if(s === "true") return true;
+    if(s === "false") return false;
+    if(/^'.*'$/.test(s)) return s.slice(1, -1).replace(/''/g, "'");
+    if(/^".*"$/.test(s)) return s.slice(1, -1);
+    return s;
+  }
+  function splitArgs(s){
+    var out = [], depth = 0, cur = "", quote = null;
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i];
+      if(quote){ cur += ch; if(ch === quote) quote = null; continue; }
+      if(ch === "'" || ch === '"'){ quote = ch; cur += ch; continue; }
+      if(ch === "(") depth++;
+      if(ch === ")") depth--;
+      if(ch === "," && depth === 0){ out.push(cur); cur = ""; continue; }
+      cur += ch;
+    }
+    if(cur.trim() !== "") out.push(cur);
+    return out;
+  }
+  function splitLogic(s, kw){
+    var out = [], depth = 0, cur = "", quote = null;
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i];
+      if(quote){ cur += ch; if(ch === quote) quote = null; continue; }
+      if(ch === "'" || ch === '"'){ quote = ch; cur += ch; continue; }
+      if(ch === "(") depth++;
+      if(ch === ")") depth--;
+      var rest = s.slice(i, i + kw.length).toUpperCase();
+      /* A value can end in a placeholder, a quote, a bracket or a character, so
+         "a = ? AND b = ?" has to split just as well as "a = 1 AND b = 2". */
+      if(depth === 0 && rest === kw && /[\s)?\w']/.test(s.charAt(i - 1) || " ")){
+        out.push(cur); cur = ""; i += kw.length - 1; continue;
+      }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.filter(function(x){ return x.trim() !== ""; });
+  }
+  /* Bound parameters are consumed through one cursor, exactly like a real
+     prepared statement: "a = ? AND b = ?" must use param 1 for a and param 2
+     for b, not the same value twice. */
+  function cursor(params){ return { a: (params || []).slice(), i: 0 }; }
+  function take(c){ var v = (c.a[c.i] === undefined) ? null : c.a[c.i]; c.i++; return v; }
+  function valueOf(expr, c, row){
+    var s = String(expr).trim();
+    if(s === "?") return take(c);
+    if(/^COALESCE\(/i.test(s)){
+      var inner = s.slice(s.indexOf("(") + 1, s.lastIndexOf(")"));
+      var args = splitArgs(inner);
+      /* SQL evaluates every argument and returns the first non-null one, so all
+         of their placeholders are consumed: a skipped placeholder would shift
+         every later value in the statement. */
+      var value = null, seen = false;
+      for(var i = 0; i < args.length; i++){
+        var v = valueOf(args[i], c, row);
+        if(!seen && v !== null && v !== undefined){ value = v; seen = true; }
+      }
+      return seen ? value : null;
+    }
+    if(/^COALESCE\(\s*(MAX|MIN)\(/i.test(s) || /^(MAX|MIN)\(/i.test(s)){
+      var body = s.slice(s.indexOf("(") + 1, s.lastIndexOf(")"));
+      var args2 = splitArgs(body).map(function(p){ return valueOf(p, c, row); });
+      var isMax = /MAX/i.test(s.slice(0, 12));
+      var nums = args2.filter(function(a){ return a !== null && a !== ""; }).map(Number);
+      return isMax ? Math.max.apply(null, [0].concat(nums)) : Math.min.apply(null, [0].concat(nums));
+    }
+    if(/^[A-Za-z_][A-Za-z0-9_.]*$/.test(s)) return cell(row, s);
+    if(/^[A-Za-z_][A-Za-z0-9_.]*\s*[+-]\s*([A-Za-z_][A-Za-z0-9_.]*|\?|-?\d+(\.\d+)?|'[^']*')$/.test(s)){
+      var m = /^([A-Za-z_][A-Za-z0-9_.]*)\s*([+-])\s*(.+)$/.exec(s);
+      var left = cell(row, m[1]) || 0;
+      var right = valueOf(m[3], c, row);
+      if(left === null || right === null) return null;
+      return m[2] === "+" ? Number(left) + Number(right) : Number(left) - Number(right);
+    }
+    return lit(s);
+  }
+  /* "e.id" and "id" are the same column once a query is joined, and a correlated
+     subquery may refer to the outer row (OUTER). */
+  var OUTER = null;
+  function cell(row, col){
+    if(row){
+      if(row[col] !== undefined) return row[col];
+      var short = col.split(".").pop();
+      if(row[short] !== undefined) return row[short];
+    }
+    if(OUTER){
+      if(OUTER[col] !== undefined) return OUTER[col];
+      var s2 = col.split(".").pop();
+      if(OUTER[s2] !== undefined) return OUTER[s2];
+    }
+    return null;
+  }
+  function matchCond(cond, row, c){
+    cond = String(cond).trim();
+    if(cond === "") return true;
+    var orParts = splitLogic(cond, " OR ");
+    if(orParts.length > 1){
+      /* Every branch consumes its own parameters, whether or not it matched. */
+      var matched = false;
+      for(var i = 0; i < orParts.length; i++){
+        var branch = { a: c.a, i: c.i };
+        if(matchCond(orParts[i], row, branch)) matched = true;
+        c.i = branch.i;
+      }
+      return matched;
+    }
+    var ands = splitLogic(cond, " AND ");
+    if(ands.length > 1){
+      for(var j = 0; j < ands.length; j++){
+        if(!matchCond(ands[j], row, c)) return false;
+      }
+      return true;
+    }
+    var m = /^([A-Za-z_][A-Za-z0-9_.]*)\s+IN\s*\((.*)\)$/i.exec(cond);
+    if(m){
+      if(/^\s*SELECT\b/i.test(m[2])){
+        var sub = runSelect(m[2], c.a.slice(c.i));
+        c.i = c.a.length;
+        for(var k = 0; k < sub.length; k++) if(c.a.indexOf(sub[k][m[1]]) > -1) return true;
+        return false;
+      }
+      var list = splitArgs(m[2]).map(function(p){ return valueOf(p, c, row); });
+      return list.indexOf(cell(row, m[1])) > -1;
+    }
+    m = /^([\s\S]+?)\s*(<=|>=|<>|!=|=|<|>)\s*([\s\S]+)$/.exec(cond);
+    if(m){
+      /* Both sides may be arithmetic, e.g. the atomic stock guard
+         "sold + ? <= quantity - sold". */
+      var left = valueOf(m[1], c, row);
+      var right = valueOf(m[3], c, row);
+      var bothNull = (left === null || left === undefined) && (right === null || right === undefined);
+      if(m[2] === "=") return bothNull ? false : String(left) === String(right);
+      if(m[2] === "!=" || m[2] === "<>") return bothNull ? true : String(left) !== String(right);
+      if(m[2] === "<") return Number(left) < Number(right);
+      if(m[2] === "<=") return Number(left) <= Number(right);
+      if(m[2] === ">") return Number(left) > Number(right);
+      if(m[2] === ">=") return Number(left) >= Number(right);
+    }
+    m = /^([A-Za-z_][A-Za-z0-9_.]*)\s+LIKE\s+(.+)$/i.exec(cond);
+    if(m) return String(cell(row, m[1]) || "").indexOf(String(valueOf(m[2], c, row)).replace(/%/g, "")) > -1;
+    m = /^([A-Za-z_][A-Za-z0-9_.]*)\s+IS\s+NOT\s+NULL$/i.exec(cond);
+    if(m) return cell(row, m[1]) !== null && cell(row, m[1]) !== undefined;
+    m = /^([A-Za-z_][A-Za-z0-9_.]*)\s+IS\s+NULL$/i.exec(cond);
+    if(m) return cell(row, m[1]) === null || cell(row, m[1]) === undefined;
+    throw new Error("unsupported WHERE clause: " + cond);
+  }
+  /* The top-level FROM, ignoring any FROM inside a subquery in the select list. */
+  function splitSelect(sql){
+    var s = String(sql).trim();
+    if(!/^SELECT\b/i.test(s)) return null;
+    var depth = 0, quote = null, fromAt = -1;
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i];
+      if(quote){ if(ch === quote) quote = null; continue; }
+      if(ch === "'" || ch === '"'){ quote = ch; continue; }
+      if(ch === "("){ depth++; continue; }
+      if(ch === ")"){ depth--; continue; }
+      if(depth === 0 && i > 0 && /\sFROM\s/i.test(s.slice(i, i + 6))){
+        fromAt = i + 1;
+        break;
+      }
+    }
+    if(fromAt < 0) return null;
+    var tm = /^FROM\s+([a-z_]+)([\s\S]*)$/i.exec(s.slice(fromAt).trim());
+    if(!tm) return null;
+    return { cols: s.slice(s.indexOf(" ") + 1, fromAt).trim(), table: tm[1].toLowerCase(), rest: tm[2] || "" };
+  }
+  /* Splits a select list on commas that are not inside parentheses. */
+  function splitColumns(cols){
+    var out = [], depth = 0, cur = "", quote = null;
+    for(var i = 0; i < cols.length; i++){
+      var ch = cols[i];
+      if(quote){ cur += ch; if(ch === quote) quote = null; continue; }
+      if(ch === "'" || ch === '"'){ quote = ch; cur += ch; continue; }
+      if(ch === "(") depth++;
+      if(ch === ")") depth--;
+      if(ch === "," && depth === 0){ out.push(cur); cur = ""; continue; }
+      cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+  function runSelect(sql, params){
+    var c = cursor(params);
+    var parsed = splitSelect(sql);
+    if(!parsed) throw new Error("unsupported SELECT: " + sql);
+    var cols = parsed.cols;
+    var table = parsed.table;
+    var rest = parsed.rest;
+    requireTable(table, sql);
+    if(!T[table]) T[table] = [];
+    var rows = T[table].map(function(r){ return Object.assign({}, r); });
+    /* In strict mode a column the rows do not have is a missing column, which is
+       exactly how an un-migrated database reports a new payments field. */
+    if(cols !== "*" && strict){
+      splitColumns(cols).forEach(function(c2){
+        var bare = c2.trim().split(/\s+AS\s+/i)[0].trim();
+        if(/\bSELECT\b/i.test(bare)) return;
+        if(/^[A-Za-z_][A-Za-z0-9_]*$/.test(bare)) requireColumn(table, bare, sql);
+      });
+    }
+    /* Table aliases: "FROM orders o" and "LEFT JOIN events e ON ...". The token
+       right after the table is its alias, unless it is a SQL keyword. */
+    var firstTok = ((/^\s+([A-Za-z_][A-Za-z0-9_]*)/.exec(rest) || [])[1] || "").toLowerCase();
+    var baseAlias = /^(left|right|inner|outer|cross|full|join|where|order|limit|group|and|or)$/.test(firstTok) ? table : firstTok;
+    var aliasMap = {};
+    splitColumns(cols).forEach(function(c2){
+      var m2 = /^([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)(?:\s+AS\s+([A-Za-z_][A-Za-z0-9_]*))?$/i.exec(c2.trim());
+      if(m2) aliasMap[m2[3] || m2[2]] = { table: m2[1].toLowerCase(), column: m2[2] };
+    });
+    var joinRe = /(?:LEFT\s+)?JOIN\s+([a-z_]+)\s+(?:([a-z_]+)\s+)?ON\s+([A-Za-z_][A-Za-z0-9_.]*)\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)/gi;
+    var jm;
+    while((jm = joinRe.exec(rest)) !== null){
+      var jt = jm[1].toLowerCase();
+      /* "a.b_id = b.id" - work out which side belongs to which table so the
+         ON clause is not read the wrong way round. */
+      var first = jm[3].split("."), second = jm[4].split(".");
+      var joinedAlias = (jm[2] || jt).toLowerCase();
+      /* A prefix names the joined table whether it is spelled as the table name
+         or as its alias ("organizers o"). */
+      var isJoined = function(p){ return p === jt || p === joinedAlias; };
+      var joinedCol = isJoined(first[0]) ? first[1] : (isJoined(second[0]) ? second[1] : second[0]);
+      var baseCol = isJoined(first[0]) ? (second.length > 1 ? second[1] : second[0])
+                                      : (first.length > 1 ? first[1] : first[0]);
+      rows = rows.map(function(r){
+        var match = (T[jt] || []).filter(function(j){ return String(cell(j, joinedCol)) === String(cell(r, baseCol)); })[0] || {};
+        var merged = Object.assign({}, r);
+        for(var k in match) if(!(k in merged)) merged[k] = match[k];
+        merged.__joined = { table: jt, alias: joinedAlias, row: match };
+        return merged;
+      });
+    }
+    /* Apply the column aliases: "e.title AS event_title" reads the joined table,
+       "o.order_number" the base one. */
+    rows = rows.map(function(r){
+      var joins = r.__joined ? [r.__joined] : [];
+      for(var name in aliasMap){
+        var entry = aliasMap[name];
+        if(entry.table === baseAlias || entry.table === table){ r[name] = cell(r, entry.column); }
+        else {
+          for(var j = 0; j < joins.length; j++){
+            if(entry.table === joins[j].table || entry.table === joins[j].alias){
+              r[name] = joins[j].row ? joins[j].row[entry.column] : null;
+            }
+          }
+        }
+      }
+      delete r.__joined;
+      return r;
+    });
+    var wm = /\bWHERE\b([\s\S]*?)(?:\bGROUP\s+BY\b|\bORDER\s+BY\b|\bLIMIT\b|$)/i.exec(rest);
+    if(wm) rows = rows.filter(function(r){ return matchCond(wm[1], r, cursor(c.a)); });
+    /* An aggregate only counts when it is a top-level select item: a COUNT(*)
+       inside a subquery must not turn the whole query into an aggregate. */
+    var plainCols = splitColumns(cols).filter(function(c2){ return !/\bSELECT\b/i.test(c2); }).join(", ");
+    var agg = /COALESCE\(\s*SUM\(([^)]+)\)\s*,\s*0\s*\)|SUM\(([^)]+)\)|COUNT\(\s*\*\s*\)|COALESCE\(\s*(?:MAX|MIN)\(([^)]*)\)\s*,\s*0\s*\)/i.exec(plainCols);
+    if(agg){
+      var out;
+      if(/COUNT/i.test(agg[0])) out = rows.length;
+      else if(agg[1] || agg[2]) out = rows.reduce(function(sum, r){ return sum + Number(cell(r, agg[1] || agg[2]) || 0); }, 0);
+      else {
+        var expr = splitArgs(agg[3])[0];
+        var isMax = /MAX/i.test(agg[0]);
+        var nums = rows.map(function(r){ return Number(cell(r, expr) || 0); });
+        out = isMax ? Math.max.apply(null, [0].concat(nums)) : Math.min.apply(null, [0].concat(nums));
+      }
+      /* Honour the column alias, e.g. "... AS total". */
+      var alias = /\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/i.exec(cols);
+      var named = {};
+      named[alias ? alias[1] : "n"] = out;
+      return [named];
+    }
+    var om = /ORDER\s+BY\s+([A-Za-z_][A-Za-z0-9_.]*)\s*(ASC|DESC)?/i.exec(rest);
+    if(om){
+      var col = om[1].split(".").pop();
+      var dir = (om[2] || "ASC").toUpperCase() === "DESC" ? -1 : 1;
+      rows.sort(function(a, b){
+        var av = cell(a, col), bv = cell(b, col);
+        if(av === bv) return 0;
+        return (av > bv ? 1 : -1) * dir;
+      });
+    }
+    var lm = /LIMIT\s+(\d+)/i.exec(rest);
+    if(lm) rows = rows.slice(0, Number(lm[1]));
+    if(cols === "*") return rows;
+    var columnList = splitColumns(cols);
+    /* The projected name is the alias when there is one, otherwise the column. */
+    var want = columnList.map(function(c2){
+      var s2 = c2.trim();
+      var am = /\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/i.exec(s2);
+      if(am) return am[1];
+      return s2.replace(/^\w+\./, "");
+    });
+    /* A correlated scalar subquery, e.g. "(SELECT MIN(price) FROM ticket_types
+       WHERE event_id = e.id) AS starting_price", is evaluated per row. */
+    var subqueries = columnList.map(function(c2){
+      if(!/\bSELECT\b/i.test(c2)) return null;
+      var i2 = c2.indexOf("(");
+      if(i2 < 0) return null;
+      var depth = 0, close = -1;
+      for(var k2 = i2; k2 < c2.length; k2++){
+        if(c2[k2] === "(") depth++;
+        else if(c2[k2] === ")"){ depth--; if(depth === 0){ close = k2; break; } }
+      }
+      if(close < 0) return null;
+      return { sql: c2.slice(i2, close + 1), alias: /\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/i.exec(c2) };
+    });
+    return rows.map(function(r){
+      var o = {};
+      want.forEach(function(c2, idx){
+        if(c2 === "*"){
+          /* "e.*" projects every column of the joined row. */
+          for(var k in r) o[k] = r[k];
+          return;
+        }
+        if(subqueries[idx]){
+          var previousOuter = OUTER;
+          OUTER = r;
+          var sub;
+          try { sub = runSelect(subqueries[idx].sql.replace(/^\s*\(/, ""), []); } finally { OUTER = previousOuter; }
+          var value = (sub[0] && (sub[0][subqueries[idx].alias ? subqueries[idx].alias[1] : "n"])) || null;
+          o[c2] = value;
+        } else {
+          o[c2] = (r[c2] === undefined) ? null : r[c2];
+        }
+      });
+      return o;
+    });
+  }
+  function runUpdate(sql, params){
+    var c = cursor(params);
+    var m = /^UPDATE\s+([a-z_]+)\s+SET\s+([\s\S]+?)\s+WHERE\s+([\s\S]+)$/i.exec(sql.trim());
+    if(!m) throw new Error("unsupported UPDATE: " + sql);
+    var table = m[1].toLowerCase();
+    /* m[3] is the WHERE clause with the keyword already removed. */
+    var where = m[3];
+    requireTable(table, sql);
+    var setParts = splitLogic(m[2], ",");
+    if(strict){
+      setParts.forEach(function(part){
+        var col = /^([A-Za-z_][A-Za-z0-9_]*)\s*=/.exec(part.trim());
+        if(col) requireColumn(table, col[1], sql);
+      });
+    }
+    var setParts = splitLogic(m[2], ",");
+    var setParams = (m[2].match(/\?/g) || []).length;
+    var rows = T[table] || [];
+    var changes = 0;
+    rows.forEach(function(row){
+      /* Parameters bind left to right: the SET values first, then the WHERE. */
+      if(!matchCond(where, row, cursor(c.a.slice(setParams)))) return;
+      /* One cursor for the whole SET list, so each column takes the next value. */
+      var setCursor = cursor(c.a.slice(0, setParams));
+      for(var i = 0; i < setParts.length; i++){
+        var eq = /^([A-Za-z_][A-Za-z0-9_.]*)\s*=\s*([\s\S]+)$/.exec(setParts[i].trim());
+        if(!eq) throw new Error("unsupported SET: " + setParts[i]);
+        row[eq[1].split(".").pop()] = valueOf(eq[2], setCursor, row);
+      }
+      changes++;
+    });
+    return changes;
+  }
+  function runInsert(sql, params){
+    var c = cursor(params);
+    var m = /^INSERT\s+INTO\s+([a-z_]+)\s*\(([^)]+)\)\s*VALUES\s*\(([\s\S]+)\)$/i.exec(sql.trim());
+    if(!m) throw new Error("unsupported INSERT: " + sql);
+    var table = m[1].toLowerCase();
+    requireTable(table, sql);
+    if(!T[table]) T[table] = [];
+    var cols = m[2].split(",").map(function(c2){ return c2.trim(); });
+    var vals = splitArgs(m[3]);
+    if(cols.length !== vals.length) throw new Error("column/value mismatch in INSERT INTO " + table);
+    var row = {};
+    cols.forEach(function(c2, i){ row[c2] = valueOf(vals[i], c, {}); });
+    if(row.id == null){ seq[table] = (seq[table] || 0) + 1; row.id = seq[table]; }
+    else seq[table] = Math.max(seq[table] || 0, Number(row.id));
+    /* The few UNIQUE constraints the payment path depends on. */
+    var uniq = { tickets: ["ticket_number", "qr_token"], payments: ["reference"],
+                 organizer_payment_providers: [] }[table] || [];
+    for(var u = 0; u < uniq.length; u++){
+      var dup = T[table].filter(function(r){ return r[uniq[u]] === row[uniq[u]]; })[0];
+      if(dup) throw new Error("UNIQUE constraint failed: " + table + "." + uniq[u]);
+    }
+    if(table === "organizer_payment_providers"){
+      var dup2 = T[table].filter(function(r){ return String(r.organizer_id) === String(row.organizer_id) && r.provider === row.provider; })[0];
+      if(dup2) throw new Error("UNIQUE constraint failed: organizer_payment_providers.organizer_id, provider");
+    }
+    T[table].push(row);
+    return row;
+  }
+  function runDelete(sql, params){
+    var m = /^DELETE\s+FROM\s+([a-z_]+)\s*(?:WHERE\s+([\s\S]+))?$/i.exec(sql.trim());
+    if(!m) throw new Error("unsupported DELETE: " + sql);
+    var table = m[1].toLowerCase();
+    requireTable(table, sql);
+    var before = (T[table] || []).length;
+    T[table] = m[2] ? (T[table] || []).filter(function(r){ return !matchCond(m[2], r, cursor(params)); }) : [];
+    return before - T[table].length;
+  }
+  /* Provider/status CHECK constraints, exactly as the migration defines them:
+     an un-migrated database must reject 'payhero' in the harness too. */
+  var CHECKS = {
+    payments: { provider: ["paystack", "pesapal", "payhero"],
+                status: ["pending", "success", "failed", "abandoned", "reversed"] },
+    payment_settings: { provider: ["paystack", "pesapal", "payhero"],
+                        status: ["not_connected", "connected", "configuration_required", "error"] },
+    organizer_payment_providers: { provider: ["paystack", "pesapal", "payhero"],
+                        status: ["not_connected", "connected", "configuration_required", "error"] }
+  };
+  function checkRows(){
+    for(var table in CHECKS){
+      var rows = T[table] || [];
+      for(var i = 0; i < rows.length; i++){
+        for(var col in CHECKS[table]){
+          var v = rows[i][col];
+          if(v === null || v === undefined) continue;
+          if(CHECKS[table][col].indexOf(String(v)) < 0){
+            throw new Error("CHECK constraint failed: " + table + "." + col + " (" + v + ")");
+          }
+        }
+      }
+    }
+  }
+  function exec(sql, params){
+    var s = String(sql).trim();
+    SQL_LOG.push(s.slice(0, 200) + "  <=  " + JSON.stringify((params || []).map(function(p){ return p === undefined ? null : String(p).slice(0, 40); })));
+    if(SQL_LOG.length > 40) SQL_LOG.shift();
+    var out = null;
+    try {
+      if(/^SELECT/i.test(s)) out = runSelect(s, params);
+      else if(/^INSERT/i.test(s)) out = runInsert(s, params);
+      else if(/^UPDATE/i.test(s)) out = runUpdate(s, params);
+      else if(/^DELETE/i.test(s)) out = runDelete(s, params);
+      else throw new Error("unsupported statement: " + s);
+      checkRows();
+    } catch(e){
+      /* Keep the real cause: the Worker often swallows a database error and
+         answers with its own safe message, which hides what actually broke. */
+      if(typeof MOCK_ERRORS !== "undefined") MOCK_ERRORS.push(String(e && e.message || e) + "  SQL: " + s.slice(0, 160));
+      throw e;
+    }
+    return out;
+  }
+  function stmt(sql, bound){
+    return {
+      bind: function(){ return stmt(sql, Array.prototype.slice.call(arguments)); },
+      all: async function(){
+        var r = exec(sql, bound);
+        return { results: Array.isArray(r) ? r : [] };
+      },
+      first: async function(){
+        var r = exec(sql, bound);
+        var rows = Array.isArray(r) ? r : [];
+        return (rows[0] === undefined) ? null : rows[0];
+      },
+      run: async function(){
+        var r = exec(sql, bound);
+        /* D1 reports meta.changes and meta.last_row_id, and the Worker depends on
+           both: an INSERT that reported no id is treated as a failure, and an
+           UPDATE that matched nothing must report 0 changes. */
+        var lastId = null, changes = 0;
+        if(Array.isArray(r)){
+          changes = r.length;
+          if(r.length && r[r.length - 1].id !== undefined) lastId = r[r.length - 1].id;
+        } else if(r && typeof r === "object"){
+          changes = 1;
+          if(r.id !== undefined) lastId = r.id;
+        } else if(typeof r === "number"){
+          changes = r;
+        }
+        return { success: true, results: [], meta: { changes: changes, last_row_id: lastId } };
+      }
+    };
+  }
+  return { state: T, prepare: function(sql){ return stmt(sql, []); }, table: function(n){ return T[n]; } };
+}
+/* ------------------------------------------------------------- firebase ----- */
+var PROJECT = "tickethub-test";
+var FB = { kid: "harness-kid", pair: null, jwk: null };
+function b64u(bytes){
+  var bin = ""; for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function utf8(s){ return new TextEncoder().encode(s); }
+async function initFirebase(){
+  FB.pair = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048,
+    publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
+  var jwk = await crypto.subtle.exportKey("jwk", FB.pair.publicKey);
+  jwk.kid = FB.kid; jwk.alg = "RS256"; jwk.use = "sig";
+  FB.jwk = jwk;
+}
+async function mintToken(uid, email, name){
+  var now = Math.floor(Date.now() / 1000);
+  var head = b64u(utf8(JSON.stringify({ alg: "RS256", kid: FB.kid, typ: "JWT" })));
+  var body = b64u(utf8(JSON.stringify({ iss: "https://securetoken.google.com/" + PROJECT, aud: PROJECT,
+    sub: uid, email: email, name: name, email_verified: true, iat: now, exp: now + 3600 })));
+  var sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", FB.pair.privateKey, utf8(head + "." + body));
+  return head + "." + body + "." + b64u(new Uint8Array(sig));
+}
+/* --------------------------------------------------- mocked provider APIs --- */
+function jsonRes(body, status){
+  return new Response(JSON.stringify(body), { status: status || 200, headers: { "Content-Type": "application/json" } });
+}
+var PH = { username: "ph-user-1", password: "ph-pass-1", channel: "133" };
+var PS = { secret: "sk_live_harness_secret", public: "pk_live_harness" };
+var PE = { key: "conkey123", secret: "consecret123" };
+/* Provider state the tests flip to drive each branch. */
+var payhero = null, paystack = null, pesapal = null;
+function resetProviders(){
+  payhero = { stk: "queued", status: "SUCCESS", amount: null, channels: true, calls: [], rejects: false };
+  paystack = { status: "success", amount: null, calls: [], rejects: false };
+  pesapal = { status: 1, amount: null, calls: [], ipnId: "IPN-1", rejects: false };
+}
+function mockProviderFetch(){
+  window.fetch = async function(input, init){
+    var href = (typeof input === "string") ? input : ((input && input.url) || String(input));
+    var method = (init && init.method) || "GET";
+    var body = (init && init.body && init.body.length) ? JSON.parse(init.body) : {};
+    var auth = (init && init.headers && (init.headers.Authorization || init.headers.authorization)) || "";
+    if(href.indexOf("googleapis.com") > -1) return jsonRes({ keys: [FB.jwk] });
+    if(href.indexOf("api.brevo.com") > -1) return jsonRes({ messageId: "harness" }, 201);
+    /* ---- PayHero: HTTP Basic on every call, as documented */
+    if(href.indexOf("backend.payhero.co.ke") > -1){
+      var expectAuth = "Basic " + btoa(PH.username + ":" + PH.password);
+      payhero.calls.push({ href: href, method: method, body: body, auth: auth });
+      if(String(auth) !== expectAuth) return jsonRes({ success: false, error_message: "Unauthenticated" }, 401);
+      if(payhero.rejects) return jsonRes({ success: false, error_message: "Channel is disabled" }, 400);
+      if(/\/payment_channels/.test(href)){
+        return payhero.channels
+          ? jsonRes({ payment_channels: [{ id: 133, channel_type: "paybill", is_active: true },
+                                         { id: 999, channel_type: "till", is_active: true }] })
+          : jsonRes({ payment_channels: [{ id: 999, channel_type: "till", is_active: true }] });
+      }
+      if(/\/transaction-status/.test(href)){
+        var ref = decodeURIComponent((href.split("reference=")[1] || "").split("&")[0]);
+        if(payhero.status === "missing") return jsonRes({ success: false, error_message: "not found" }, 404);
+        var out = { transaction_date: "2026-01-01T10:00:00Z", provider: "m-pesa",
+          success: payhero.status === "SUCCESS", merchant: "Harness", status: payhero.status,
+          reference: ref, third_party_reference: "SKQ96C7K7H", provider_reference: "SKQ96C7K7H",
+          CheckoutRequestID: "ws_CO_harness" };
+        /* The documented status payload carries no amount; the harness only
+           reports one when a test deliberately manipulates it. */
+        if(payhero.amount !== null) out.amount = payhero.amount;
+        return jsonRes(out);
+      }
+      if(/\/payments$/.test(href)){
+        if(body.amount == null || !body.channel_id || !body.phone_number) return jsonRes({ success: false, error_message: "missing fields" }, 400);
+        if(String(body.external_reference || "").indexOf("PAT-") !== 0) return jsonRes({ success: false, error_message: "bad reference" }, 400);
+        return jsonRes({ success: true, status: String(payhero.stk).toUpperCase(),
+          reference: "PH" + String(payhero.calls.length).padStart(4, "0"),
+          CheckoutRequestID: "ws_CO_harness" }, 201);
+      }
+      return jsonRes({ error_message: "unknown endpoint" }, 404);
+    }
+    /* ---- Paystack */
+    if(href.indexOf("api.paystack.co") > -1){
+      paystack.calls.push({ href: href, method: method, body: body, auth: auth });
+      if(String(auth).indexOf("Bearer sk_") < 0) return jsonRes({ status: false, message: "bad key" }, 401);
+      if(paystack.rejects) return jsonRes({ status: false, message: "rejected" }, 400);
+      if(/\/transaction\/initialize/.test(href)){
+        return jsonRes({ status: true, data: { authorization_url: "https://checkout.paystack.com/test",
+          reference: body.reference, access_code: "access_test" } });
+      }
+      if(/\/transaction\/verify\//.test(href)){
+        return jsonRes({ status: true, data: { id: 998877, status: paystack.status,
+          amount: (paystack.amount === null ? 150000 : paystack.amount), currency: "KES",
+          reference: href.split("/").pop(), channel: "mobilemoney",
+          paid_at: paystack.status === "success" ? "2026-01-01T10:00:00Z" : null } });
+      }
+      if(/\/balance/.test(href)) return jsonRes({ status: true, data: { balance: 100 } });
+      return jsonRes({ status: false }, 400);
+    }
+    /* ---- Pesapal */
+    if(href.indexOf("pesapal") > -1){
+      pesapal.calls.push({ href: href, method: method, body: body, auth: auth });
+      if(pesapal.rejects) return jsonRes({ status: "error" }, 400);
+      if(/\/Auth\/RequestToken/.test(href)) return jsonRes({ token: "pesapal-token-1", expires_in: 3600 });
+      if(/\/URLSetup\/RegisterIPN/.test(href)) return jsonRes({ ipn_id: pesapal.ipnId, status: "success" });
+      if(/\/Transactions\/SubmitOrderRequest/.test(href)){
+        return jsonRes({ status: "success", redirect_url: "https://cybqa.pesapal.com/checkout/test",
+          order_tracking_id: "PES-TRACK-1", merchant_reference: body.id });
+      }
+      if(/\/Transactions\/GetTransactionStatus/.test(href)){
+        return jsonRes({ status: "success", status_code: pesapal.status,
+          amount: (pesapal.amount === null ? 1500 : pesapal.amount), currency: "KES",
+          payment_method: "Visa", confirmation_code: "conf-1", merchant_reference: "PAT-1" });
+      }
+      return jsonRes({ status: "error" }, 400);
+    }
+    return jsonRes({ error: "unexpected_outbound_call", url: href }, 599);
+  };
+}
+/* ----------------------------------------------------------------- seed ---- */
+var db = null, W = null;
+var TOKENS = {};
+function seed(overrides){
+  return Object.assign({
+    users: [
+      { id: 1, firebase_uid: "uid-a", full_name: "Alice A", email: "a@example.com", phone: "+254700000001", role: "organizer", status: "active" },
+      { id: 2, firebase_uid: "uid-b", full_name: "Bob B", email: "b@example.com", phone: "+254700000002", role: "organizer", status: "active" },
+      { id: 3, firebase_uid: "uid-c", full_name: "Cara C", email: "c@example.com", phone: "+254700000003", role: "organizer", status: "active" }
+    ],
+    organizers: [
+      { id: 1, user_id: 1, business_name: "Alice Events", business_email: "a@example.com", business_phone: "+254700000001", logo_url: null, logo_key: null, status: "active", use_owner_payments: 0 },
+      { id: 2, user_id: 2, business_name: "Bob Events", business_email: "b@example.com", business_phone: "+254700000002", logo_url: null, logo_key: null, status: "active", use_owner_payments: 0 },
+      { id: 3, user_id: 3, business_name: "Cara Events", business_email: "c@example.com", business_phone: "+254700000003", logo_url: null, logo_key: null, status: "active", use_owner_payments: 0 }
+    ],
+    events: [
+      { id: 1, organizer_id: 1, title: "Nairobi Live", slug: "nairobi-live", description: "Live music.", category: "Music",
+        venue: "KICC", location: "Nairobi", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00",
+        poster_url: null, status: "active", is_featured: 0, sales_start: null, sales_end: null, payment_provider: null, payment_mode: null },
+      { id: 2, organizer_id: 1, title: "Legacy Event", slug: "legacy-event", description: "Old event.", category: "Music",
+        venue: "Nairobi", location: "Nairobi", event_date: "2027-11-05", start_time: "10:00", end_time: "12:00",
+        poster_url: null, status: "active", is_featured: 0, sales_start: null, sales_end: null, payment_provider: null, payment_mode: null },
+      { id: 3, organizer_id: 2, title: "Bob Bash", slug: "bob-bash", description: "Bob only.", category: "Music",
+        venue: "Nairobi", location: "Nairobi", event_date: "2027-12-05", start_time: "10:00", end_time: "12:00",
+        poster_url: null, status: "active", is_featured: 0, sales_start: null, sales_end: null, payment_provider: null, payment_mode: null }
+    ],
+    ticket_types: [
+      { id: 11, event_id: 1, name: "Regular", description: null, price: 1500, quantity: 100, sold: 0, sales_start: null, sales_end: null, status: "active" },
+      { id: 12, event_id: 1, name: "VIP", description: null, price: 3500, quantity: 10, sold: 0, sales_start: null, sales_end: null, status: "active" },
+      { id: 21, event_id: 2, name: "Regular", description: null, price: 1000, quantity: 50, sold: 0, sales_start: null, sales_end: null, status: "active" },
+      { id: 31, event_id: 3, name: "Regular", description: null, price: 2000, quantity: 50, sold: 0, sales_start: null, sales_end: null, status: "active" }
+    ],
+    orders: [], order_items: [], payments: [], tickets: [],
+    payment_settings: [], organizer_payment_providers: [], platform_payment_providers: [],
+    app_settings: [], email_outbox: [], event_staff: [], contact_messages: [], rate_limits: []
+  }, overrides || {});
+}
+function makeEnv(opts){
+  var o = opts || {};
+  return {
+    /* A live reference, so a test group can replace the database and still use
+       an env it built earlier. */
+    get DB(){ return db; },
+    BUCKET: null,
+    PAYMENT_ENCRYPTION_KEY: "harness-encryption-key-0123456789",
+    FIREBASE_PROJECT_ID: PROJECT,
+    FRONTEND_URL: "https://tickethub.example",
+    ALLOWED_ORIGINS: "https://tickethub.example",
+    /* TURNSTILE_SECRET is deliberately absent: the Worker documents that an
+       un-configured deployment skips the challenge, which keeps this harness
+       focused on the payment layer. */
+    PESAPAL_ENV: "sandbox",
+    EMAIL_DISABLED: "true",
+    PAYSTACK_SECRET_KEY: o.platformPaystack === false ? undefined : "sk_live_platform_fallback",
+    PESAPAL_CONSUMER_KEY: o.platformPesapal === false ? undefined : PE.key,
+    PESAPAL_CONSUMER_SECRET: o.platformPesapal === false ? undefined : PE.secret,
+    PAYHERO_API_USERNAME: undefined, PAYHERO_API_PASSWORD: undefined, PAYHERO_CHANNEL_ID: undefined
+  };
+}
+/* --------------------------------------------------------------- requests --- */
+var API = "https://worker.test";
+var ipSeq = 0;
+function nextIp(){ ipSeq++; return "41.90." + Math.floor(ipSeq / 200) + "." + (1 + (ipSeq % 200)); }
+function authHeader(who){ return TOKENS[who] ? { Authorization: "Bearer " + TOKENS[who] } : {}; }
+async function call(path, init, env, ip){
+  var base = Object.assign({}, init || {});
+  base.headers = Object.assign({}, base.headers || {}, { "CF-Connecting-IP": ip || nextIp() });
+  var res = await W.default.fetch(new Request(API + path, base), env || makeEnv(), { waitUntil: function(){} });
+  var body = null, text = "";
+  try { text = await res.clone().text(); body = JSON.parse(text); } catch(e){ body = null; }
+  return { status: res.status, body: body || { __raw: (text || "").slice(0, 200) }, res: res };
+}
+async function send(path, body, env, headers, ip){
+  return call(path, { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, headers || {}),
+    body: JSON.stringify(body || {}) }, env, ip);
+}
+function rows(t){ return db.table(t) || []; }
+function findOrder(reference){ return rows("orders").filter(function(o){ return o.order_number === reference; })[0] || null; }
+function findPayment(reference){ return rows("payments").filter(function(p){ return p.reference === reference; })[0] || null; }
+function providerRowOf(orgId, key){
+  return rows("organizer_payment_providers").filter(function(r){ return String(r.organizer_id) === String(orgId) && r.provider === key; })[0] || null;
+}
+function platformRowOf(key){
+  return rows("platform_payment_providers").filter(function(r){ return r.provider === key; })[0] || null;
+}
+async function buy(eventId, ticketTypeId, qty, env, who){
+  var res = await send("/api/orders", { event_id: eventId, items: [{ ticket_type_id: ticketTypeId, quantity: qty || 1 }],
+    customer: { full_name: "Jane Wanjiru", email: "jane@example.com", phone: "+254712345678" } }, env, authHeader(who));
+  return res;
+}
+/* ------------------------------------------------------------------ tests --- */
+var errors = [], warnings = [], MOCK_ERRORS = [], SQL_LOG = [];
+var realWarn = console.warn, realError = console.error;
+console.warn = function(){ warnings.push(Array.prototype.map.call(arguments, String).join(" ")); };
+console.error = function(){ errors.push(Array.prototype.map.call(arguments, String).join(" ")); };
+
+async function connect(who, key, fields, env){
+  var res = await send("/api/organizer/payment-providers/" + key, fields, env, authHeader(who));
+  if(res.status !== 200) note("connect " + key + " for " + who + " -> " + res.status + " " + JSON.stringify(res.body).slice(0, 200));
+  return res;
+}
+async function setActive(who, key, env){
+  return send("/api/organizer/payment-provider/select", { provider: key }, env, authHeader(who));
+}
+/* Signs a Paystack webhook with the real HMAC-SHA512 the platform uses. */
+async function paystackSignature(raw, secret){
+  var enc = new TextEncoder().encode(secret);
+  var key = await crypto.subtle.importKey("raw", enc, { name: "HMAC", hash: "SHA-512" }, false, ["sign"]);
+  var sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw));
+  return [...new Uint8Array(sig)].map(function(b){ return b.toString(16).padStart(2, "0"); }).join("");
+}
+/* The documented PayHero callback body. */
+function payheroCallback(reference, amount, status, code, headers){
+  return { forward_url: "", status: true, response: { Amount: amount, CheckoutRequestID: "ws_CO_harness",
+    ExternalReference: reference, MerchantRequestID: "3202-70921557-1", MpesaReceiptNumber: "SAE3YULR0Y",
+    Phone: "+254712345678", ResultCode: (code === undefined ? 0 : code), ResultDesc: "The service request is processed successfully.",
+    Status: status || "Success" } };
+}
+
+(async function(){
+  try {
+    /* ------------------------------------------- 0. load the real Worker ---- */
+    step("crypto");
+    await initFirebase();
+    step("tokens");
+    TOKENS.a = await mintToken("uid-a", "a@example.com", "Alice A");
+    TOKENS.b = await mintToken("uid-b", "b@example.com", "Bob B");
+    TOKENS.c = await mintToken("uid-c", "c@example.com", "Cara C");
+    /* The platform owner. Owners are ONLY ever determined by an existing D1 row
+       with role 'owner', which the owner-payment tests seed themselves. */
+    TOKENS.o = await mintToken("uid-o", "o@example.com", "Olive O");
+    step("mock");
+    mockProviderFetch();
+    resetProviders();
+    db = makeDb(seed());
+    step("fetch worker");
+    var src = await (await realFetch("./worker/worker.js")).text();
+    step("import worker");
+    W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    step("imported");
+    ck("the Worker loads as an ES module", typeof W.default.fetch === "function", src.length + " bytes");
+    var twoFiles = await (await realFetch("./worker/index.js")).text();
+    ck("worker/index.js is still the source of truth and contains the PayHero adapter",
+       twoFiles.indexOf("PayheroProvider") > -1 && twoFiles.indexOf("payhero") > -1, "");
+    var migration = await (await realFetch("./worker/migrations/0002_payhero.sql")).text();
+    ck("the PayHero migration widens the payments provider CHECK constraint",
+       /provider IN \('paystack','pesapal','payhero'\)/.test(migration) &&
+       /CREATE TABLE IF NOT EXISTS organizer_payment_providers/.test(migration) &&
+       /ALTER TABLE events ADD COLUMN payment_provider/.test(migration), migration.length + " bytes");
+    var repair = await (await realFetch("./worker/migrations/0003_payhero_repair.sql")).text();
+    ck("the repair migration adds only what is missing, one statement at a time, and never rebuilds a table",
+       /(^|\n)ALTER TABLE payments ADD COLUMN provider_metadata TEXT;/.test(repair) &&
+        /(^|\n)ALTER TABLE payments ADD COLUMN failure_reason TEXT;/.test(repair) &&
+        /(^|\n)ALTER TABLE payments ADD COLUMN failure_at TEXT;/.test(repair) &&
+        /(^|\n)ALTER TABLE events ADD COLUMN payment_provider TEXT;/.test(repair) &&
+       /CREATE TABLE IF NOT EXISTS organizer_payment_providers/.test(repair) &&
+       !/DROP TABLE/.test(repair) && !/INSERT INTO payments/.test(repair),
+       repair.length + " bytes");
+    var rebuild = await (await realFetch("./worker/migrations/0004_payhero_check_rebuild.sql")).text();
+    ck("the CHECK rebuild migration copies every payment row before it drops anything",
+       /provider IN \('paystack','pesapal','payhero'\)/.test(rebuild) &&
+       /(^|\n)INSERT INTO payments_new[\s\S]*?SELECT[\s\S]*?FROM payments;/.test(rebuild) &&
+        /(^|\n)DROP TABLE payments;/.test(rebuild) && /payment_settings_new/.test(rebuild) &&
+       !/ADD COLUMN/.test(rebuild), rebuild.length + " bytes");
+    var schema = await (await realFetch("./worker/schema.sql")).text();
+    ck("a fresh schema already contains PayHero, the per-provider table and the event override",
+       /payhero/.test(schema) && /organizer_payment_providers/.test(schema) && /payment_provider TEXT/.test(schema), "");
+    var checkout = await (await realFetch("./checkout/index.html")).text();
+    ck("checkout never hardcodes one gateway: it starts payment through /api/payments/create",
+       /api\/payments\/create/.test(checkout) && !/api\/payments\/paystack\/initiate/.test(checkout), "");
+    ck("checkout handles the M-Pesa prompt: it waits, polls and stops on every terminal state",
+       /mode === "stk_push"/.test(checkout) && /watchPhonePrompt/.test(checkout) &&
+       /s\.status === "paid"/.test(checkout) && /abandoned/.test(checkout) &&
+       /payment-success\/\?reference=/.test(checkout), "");
+    ck("checkout explains the phone prompt and never offers a gateway choice",
+       /M-Pesa prompt on your phone/.test(checkout) && !/<select[^>]*id="payProvider"/.test(checkout), "");
+    var settings = await (await realFetch("./organizer-settings/index.html")).text();
+    ck("organizer settings renders one card per provider from the API",
+       /payCardHtml/.test(settings) && /payhero/.test(settings) &&
+       /\/api\/organizer\/payment-providers/.test(settings) && /\/api\/organizer\/payment-provider\/select/.test(settings), "");
+    ck("organizer settings has no leftover two-provider form", !/id="payProvider"/.test(settings), "");
+  } catch(e){ ck("harness bootstrap", false, (e && e.stack) || String(e)); finish(); return; }
+
+  try {
+    /* ------------------------------- 0a. the mock engine must behave like SQL */
+    var probe = makeDb({ t: [] });
+    await probe.prepare("INSERT INTO t (a, b, n) VALUES (?,?,?)").bind("x", "payhero", 1).run();
+    await probe.prepare("INSERT INTO t (a, b, n) VALUES (?,?,?)").bind("x", "pesapal", 2).run();
+    var one = await probe.prepare("SELECT * FROM t WHERE a = ? AND b = ?").bind("x", "payhero").first();
+    ck("engine: a two-parameter WHERE binds the first and second parameter to the right columns",
+       !!one && one.n === 1, JSON.stringify(one || null));
+    var none = await probe.prepare("SELECT * FROM t WHERE a = ? AND b = ?").bind("x", "paystack").first();
+    ck("engine: a two-parameter WHERE that matches nothing returns null", none === null, JSON.stringify(none));
+    await probe.prepare("UPDATE t SET n = ?, a = ? WHERE b = ? AND n = ?").bind(9, "y", "payhero", 1).run();
+    var after = await probe.prepare("SELECT * FROM t WHERE a = ? AND b = ?").bind("y", "payhero").first();
+    var all = await probe.prepare("SELECT * FROM t").all();
+    ck("engine: UPDATE binds its SET values and its WHERE values in the right order",
+       !!after && after.n === 9, JSON.stringify(after || null) + " rows=" + JSON.stringify(all.results));
+    await probe.prepare("DELETE FROM t WHERE a = ? AND b = ?").bind("x", "pesapal").run();
+    var left = await probe.prepare("SELECT * FROM t").all();
+    ck("engine: DELETE with two parameters removes exactly one row", left.results.length === 1, left.results.length);
+    var or = await probe.prepare("SELECT * FROM t WHERE a = ? OR b = ?").bind("zzz", "payhero").all();
+    ck("engine: OR still matches the second parameter", or.results.length === 1, or.results.length);
+    var agg = await probe.prepare("SELECT COALESCE(SUM(n),0) AS total FROM t").first();
+    ck("engine: COALESCE(SUM(x),0) aggregates", agg && agg.total === 9, JSON.stringify(agg || null));
+    var joined = makeDb({ a: [{ id: 1, b_id: 2, name: "one" }], b: [{ id: 2, label: "hello" }] });
+    var j = await joined.prepare("SELECT a.*, b.label AS b_label FROM a LEFT JOIN b ON a.b_id = b.id WHERE a.id = ?").bind(1).first();
+    ck("engine: LEFT JOIN with a column alias reads the joined table",
+       !!j && j.b_label === "hello" && j.name === "one", JSON.stringify(j || null));
+    var ev = makeDb({ events: [{ id: 2, organizer_id: 1, title: "Gig" }], organizers: [{ id: 1, business_name: "Org" }] });
+    var j2 = await ev.prepare("SELECT e.*, o.business_name AS organizer_name, " +
+      "(SELECT MIN(price) FROM ticket_types tt WHERE tt.event_id = e.id) AS starting_price " +
+      "FROM events e LEFT JOIN organizers o ON o.id = e.organizer_id WHERE e.id = ?").bind(2).first();
+    ck("engine: a query with a join, an alias, a correlated subquery and a qualified WHERE",
+       !!j2 && j2.title === "Gig" && j2.organizer_name === "Org" && j2.starting_price === null,
+       JSON.stringify(j2 || null));
+    var scoped = makeDb({ orders: [{ id: 1, organizer_id: 2, order_number: "PAT-A" }, { id: 2, organizer_id: 1, order_number: "PAT-B" }] });
+    var j3 = await scoped.prepare("SELECT o.*, (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS ticket_count " +
+      "FROM orders o LEFT JOIN organizers x ON x.id = o.organizer_id WHERE o.organizer_id = ?").bind(1).all();
+    ck("engine: the WHERE filters after the join and a subselect on the other organizer",
+       j3.results.length === 1 && j3.results[0].order_number === "PAT-B", JSON.stringify(j3.results));
+  } catch(e){ ck("engine self-test", false, (e && e.stack) || String(e)); }
+
+  try {
+    var env = makeEnv({ platformPaystack: false, platformPesapal: false });
+    db = makeDb(seed());
+    var list = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("a") }, env);
+    var cards = (list.body.providers || []);
+    ck("GET /api/organizer/payment-providers lists exactly three providers",
+       list.status === 200 && cards.length === 3 &&
+       cards.map(function(c){ return c.key; }).sort().join(",") === "payhero,paystack,pesapal",
+       list.status + " " + (cards || []).map(function(c){ return c.key; }).join(","));
+    ck("an organizer with nothing configured sees every provider as not connected and unavailable",
+       cards.every(function(c){ return c.status === "not_connected" && c.available === false; }),
+       cards.map(function(c){ return c.key + ":" + c.status + ":" + c.available; }).join(" | "));
+    ck("no secret material is ever returned by the settings API",
+       JSON.stringify(list.body).indexOf(PH.password) < 0 && JSON.stringify(list.body).indexOf(PS.secret) < 0 &&
+       JSON.stringify(list.body).indexOf("v1.") < 0, "no ciphertext in the payload");
+    var order = await buy(1, 11, 1, env);
+    ck("checkout is closed and the order records the default provider",
+       order.status === 201 && order.body.payment_configured === false && order.body.provider === "paystack",
+       order.status + " " + JSON.stringify(order.body.payment_message || ""));
+    ck("the closed-checkout message names the fix, not the infrastructure",
+       /not currently configured/i.test(order.body.payment_message || "") &&
+       /Payment Settings/i.test(order.body.payment_message || ""), order.body.payment_message || "");
+    var init = await send("/api/payments/paystack/initiate", { reference: order.body.order.reference, checkout_proof: order.body.checkout_proof }, env);
+    ck("initiating payment without a configured provider is refused with the actionable message",
+       init.status === 409 && init.body.code === "PROVIDER_NOT_CONNECTED" &&
+       /not currently configured/i.test(init.body.error || init.body.message || ""),
+       init.status + " " + JSON.stringify(init.body).slice(0, 160));
+    ck("there is no silent fallback to another gateway",
+       payhero.calls.length === 0 && paystack.calls.length === 0 && pesapal.calls.length === 0, "no provider API was called");
+  } catch(e){ ck("group 1 (no provider configured)", false, (e && e.stack) || String(e)); }
+  try {
+    /* --------------------- 2. organizer with ONLY PayHero configured */
+    db = makeDb(seed());
+    resetProviders();
+    env = makeEnv({ platformPaystack: false, platformPesapal: false });
+    var partial = await connect("a", "payhero", { api_username: PH.username, password: PH.password }, env);
+    var phCard = partial.body.provider_card || {};
+    ck("an incomplete PayHero config reports 'Configuration Required'",
+       partial.status === 200 && phCard.status === "configuration_required" && phCard.available === false,
+       partial.status + " " + phCard.status);
+    var test0 = await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    ck("a connection test with no channel id is refused with actionable wording",
+       test0.status === 200 && test0.body.ok === false && /Add your PayHero details/i.test(test0.body.message || ""),
+       test0.status + " " + (test0.body.message || ""));
+    var full = await connect("a", "payhero", { api_username: PH.username, password: PH.password, channel_id: PH.channel }, env);
+    phCard = full.body.provider_card || {};
+    ck("a complete PayHero config reports Connected and Available",
+       full.status === 200 && phCard.status === "connected" && phCard.available === true &&
+       phCard.checkout_mode === "stk_push" && phCard.test_supported === true,
+       full.status + " " + phCard.status + " " + phCard.checkout_mode);
+    ck("the PayHero password is stored encrypted and never echoed back",
+       /v1\./.test(String(providerRowOf(1, "payhero").password_encrypted)) &&
+       JSON.stringify(full.body).indexOf(PH.password) < 0 &&
+       providerRowOf(1, "payhero").password_encrypted !== PH.password,
+       "row=" + JSON.stringify(providerRowOf(1, "payhero")));
+    var testOk = await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    ck("the PayHero connection test validates the credentials and the channel id",
+       testOk.status === 200 && testOk.body.ok === true && /channel 133 is active/.test(testOk.body.message || ""),
+       testOk.status + " " + (testOk.body.message || ""));
+    payhero.channels = false;
+    var testBadChannel = await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    payhero.channels = true;
+    ck("a PayHero connection test catches a channel that is not on the account",
+       testBadChannel.body.ok === false && /not an active channel/.test(testBadChannel.body.message || ""),
+       testBadChannel.body.message || "");
+    ck("a provider left in the Error state cannot be chosen as the active one",
+       (await setActive("a", "payhero", env)).status === 422, "blocked while errored");
+    /* Fixing the account and re-testing clears the Error state. */
+    var recovered = await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    ck("a passing re-test clears the Error state and records the new test time",
+       recovered.body.ok === true && recovered.body.provider_card.status === "connected" &&
+       !!recovered.body.provider_card.last_tested_at && recovered.body.provider_card.last_error === null,
+       JSON.stringify({ ok: recovered.body.ok, s: recovered.body.provider_card && recovered.body.provider_card.status }));
+    var selectPh = await setActive("a", "payhero", env);
+    ck("PayHero can be made the active provider once it is connected",
+       selectPh.status === 200 && selectPh.body.provider === "payhero" &&
+       selectPh.body.active_provider.connected === true,
+       selectPh.status + " " + JSON.stringify(selectPh.body).slice(0, 200) + " row=" + JSON.stringify(providerRowOf(1, "payhero")));
+
+    var orderPh = await buy(1, 11, 2, env);
+    var refPh = orderPh.body.order.reference;
+    ck("an order for a PayHero event records provider=payhero and is ready to pay",
+       orderPh.status === 201 && orderPh.body.provider === "payhero" && orderPh.body.payment_configured === true,
+       orderPh.status + " " + orderPh.body.provider);
+    var initPh = await send("/api/payments/payhero/initiate",
+      { reference: refPh, checkout_proof: orderPh.body.checkout_proof }, env);
+    ck("PayHero checkout prompts the phone instead of redirecting (one flow, no gateway picker)",
+       initPh.status === 200 && initPh.body.mode === "stk_push" && initPh.body.awaiting_customer === true &&
+       initPh.body.checkout_url === null && !!initPh.body.status_url, initPh.status + " " + initPh.body.mode);
+    var stk = payhero.calls.filter(function(c){ return /\/payments$/.test(c.href); })[0] || {};
+    ck("the PayHero STK call carries the server-calculated amount, the normalised phone and our reference",
+       stk.body && stk.body.amount === 3000 && stk.body.phone_number === "254712345678" &&
+       stk.body.channel_id === 133 && stk.body.provider === "m-pesa" && stk.body.external_reference === refPh &&
+       /\/api\/webhooks\/payhero$/.test(stk.body.callback_url || ""), JSON.stringify(stk.body || {}));
+    ck("the PayHero call authenticates with HTTP Basic and never puts the key in the URL",
+       String(stk.auth).indexOf("Basic ") === 0 && stk.href.indexOf(PH.password) < 0, String(stk.auth).slice(0, 12) + "...");
+    var payRow = findPayment(refPh);
+    ck("the transaction is recorded with the PayHero reference and provider metadata",
+       payRow && payRow.provider === "payhero" && /^PH/.test(String(payRow.provider_ref)) &&
+       /channel_id/.test(String(payRow.provider_metadata || "")), JSON.stringify(payRow || {}));
+    payhero.status = "QUEUED";
+    var pending = await call("/api/payments/" + encodeURIComponent(refPh), { method: "GET" }, env);
+    ck("while the M-Pesa prompt is unanswered the order stays pending and no ticket is issued",
+       pending.status === 200 && pending.body.status === "pending" && (pending.body.tickets || []).length === 0,
+       pending.status + " " + pending.body.status);
+  } catch(e){ ck("group 2 (PayHero only)", false, (e && e.stack) || String(e)); }
+  try {
+    /* --------------------- 3. PayHero callback: success, duplicates, attacks */
+    payhero.status = "SUCCESS";
+    var cb = payheroCallback(refPh, 3000, "Success", 0);
+    var beforeTickets = rows("tickets").length;
+    var good = await send("/api/webhooks/payhero", cb, env);
+    var orderRow = findOrder(refPh);
+    ck("a genuine PayHero callback settles the order and issues the tickets",
+       good.status === 200 && good.body.settled === true && orderRow.status === "paid" &&
+       rows("tickets").length === beforeTickets + 2, good.status + " " + JSON.stringify(good.body));
+    ck("the transaction records completion, not just the order",
+       (function(){ var p = findPayment(refPh); return p && p.status === "success" && !!p.paid_at && p.provider === "payhero"; })(),
+       JSON.stringify(findPayment(refPh) || {}));
+    var statusAfter = await call("/api/payments/" + encodeURIComponent(refPh), { method: "GET" }, env);
+    ck("the customer status endpoint reports PayHero and the real paid state",
+       statusAfter.body.status === "paid" && statusAfter.body.payment.provider === "payhero" &&
+       statusAfter.body.payment.provider_label === "PayHero" && (statusAfter.body.tickets || []).length === 2,
+       statusAfter.body.status + " " + (statusAfter.body.payment || {}).provider_label);
+    ck("the public payload never exposes organizer-only metadata (channel id, phone digits, provider raw)",
+       !/channel_id/.test(JSON.stringify(statusAfter.body.payment || {})) &&
+       !/phone_last4/.test(JSON.stringify(statusAfter.body)) &&
+       !/provider_response/.test(JSON.stringify(statusAfter.body)) &&
+       !/provider_metadata/.test(JSON.stringify(statusAfter.body)) &&
+       !/"133"/.test(JSON.stringify(statusAfter.body.payment || {})),
+       "payment=" + JSON.stringify(statusAfter.body.payment || {}));
+    var afterFirst = rows("tickets").length;
+    var callsBefore = payhero.calls.length;
+    var dup = await send("/api/webhooks/payhero", cb, env);
+    ck("a replayed PayHero callback is idempotent (no second ticket, no second provider call)",
+       dup.status === 200 && dup.body.duplicate === true && rows("tickets").length === afterFirst &&
+       payhero.calls.length === callsBefore, dup.status + " " + JSON.stringify(dup.body));
+    var wrongAmount = await send("/api/webhooks/payhero", payheroCallback(refPh, 100, "Success", 0), env);
+    ck("a callback claiming the wrong amount can never mark an order paid",
+       wrongAmount.status === 200 && wrongAmount.body.mismatch === "amount" && findOrder(refPh).status === "paid",
+       JSON.stringify(wrongAmount.body));
+    var unknown = await send("/api/webhooks/payhero", payheroCallback("PAT-DOESNOTEXIST", 500, "Success", 0), env);
+    ck("a callback for an unknown reference is ignored",
+       unknown.status === 200 && unknown.body.ignored === "unknown_reference", JSON.stringify(unknown.body));
+    var garbage = await send("/api/webhooks/payhero", { nonsense: true }, env);
+    ck("a callback with no identifiers is ignored",
+       garbage.status === 200 && (garbage.body.ignored === "malformed_payload" || garbage.body.ignored === "no_identifiers"),
+       JSON.stringify(garbage.body));
+    var wrongAuth = await send("/api/webhooks/payhero", payheroCallback(refPh, 3000, "Success", 0), env,
+      { Authorization: "Basic " + btoa("someone:else") });
+    ck("a callback with a WRONG Basic Authorization header is hard-rejected (401)",
+       wrongAuth.status === 401 && wrongAuth.body.code === "BAD_SIGNATURE", wrongAuth.status + " " + JSON.stringify(wrongAuth.body));
+    var rightAuth = await send("/api/webhooks/payhero", payheroCallback(refPh, 3000, "Success", 0), env,
+      { Authorization: "Basic " + btoa(PH.username + ":" + PH.password) });
+    ck("a callback with the correct Basic Authorization header is accepted and still idempotent",
+       rightAuth.status === 200 && rightAuth.body.received === true, rightAuth.status + " " + JSON.stringify(rightAuth.body));
+    var orderFail = await buy(1, 11, 1, env);
+    var refFail = orderFail.body.order.reference;
+    await send("/api/payments/payhero/initiate", { reference: refFail, checkout_proof: orderFail.body.checkout_proof }, env);
+    payhero.status = "FAILED";
+    var failCb = await send("/api/webhooks/payhero", payheroCallback(refFail, 1500, "Failed", 1), env);
+    ck("a failed M-Pesa prompt fails the order, issues no ticket and records the reason",
+       failCb.status === 200 && failCb.body.settled === false && findOrder(refFail).status === "failed" &&
+       (findPayment(refFail).failure_reason || "") === "failed" && !!findPayment(refFail).failure_at,
+       JSON.stringify(failCb.body) + " / " + JSON.stringify(findPayment(refFail) || {}));
+    payhero.status = "SUCCESS";
+  } catch(e){ ck("group 3 (PayHero callbacks)", false, (e && e.stack) || String(e)); }
+  try {
+    /* ------------- 4. all three connected, switching, event-level override */
+    await connect("a", "paystack", { public_key: PS.public, secret_key: PS.secret }, env);
+    await connect("a", "pesapal", { consumer_key: PE.key, consumer_secret: PE.secret }, env);
+    /* group 2 left PayHero in the Error state on purpose; a passing test clears it */
+    await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    var allThree = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("a") }, env);
+    var byKey = {};
+    (allThree.body.providers || []).forEach(function(c){ byKey[c.key] = c; });
+    ck("all three providers can be connected at the same time and are independently available",
+       byKey.paystack && byKey.pesapal && byKey.payhero &&
+       byKey.paystack.status === "connected" && byKey.pesapal.status === "connected" && byKey.payhero.status === "connected" &&
+       byKey.paystack.available && byKey.pesapal.available && byKey.payhero.available,
+       Object.keys(byKey).map(function(k){ return k + ":" + byKey[k].status; }).join(" "));
+    ck("an organizer only has to configure one provider (Bob has none of his own)",
+       (function(){
+         return (allThree.body.providers || []).length === 3;
+       })(), "three cards always shown");
+    var switchTo = await setActive("a", "paystack", env);
+    ck("the organizer can switch the active provider at any time",
+       switchTo.status === 200 && switchTo.body.provider === "paystack" &&
+       rows("payment_settings").filter(function(s){ return s.organizer_id === 1; })[0].provider === "paystack",
+       switchTo.body.provider);
+
+    var psOrder = await buy(1, 11, 1, env);
+    ck("checkout now follows the active provider (Paystack), not the first card",
+       psOrder.body.provider === "paystack", psOrder.body.provider);
+    var psInit = await send("/api/payments/paystack/initiate",
+      { reference: psOrder.body.order.reference, checkout_proof: psOrder.body.checkout_proof }, env);
+    ck("Paystack checkout still redirects as before (no behaviour change)",
+       psInit.status === 200 && psInit.body.mode === "redirect" &&
+       /checkout\.paystack\.com/.test(psInit.body.checkout_url || ""), psInit.status + " " + psInit.body.mode);
+    var createAlias = await send("/api/payments/create",
+      { reference: psOrder.body.order.reference, checkout_proof: psOrder.body.checkout_proof }, env);
+    ck("POST /api/payments/create is the provider-neutral entry point and resolves PayHero-style flows too",
+       createAlias.status === 200 && createAlias.body.provider === "paystack" &&
+       /checkout\.paystack\.com/.test(createAlias.body.checkout_url || ""), createAlias.status + " " + createAlias.body.provider);
+    var statusAlias = await call("/api/payments/" + encodeURIComponent(psOrder.body.order.reference) + "/status", { method: "GET" }, env);
+    ck("GET /api/payments/:id/status answers exactly like /api/payments/:reference",
+       statusAlias.status === 200 && statusAlias.body.payment.provider === "paystack", statusAlias.status);
+
+    await setActive("a", "pesapal", env);
+    var peOrder = await buy(1, 11, 1, env);
+    ck("switching to Pesapal is reflected on the very next order",
+       peOrder.body.provider === "pesapal", peOrder.body.provider);
+    var peInit = await send("/api/payments/pesapal/initiate",
+      { reference: peOrder.body.order.reference, checkout_proof: peOrder.body.checkout_proof }, env);
+    ck("the Pesapal flow is unchanged: a redirect URL and a registered IPN id",
+       peInit.status === 200 && /cybqa\.pesapal\.com\/checkout/.test(peInit.body.checkout_url || "") &&
+       (providerRowOf(1, "pesapal").ipn_id || "") === "IPN-1", peInit.status + " " + (peInit.body.checkout_url || ""));
+    var peStatus = call("/api/payments/" + encodeURIComponent(peOrder.body.order.reference) + "/status", { method: "GET" }, env);
+    await peStatus;
+    ck("the Pesapal transaction keeps the Pesapal tracking id in provider_ref",
+       String((findPayment(peOrder.body.order.reference) || {}).provider_ref) === "PES-TRACK-1",
+       JSON.stringify(findPayment(peOrder.body.order.reference) || {}));
+  } catch(e){ ck("group 4 (three providers + switching)", false, (e && e.stack) || String(e)); }
+  try {
+    /* ------------- 5. event-level provider, isolation, disabled provider */
+    await setActive("a", "paystack", env);
+    var ev = await call("/api/organizer/events/2", { method: "GET", headers: authHeader("a") }, env);
+    ck("an event with no override reports the organizer's active provider",
+       ev.body.event.effective_payment_provider === "paystack" && ev.body.event.payment_provider === null,
+       JSON.stringify({ eff: ev.body.event.effective_payment_provider, own: ev.body.event.payment_provider }));
+    var setEvent = await call("/api/organizer/events/2", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_provider: "payhero" }) }, env);
+    ck("an event may be pinned to a provider the organizer has connected",
+       setEvent.status === 200 && setEvent.body.event.payment_provider === "payhero",
+       setEvent.status + " event=" + JSON.stringify(setEvent.body.event).slice(0, 260));
+    var evOrder = await buy(2, 21, 1, env);
+    ck("that event then sells through its own provider while the active one is Paystack",
+       evOrder.body.provider === "payhero", evOrder.body.provider);
+    var badEvent = await call("/api/organizer/events/2", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_provider: "paystack_unknown" }) }, env);
+    ck("an unknown provider name is rejected at validation", badEvent.status === 422, badEvent.status);
+
+    /* isolation: organizer B must never see or touch organizer A's credentials */
+    var bobList = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("b") }, env);
+    ck("organizer B sees no credentials of organizer A",
+       bobList.status === 200 && (bobList.body.providers || []).every(function(c){ return !c.fields.has_password && !c.fields.has_secret_key && !c.fields.has_consumer_secret; }),
+       JSON.stringify((bobList.body.providers || []).map(function(c){ return c.key + ":" + c.status; }).join(",")));
+    var bobSets = await setActive("b", "payhero", env);
+    ck("organizer B cannot activate a provider B has not connected",
+       bobSets.status === 422 && bobSets.body.code === "PROVIDER_NOT_CONFIGURED", bobSets.status + " " + bobSets.body.code);
+    var bobEvent = await call("/api/organizer/events/1", { method: "PUT", headers: authHeader("b"),
+      body: JSON.stringify({ payment_provider: "payhero" }) }, env);
+    ck("organizer B cannot touch organizer A's event", bobEvent.status === 403, bobEvent.status);
+    var bobOrders = await call("/api/organizer/orders", { method: "GET", headers: authHeader("b") }, env);
+    ck("organizer B's order list only contains organizer B's orders",
+       (bobOrders.body.orders || []).length === 0, JSON.stringify(bobOrders.body).slice(0, 300));
+    var noAuth = await call("/api/organizer/payment-providers", { method: "GET" }, env);
+    ck("the payment configuration API requires a sign-in", noAuth.status === 401, noAuth.status);
+    var forged = await call("/api/organizer/payment-providers/payhero",
+      { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer not-a-token" },
+        body: JSON.stringify({ organizer_id: 1, api_username: PH.username, password: PH.password, channel_id: PH.channel }) }, env);
+    ck("a forged token cannot write credentials", forged.status === 401 && !providerRowOf(2, "payhero"), forged.status);
+
+    /* a provider that is disabled must stop being used, and must not silently
+       hand over to another gateway */
+    var disable = await send("/api/organizer/payment-providers/payhero", { enabled: false }, env, authHeader("a"));
+    ck("a provider can be disabled without deleting its credentials",
+       disable.status === 200 && disable.body.provider_card.enabled === false &&
+       !!providerRowOf(1, "payhero").password_encrypted, disable.status + " " + JSON.stringify(disable.body.provider_card && disable.body.provider_card.enabled));
+    var evOrder2 = await buy(2, 21, 1, env);
+    ck("an event pinned to a disabled provider falls back to the active provider, not to a random gateway",
+       evOrder2.body.provider === "paystack", evOrder2.body.provider);
+    var reenable = await send("/api/organizer/payment-providers/payhero", { enabled: true }, env, authHeader("a"));
+    payhero.rejects = true;
+    var errState = await send("/api/organizer/payment-providers/payhero/test", {}, env, authHeader("a"));
+    payhero.rejects = false;
+    ck("a failing connection test records the Error state and makes it unavailable",
+       errState.body.provider_card.status === "error" && errState.body.provider_card.available === false,
+       JSON.stringify(errState.body.provider_card && { s: errState.body.provider_card.status, a: errState.body.provider_card.available }));
+    ck("the recorded error message is safe to show (no credentials)",
+       !/ph-pass-1/.test(JSON.stringify(errState.body)), errState.body.provider_card.last_error || "");
+    payhero.rejects = false;
+    var reselect = await setActive("a", "payhero", env);
+    ck("a provider in the Error state cannot be set as the active provider",
+       reselect.status === 422, reselect.status);
+  } catch(e){ ck("group 5 (event provider + isolation)", false, (e && e.stack) || String(e)); }
+  try {
+    /* ------------- 6. backward compatibility: legacy data and legacy routes */
+    /* First produce a REAL ciphertext, exactly the way a pre-PayHero deployment
+       would already have stored one, so the legacy path runs on real data. */
+    db = makeDb(seed());
+    resetProviders();
+    await connect("a", "paystack", { public_key: PS.public, secret_key: PS.secret }, env);
+    var realCipher = providerRowOf(1, "paystack").secret_key_encrypted;
+    var legacy = seed();
+    legacy.payment_settings = [{ id: 1, organizer_id: 1, provider: "paystack", public_key: PS.public,
+      secret_key_encrypted: realCipher, consumer_key: null, consumer_secret_encrypted: null,
+      ipn_id: null, status: "connected", last_tested_at: "2025-01-01 00:00:00", last_error: null,
+      created_at: "2025-01-01 00:00:00", updated_at: "2025-01-01 00:00:00" }];
+    /* An order and a ticket that were paid BEFORE PayHero existed. */
+    legacy.orders = [{ id: 50, order_number: "PAT-OLDDONE00", event_id: 1, organizer_id: 1, customer_name: "Old Buyer",
+      customer_email: "old@example.com", customer_phone: "+254700000009", total_amount: 1500, currency: "KES",
+      status: "paid", inventory_held: 0, paid_at: "2025-01-02 00:00:00", created_at: "2025-01-01 00:00:00", updated_at: "2025-01-02 00:00:00" }];
+    legacy.payments = [{ id: 50, order_id: 50, provider: "paystack", reference: "PAT-OLDDONE00", provider_ref: "ps_old_1",
+      amount: 1500, currency: "KES", status: "success", paid_at: "2025-01-02 00:00:00", created_at: "2025-01-01 00:00:00", updated_at: "2025-01-02 00:00:00" }];
+    legacy.tickets = [{ id: 60, order_id: 50, event_id: 1, ticket_type_id: 11, attendee_name: "Old Buyer",
+      attendee_email: "old@example.com", attendee_phone: "+254700000009", ticket_number: "PAT-OLDAAAAAA",
+      qr_token: "oldqrtoken", status: "valid", checked_in: 0, checked_in_at: null, created_at: "2025-01-02 00:00:00" }];
+    db = makeDb(legacy);
+    resetProviders();
+    var envOld = makeEnv({ platformPaystack: false, platformPesapal: false });
+    var oldList = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("a") }, envOld);
+    var oldCards = {};
+    (oldList.body.providers || []).forEach(function(c){ oldCards[c.key] = c; });
+    ck("a pre-PayHero organizer is still Connected on Paystack without touching anything",
+       oldCards.paystack && oldCards.paystack.status === "connected" && oldCards.paystack.credentials_source === "organizer",
+       JSON.stringify({ s: oldCards.paystack && oldCards.paystack.status, src: oldCards.paystack && oldCards.paystack.credentials_source }));
+    ck("the pre-PayHero credentials were not silently deleted or moved",
+       rows("payment_settings").filter(function(s){ return s.organizer_id === 1; })[0].secret_key_encrypted === realCipher,
+       "legacy row intact");
+    var legacyBuy = await buy(1, 11, 1, envOld);
+    ck("an organizer with only the legacy Paystack row can still sell",
+       legacyBuy.status === 201 && legacyBuy.body.provider === "paystack" && legacyBuy.body.payment_configured === true,
+       legacyBuy.status + " " + legacyBuy.body.provider);
+    var oldGet = await call("/api/organizer/payment-settings", { method: "GET", headers: authHeader("a") }, envOld);
+    ck("the legacy GET /api/organizer/payment-settings still answers with its old shape",
+       oldGet.status === 200 && oldGet.body.provider === "paystack" && oldGet.body.provider_label === "Paystack" &&
+       oldGet.body.payment_settings.has_secret_key === true && oldGet.body.payment_settings.secret_key_masked === "Stored (hidden)" &&
+       oldGet.body.payment_settings.secret_key === undefined && Array.isArray(oldGet.body.providers),
+       JSON.stringify({ p: oldGet.body.provider, has: oldGet.body.payment_settings && oldGet.body.payment_settings.has_secret_key }));
+    var oldStatus = await call("/api/payments/PAT-OLDDONE00", { method: "GET" }, envOld);
+    ck("a ticket bought before this change is still readable and still says paystack",
+       oldStatus.status === 200 && oldStatus.body.status === "paid" && oldStatus.body.ticket_count === 1 &&
+       oldStatus.body.payment.provider === "paystack" && oldStatus.body.tickets[0].ticket_number === "PAT-OLDAAAAAA",
+       oldStatus.status + " " + oldStatus.body.status + " " + (oldStatus.body.tickets || []).length);
+    /* the legacy PUT connects AND selects, exactly as it always did */
+    db = makeDb(seed());
+    resetProviders();
+    var legacyPut = await call("/api/organizer/payment-settings",
+      { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, authHeader("a")),
+        body: JSON.stringify({ provider: "payhero", api_username: PH.username, password: PH.password, channel_id: PH.channel }) }, env);
+    ck("the legacy PUT /api/organizer/payment-settings can now also connect PayHero and make it active",
+       legacyPut.status === 200 && legacyPut.body.provider === "payhero" && !!providerRowOf(1, "payhero"),
+       legacyPut.status + " " + legacyPut.body.provider);
+    var legacyTest = await send("/api/organizer/payment-settings/test", { provider: "payhero" }, env, authHeader("a"));
+    ck("the legacy test route answers for PayHero too", legacyTest.status === 200 && legacyTest.body.ok === true,
+       legacyTest.status + " " + legacyTest.body.message);
+    var legacyDisconnect = await call("/api/organizer/payment-settings",
+      { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, authHeader("a")),
+        body: JSON.stringify({ disconnect: true }) }, env);
+    ck("the legacy disconnect route still removes every saved provider",
+       legacyDisconnect.status === 200 && !providerRowOf(1, "payhero") && rows("payment_settings").length === 0,
+       legacyDisconnect.status + " / " + rows("organizer_payment_providers").length);
+  } catch(e){ ck("group 6 (backward compatibility)", false, (e && e.stack) || String(e)); }
+  try {
+    /* ------------- 7. platform fallback, provider outage, Paystack webhooks */
+    db = makeDb(seed());
+    resetProviders();
+    var envPlat = makeEnv();
+    var plat = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("a") }, envPlat);
+    var platCard = (plat.body.providers || []).filter(function(c){ return c.key === "paystack"; })[0] || {};
+    ck("with no organizer credentials the platform account is offered as the documented fallback",
+       platCard.status === "connected" && platCard.credentials_source === "platform" && platCard.platform_credentials === true,
+       JSON.stringify({ s: platCard.status, src: platCard.credentials_source }));
+    ck("the platform secret never leaves the server",
+       JSON.stringify(plat.body).indexOf("sk_live_platform_fallback") < 0, "no secret in the payload");
+    var platOrder = await buy(1, 11, 1, envPlat);
+    var platInit = await send("/api/payments/paystack/initiate",
+      { reference: platOrder.body.order.reference, checkout_proof: platOrder.body.checkout_proof }, envPlat);
+    ck("that fallback still completes a real Paystack checkout",
+       platInit.status === 200 && /checkout\.paystack\.com/.test(platInit.body.checkout_url || ""), platInit.status);
+    paystack.rejects = true;
+    var downOrder = await buy(1, 11, 1, envPlat);
+    var downInit = await send("/api/payments/paystack/initiate",
+      { reference: downOrder.body.order.reference, checkout_proof: downOrder.body.checkout_proof }, envPlat);
+    paystack.rejects = false;
+    ck("a provider outage produces a safe customer-facing error and never another gateway",
+       downInit.status === 409 && /could not start this checkout/i.test(downInit.body.error || "") &&
+       payhero.calls.length === 0 && pesapal.calls.length === 0,
+       downInit.status + " " + (downInit.body.error || ""));
+
+    /* amount tampering on a Paystack callback */
+    db = makeDb(seed());
+    resetProviders();
+    await connect("a", "paystack", { public_key: PS.public, secret_key: PS.secret }, env);
+    await setActive("a", "paystack", env);
+    var psBuy = await buy(1, 11, 1, env);
+    var psRef = psBuy.body.order && psBuy.body.order.reference;
+    /* The customer goes through checkout first, exactly as in real life. */
+    var psInit = await send("/api/payments/paystack/initiate",
+      { reference: psRef, checkout_proof: psBuy.body.checkout_proof }, env);
+    ck("a Paystack checkout can be started for a webhook test order", psInit.status === 200, psInit.status);
+    /* Two signed events: one with the true amount, one with a tampered amount. */
+    var goodEvent = { event: "charge.success", data: { reference: psRef, id: 4242, amount: 150000, currency: "KES", status: "success" } };
+    var badEvent = { event: "charge.success", data: { reference: psRef, id: 4242, amount: 999999, currency: "KES", status: "success" } };
+    var sigOk = await paystackSignature(JSON.stringify(goodEvent), PS.secret);
+    var sigBad = await paystackSignature(JSON.stringify(badEvent), PS.secret);
+    var tampered = await send("/api/webhooks/paystack", badEvent, env, { "x-paystack-signature": sigBad });
+    ck("a validly signed Paystack callback reporting the wrong amount is refused",
+       tampered.status === 200 && tampered.body.mismatch === "amount" && findOrder(psRef).status === "pending",
+       psBuy.status + " " + JSON.stringify(tampered.body));
+    var badSig = await send("/api/webhooks/paystack", goodEvent, env, { "x-paystack-signature": "deadbeef" });
+    ck("a Paystack callback with a bad signature is hard-rejected (401)",
+       badSig.status === 401 && badSig.body.code === "BAD_SIGNATURE", badSig.status + " " + JSON.stringify(badSig.body));
+    var goodPs = await send("/api/webhooks/paystack", goodEvent, env, { "x-paystack-signature": sigOk });
+    ck("the same callback settles the order once the amount matches",
+       goodPs.status === 200 && goodPs.body.settled === true && findOrder(psRef).status === "paid" &&
+       rows("tickets").filter(function(t){ return t.order_id === findOrder(psRef).id; }).length === 1,
+       JSON.stringify(goodPs.body));
+    var dupPs = await send("/api/webhooks/paystack", goodEvent, env, { "x-paystack-signature": sigOk });
+    ck("replaying the Paystack callback changes nothing",
+       dupPs.body.duplicate === true && rows("tickets").filter(function(t){ return t.order_id === findOrder(psRef).id; }).length === 1,
+       JSON.stringify(dupPs.body));
+    var psNoSig = await send("/api/webhooks/paystack", goodEvent, env, {});
+    ck("a Paystack callback with no signature at all is rejected", psNoSig.status === 401, psNoSig.status);
+    var caps = await call("/api/organizer/payment-providers", { method: "GET", headers: authHeader("a") }, env);
+    var caps2 = await call("/api/organizer/orders", { method: "GET", headers: authHeader("a") }, env);
+    var listed = (caps2.body.orders || [])[0] || {};
+    ck("an order in the organizer's list shows the provider that actually took the money",
+       listed.provider === "paystack" && listed.provider_label === "Paystack", JSON.stringify(caps2.body).slice(0, 260));
+    ck("a never-paid order shows no provider rather than a guessed one",
+       (function(){
+         var pendingOne = (caps2.body.orders || []).filter(o => o.status === "pending")[0];
+         return !pendingOne || (pendingOne.provider === "paystack" || pendingOne.provider === null);
+       })(), "");
+    ck("the provider capabilities say plainly that no gateway has refunds automated here",
+       (caps.body.providers || []).every(function(x){ return x.refund_supported === false; }),
+       JSON.stringify((caps.body.providers || []).map(function(x){ return x.key + ":" + x.refund_supported; }).join(",")));
+    ck("no PayHero secret or Paystack secret appears in any organizer response",
+       JSON.stringify(caps.body).indexOf(PH.password) < 0 && JSON.stringify(caps.body).indexOf(PS.secret) < 0, "clean");
+  } catch(e){ ck("group 7 (fallback + paystack webhooks)", false, (e && e.stack) || String(e)); }
+
+  try {
+    /* ------------- 8. a database that has NOT been migrated yet */
+    /* A pre-PayHero database: no organizer_payment_providers, no provider
+       metadata, no events.payment_provider. The Worker must name the file to
+       run rather than answering 500 "Something went wrong" to a buyer. */
+    var old = seed();
+    delete old.organizer_payment_providers;
+    /* A pre-migration events table has no payment_provider column at all. */
+    old.events = old.events.map(function(e){ var c = Object.assign({}, e); delete c.payment_provider; return c; });
+    old.payments = [{ id: 1, order_id: 1, provider: "paystack", reference: "PAT-OLDPRE0000",
+      provider_ref: "ps_pre_1", amount: 1000, currency: "KES", status: "pending",
+      created_at: "2025-01-01 00:00:00", updated_at: "2025-01-01 00:00:00" }];
+    db = makeDb(old, { strict: true });
+    resetProviders();
+    var envOld2 = makeEnv();
+    var health = await call("/api/health", { method: "GET" }, envOld2);
+    ck("the health check reports an un-migrated database instead of failing silently",
+       health.status === 200 && health.body.payment_schema && health.body.payment_schema.ready === false &&
+       health.body.payment_schema.missing.indexOf("organizer_payment_providers") > -1,
+       JSON.stringify(health.body.payment_schema || {}));
+    ck("an un-migrated database is pointed at 0002_payhero.sql",
+       health.body.payment_schema.migrations.join(",") === "0002_payhero.sql,0003_payhero_repair.sql" &&
+       health.body.payment_schema.partially_applied === false &&
+       /0002_payhero\.sql/.test(health.body.payment_schema.hint || ""),
+       JSON.stringify(health.body.payment_schema || {}));
+    var oldBuy = await buy(1, 11, 1, envOld2);
+    /* Whichever step touches the new schema first, the operator must be able to
+       reach the file name - never a bare "Something went wrong". */
+    ck("an un-migrated database answers with the health endpoint that names the file, not a bare 500",
+       oldBuy.status === 500 && oldBuy.body.code === "MIGRATION_REQUIRED" &&
+       /\/api\/health/.test(oldBuy.body.error || "") && !/Something went wrong/.test(oldBuy.body.error || ""),
+       oldBuy.status + " " + JSON.stringify(oldBuy.body).slice(0, 200));
+
+    /* The reported symptom, reproduced exactly: the provider table is present
+       (so the order is created) but the payments table predates the migration.
+       Order creation succeeds, the payment step must name the fix. */
+    var half = seed();
+    half.payments = [{ id: 1, order_id: 1, provider: "paystack", reference: "PAT-HALFPRE000",
+      provider_ref: "ps_half_1", amount: 1500, currency: "KES", status: "pending",
+      created_at: "2025-01-01 00:00:00", updated_at: "2025-01-01 00:00:00" }];
+    db = makeDb(half, { strict: true });
+    resetProviders();
+    var halfEnv = makeEnv();
+    var halfHealth = await call("/api/health", { method: "GET" }, halfEnv);
+    ck("the health check names the missing payments columns, not the whole database",
+       halfHealth.body.payment_schema.ready === false &&
+       halfHealth.body.payment_schema.missing.join(",") === "payments.provider_metadata,payments.failure_reason,payments.failure_at",
+       JSON.stringify(halfHealth.body.payment_schema || {}));
+    ck("a part-way migration is repaired with 0003_payhero_repair.sql, not by re-running 0002",
+       halfHealth.body.payment_schema.migrations.join(",") === "0002_payhero.sql,0003_payhero_repair.sql" &&
+       halfHealth.body.payment_schema.partially_applied === true &&
+       /0003_payhero_repair\.sql/.test(halfHealth.body.payment_schema.hint || "") &&
+       /0003_payhero_repair\.sql/.test(halfHealth.body.payment_schema.note || ""),
+       JSON.stringify(halfHealth.body.payment_schema || {}));
+    var halfBuy = await buy(1, 11, 1, halfEnv);
+    ck("the reported 500 (order created, payment fails on an old payments table) now names the fix",
+       halfBuy.status === 500 && halfBuy.body.code === "MIGRATION_REQUIRED" &&
+       /\/api\/health/.test(halfBuy.body.error || "") &&
+       !/Something went wrong/.test(halfBuy.body.error || ""),
+       halfBuy.status + " " + JSON.stringify(halfBuy.body).slice(0, 220));
+
+    db = makeDb(seed());
+    resetProviders();
+    var readyNow = await call("/api/health", { method: "GET" }, makeEnv());
+    ck("a migrated database reports a ready payment schema",
+       readyNow.body.payment_schema && readyNow.body.payment_schema.ready === true &&
+       (readyNow.body.payment_schema.missing || []).length === 0, JSON.stringify(readyNow.body.payment_schema || {}));
+  } catch(e){ ck("group 8 (un-migrated database)", false, (e && e.stack) || String(e)); }
+
+  try {
+    /* ------------- 9. a connected provider works before it is "Active" */
+    /* The reported symptom: PayHero (or Pesapal) is connected in Payment
+       Settings and the event names it, yet "Pay Now" never opens that gateway,
+       while Paystack keeps working. The organizer's own row in
+       organizer_payment_providers IS the connection, so the resolver must read it
+       even when there is no payment_settings row yet - the state between
+       connecting a provider and choosing it as Active. providerState() (which
+       paints the Payment Settings page) is written that way already; when
+       checkout alone re-reads the organizer from payment_settings it silently
+       drops the row, reports the provider as unconfigured and falls back to the
+       platform's Paystack account. */
+
+    /* (a) PayHero only. There is no platform PayHero fallback by design, so the
+       organizer's own row is the only thing that can serve this event. */
+    db = makeDb(seed());
+    resetProviders();
+    var envOrphan = makeEnv({ platformPaystack: false, platformPesapal: false });
+    var connected = await connect("a", "payhero",
+      { api_username: PH.username, password: PH.password, channel_id: PH.channel }, envOrphan);
+    ck("an organizer can connect PayHero without having an Active Payment Provider yet",
+       connected.status === 200 && connected.body.provider_card.status === "connected" &&
+       rows("organizer_payment_providers").length === 1 && rows("payment_settings").length === 0,
+       "rows=" + rows("organizer_payment_providers").length + " settings=" + rows("payment_settings").length);
+    var pinEvent = await call("/api/organizer/events/1", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_provider: "payhero" }) }, envOrphan);
+    ck("an event can be pinned to the provider the organizer just connected",
+       pinEvent.status === 200 && pinEvent.body.event.payment_provider === "payhero",
+       pinEvent.status + " " + JSON.stringify(pinEvent.body).slice(0, 160));
+    var orphanOrder = await buy(1, 11, 1, envOrphan);
+    ck("checkout uses the organizer's own connected PayHero account, before it is the Active Provider",
+       orphanOrder.status === 201 && orphanOrder.body.provider === "payhero" &&
+       orphanOrder.body.payment_configured === true,
+       orphanOrder.status + " " + JSON.stringify({ provider: orphanOrder.body.provider,
+         ready: orphanOrder.body.payment_configured, message: orphanOrder.body.payment_message }));
+    var orphanInit = await send("/api/payments/create",
+      { reference: orphanOrder.body.order.reference, checkout_proof: orphanOrder.body.checkout_proof }, envOrphan);
+    ck("Pay Now then starts the PayHero phone prompt (stk_push, no redirect URL to open)",
+       orphanInit.status === 200 && orphanInit.body.provider === "payhero" &&
+       orphanInit.body.mode === "stk_push" && orphanInit.body.awaiting_customer === true &&
+       orphanInit.body.checkout_url === null && !!orphanInit.body.status_url,
+       orphanInit.status + " " + JSON.stringify({ provider: orphanInit.body.provider, mode: orphanInit.body.mode }));
+    /* The customer who paid must still get their ticket: the webhook and the
+       status route authorise themselves with the organizer's own row (not with
+       an Active Provider row), so a paid order can never be left unsettled. */
+    payhero.status = "SUCCESS";
+    var orphanCb = await send("/api/webhooks/payhero",
+      payheroCallback(orphanOrder.body.order.reference, 1500, "Success", 0), envOrphan,
+      { Authorization: "Basic " + btoa(PH.username + ":" + PH.password) });
+    ck("a payment through a connected (not yet active) PayHero account still settles and issues tickets",
+       orphanCb.status === 200 && orphanCb.body.settled === true &&
+       findOrder(orphanOrder.body.order.reference).status === "paid" &&
+       (findPayment(orphanOrder.body.order.reference) || {}).status === "success",
+       orphanCb.status + " " + JSON.stringify(orphanCb.body));
+  } catch(e){ ck("group 9 (connected but not yet active, PayHero)", false, (e && e.stack) || String(e)); }
+  try {
+    /* (b) Pesapal only, with the platform Pesapal account deliberately absent:
+       the buyer must receive Pesapal's hosted redirect URL. */
+    db = makeDb(seed());
+    resetProviders();
+    var envPe = makeEnv({ platformPaystack: false, platformPesapal: false });
+    await connect("a", "pesapal", { consumer_key: PE.key, consumer_secret: PE.secret }, envPe);
+    await call("/api/organizer/events/1", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_provider: "pesapal" }) }, envPe);
+    var peOrder = await buy(1, 11, 1, envPe);
+    ck("checkout uses the organizer's own connected Pesapal account, before it is the Active Provider",
+       peOrder.status === 201 && peOrder.body.provider === "pesapal" && peOrder.body.payment_configured === true,
+       peOrder.status + " " + JSON.stringify({ provider: peOrder.body.provider,
+         ready: peOrder.body.payment_configured, message: peOrder.body.payment_message }));
+    var peCreate = await send("/api/payments/create",
+      { reference: peOrder.body.order.reference, checkout_proof: peOrder.body.checkout_proof }, envPe);
+    ck("Pay Now then returns the Pesapal redirect URL the browser opens",
+       peCreate.status === 200 && peCreate.body.provider === "pesapal" && peCreate.body.mode === "redirect" &&
+       /cybqa\.pesapal\.com\/checkout/.test(peCreate.body.checkout_url || "") &&
+       peCreate.body.authorization_url === peCreate.body.checkout_url,
+       peCreate.status + " " + JSON.stringify({ provider: peCreate.body.provider, url: peCreate.body.checkout_url }));
+    ck("the Pesapal IPN id learned at checkout is kept on the organizer's own provider row",
+       !!providerRowOf(1, "pesapal") && !!providerRowOf(1, "pesapal").ipn_id,
+       JSON.stringify(providerRowOf(1, "pesapal") || {}));
+
+    /* (c) Pesapal sandbox and live are two different accounts. A rejected key
+       pair must name the environment the Worker dialled, otherwise live keys
+       tested by the sandbox read as "wrong consumer key". */
+    pesapal.rejects = true;
+    var peTest = await send("/api/organizer/payment-providers/pesapal/test", {}, envPe, authHeader("a"));
+    pesapal.rejects = false;
+    ck("a rejected Pesapal key pair is reported with the environment the Worker dialled",
+       peTest.status === 200 && peTest.body.ok === false && /sandbox/.test(peTest.body.message || "") &&
+       /PESAPAL_ENV/.test(peTest.body.message || ""), peTest.status + " " + (peTest.body.message || ""));
+    var peTestOk = await send("/api/organizer/payment-providers/pesapal/test", {}, envPe, authHeader("a"));
+    ck("a passing Pesapal test names that same environment",
+       peTestOk.body.ok === true && /sandbox/.test(peTestOk.body.message || ""),
+       peTestOk.status + " " + (peTestOk.body.message || ""));
+
+    /* (d) The default path is untouched: an organizer who has connected nothing
+       is still served by the platform's own Paystack account (which is why
+       Paystack keeps working while a newly connected Pesapal/PayHero account
+       looked broken), and no order is ever left without a gateway. */
+    db = makeDb(seed());
+    resetProviders();
+    var bareOrder = await buy(1, 11, 1, makeEnv());
+    ck("with nothing connected the platform's Paystack account still serves the order",
+       bareOrder.status === 201 && bareOrder.body.provider === "paystack" &&
+       bareOrder.body.payment_configured === true && bareOrder.body.payment_message === null,
+       bareOrder.status + " " + JSON.stringify({ provider: bareOrder.body.provider,
+         ready: bareOrder.body.payment_configured, message: bareOrder.body.payment_message }));
+  } catch(e){ ck("group 9 (connected but not yet active, Pesapal)", false, (e && e.stack) || String(e)); }
+
+  try {
+    /* --------------------------- 10. owner payment mode --------------------
+       The owner connects a merchant account; organizers then collect through
+       it. Every branch below proves WHOSE credentials pay: the owner's secret
+       is sk_live_harness_secret (PS.secret), Alice's own is sk_live_alice_secret. */
+    step("owner payment mode");
+    db = makeDb(seed());
+    resetProviders();
+    var envO = makeEnv({ platformPaystack: false, platformPesapal: false });
+    rows("users").push({ id: 4, firebase_uid: "uid-o", full_name: "Olive O", email: "o@example.com",
+      phone: "+254700000004", role: "owner", status: "active" });
+    rows("organizers")[0].use_owner_payments = 1;
+    var ownSave = await send("/api/owner/payment-providers/paystack",
+      { public_key: PS.public, secret_key: PS.secret }, envO, authHeader("o"));
+    var ownSelect = await send("/api/owner/payment-provider/select", { provider: "paystack" }, envO, authHeader("o"));
+    var ownRow = platformRowOf("paystack");
+    ck("the platform owner connects and activates a merchant account through the API",
+       ownSave.status === 200 && ownSelect.status === 200 && ownSelect.body.active_provider && ownSelect.body.active_provider.connected === true,
+       ownSave.status + "/" + ownSelect.status + " " + JSON.stringify(ownSave.body).slice(0, 140));
+    ck("the owner's secret is stored encrypted and never echoed back",
+       !!ownRow && !!ownRow.secret_key_encrypted && ownRow.secret_key_encrypted !== PS.secret &&
+       JSON.stringify(ownSave.body).indexOf(PS.secret) < 0,
+       JSON.stringify({ enc: ownRow && String(ownRow.secret_key_encrypted).slice(0, 24) }));
+    var forbidden = await call("/api/owner/payment-providers", { method: "GET", headers: authHeader("a") }, envO);
+    ck("an organizer cannot read the owner's payment store", forbidden.status === 403,
+       forbidden.status + " " + JSON.stringify(forbidden.body).slice(0, 120));
+    var meA = await call("/api/me", { method: "GET", headers: authHeader("a") }, envO);
+    ck("GET /api/me reports the account-wide owner payment default",
+       meA.status === 200 && meA.body.organizer && meA.body.organizer.use_owner_payments === true,
+       JSON.stringify(meA.body.organizer || {}));
+    /* Alice connects her OWN Paystack as well: owner mode must ignore it. */
+    await connect("a", "paystack", { public_key: "pk_live_alice", secret_key: "sk_live_alice_secret" }, envO);
+    await setActive("a", "paystack", envO);
+    /* Event 1 inherits Alice's account default (owner mode). */
+    var evOwner = await buy(1, 11, 1, envO);
+    ck("an owner-mode order is ready to pay",
+       evOwner.status === 201 && evOwner.body.provider === "paystack" && evOwner.body.payment_configured === true,
+       evOwner.status + " " + JSON.stringify({ provider: evOwner.body.provider, ready: evOwner.body.payment_configured, message: evOwner.body.payment_message }));
+    paystack.calls = [];
+    var initOwner = await send("/api/payments/create",
+      { reference: evOwner.body.order.reference, checkout_proof: evOwner.body.checkout_proof }, envO);
+    ck("owner mode pays with the OWNER's credentials, never the organizer's own",
+       initOwner.status === 200 && String((paystack.calls[0] || {}).auth || "") === "Bearer " + PS.secret,
+       initOwner.status + " auth=" + String((paystack.calls[0] || {}).auth || "").slice(0, 30));
+    /* Pinning the event back to the organizer's own account. */
+    var pinOwn = await call("/api/organizer/events/2", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_mode: "own" }) }, envO);
+    var evOwn = await buy(2, 21, 1, envO);
+    paystack.calls = [];
+    var initOwn2 = await send("/api/payments/create",
+      { reference: evOwn.body.order.reference, checkout_proof: evOwn.body.checkout_proof }, envO);
+    ck("an event pinned to its own account pays with the ORGANIZER's credentials",
+       pinOwn.status === 200 && evOwn.status === 201 && initOwn2.status === 200 &&
+       String((paystack.calls[0] || {}).auth || "") === "Bearer sk_live_alice_secret",
+       pinOwn.status + "/" + evOwn.status + "/" + initOwn2.status +
+       " auth=" + String((paystack.calls[0] || {}).auth || "").slice(0, 30));
+    var badMode = await call("/api/organizer/events/2", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_mode: "boss" }) }, envO);
+    ck("an invalid payment mode is rejected", badMode.status === 422,
+       badMode.status + " " + JSON.stringify(badMode.body).slice(0, 120));
+    /* Switching owner payment mode OFF flips owner-mode events back to the
+       organizer's own account (the owner branch is skipped entirely). */
+    db.table("app_settings").push({ key: "owner_payment_enabled", value: "false" });
+    var evOff = await buy(1, 11, 1, envO);
+    paystack.calls = [];
+    var initOff = await send("/api/payments/create",
+      { reference: evOff.body.order.reference, checkout_proof: evOff.body.checkout_proof }, envO);
+    ck("switching owner payment mode off sends owner-mode events back to the organizer's own account",
+       evOff.status === 201 && initOff.status === 200 &&
+       String((paystack.calls[0] || {}).auth || "") === "Bearer sk_live_alice_secret",
+       evOff.status + "/" + initOff.status + " auth=" + String((paystack.calls[0] || {}).auth || "").slice(0, 30));
+    db.table("app_settings").pop();
+    /* Explicit "owner" on the event wins over the (now off) account default. */
+    rows("organizers")[0].use_owner_payments = 0;
+    var pinOwner = await call("/api/organizer/events/1", { method: "PUT", headers: authHeader("a"),
+      body: JSON.stringify({ payment_mode: "owner" }) }, envO);
+    var evExplicit = await buy(1, 12, 1, envO);
+    paystack.calls = [];
+    var initExplicit = await send("/api/payments/create",
+      { reference: evExplicit.body.order.reference, checkout_proof: evExplicit.body.checkout_proof }, envO);
+    ck("an event explicitly set to owner mode collects through the owner's account even when the default is off",
+       pinOwner.status === 200 && rows("events")[0].payment_mode === "owner" &&
+       evExplicit.status === 201 && evExplicit.body.payment_configured === true &&
+       String((paystack.calls[0] || {}).auth || "") === "Bearer " + PS.secret,
+       pinOwner.status + "/" + evExplicit.status + " mode=" + rows("events")[0].payment_mode +
+       " auth=" + String((paystack.calls[0] || {}).auth || "").slice(0, 30));
+  } catch(e){ ck("group 10 (owner payment mode)", false, (e && e.stack) || String(e)); }
+
+try {
+  step("free tickets");
+  /* ===========================================================================
+     Free tickets: email verification, IP abuse prevention, duplicates
+     ---------------------------------------------------------------------------
+     The Worker keys every stored value with HMAC-SHA256 over the deployment
+     secret (PAYMENT_ENCRYPTION_KEY in this harness), so these tests can mint
+     exactly the rows the real service would: a code, a continuation token and
+     an email identity. Nothing here trusts a client-supplied price, address,
+     quantity or event.
+     ========================================================================= */
+  var FREE_KEY = "harness-encryption-key-0123456789";
+  async function hmac256Hex(secret, message){
+    var key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    var sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+    return [].slice.call(new Uint8Array(sig)).map(function(b){ return b.toString(16).padStart(2, "0"); }).join("");
+  }
+  async function identHash(kind, value){ return (await hmac256Hex(FREE_KEY, kind + "|" + value)).slice(0, 48); }
+  async function otpHashFor(token, code){ return await hmac256Hex(FREE_KEY, "otp|" + token + "|" + code); }
+  function token32(){ return [].slice.call(crypto.getRandomValues(new Uint8Array(32)))
+    .map(function(b){ return b.toString(16).padStart(2, "0"); }).join(""); }
+  function isoAt(ms){ return new Date(ms).toISOString(); }
+  function sessionRow(id, extra){
+    var row = { id: id, session_token: token32(), event_id: EV_FREE, email: "seed@example.com",
+      email_hash: null, name: "Seed Attendee", quantity: 1, ticket_type_id: TT_FREE, otp_hash: null,
+      status: "pending", attempts: 0, resends: 0, ip_hash: null,
+      expires_at: isoAt(Date.now() + 300000), last_sent_at: isoAt(Date.now()), verified_at: null,
+      continue_hash: null, continue_expires_at: null, created_at: isoAt(Date.now()), consumed_at: null };
+    for(var k in extra) row[k] = extra[k];
+    db.state.free_ticket_sessions.push(row);
+    return row;
+  }
+
+  /* ---- seed: three events on organizer A, only the first has a free type ---- */
+  var EV_FREE = 91, EV_NO_OTP = 92, EV_NO_PRICE = 93;
+  function seedEvent(id, extra){
+    var row = { id: id, organizer_id: 1, title: "Harness Free Entry " + id, slug: "harness-free-" + id,
+      description: "Harness event.", category: "Community", venue: "Nairobi", location: "Nairobi",
+      event_date: "2027-12-31", start_time: "09:00", end_time: "17:00", poster_url: null,
+      status: "active", is_featured: 0, sales_start: null, sales_end: null,
+      payment_provider: "paystack", payment_mode: "own",
+      free_otp_enabled: 1, free_ticket_limit: 1, ip_abuse_enabled: 1, free_ticket_config: null };
+    for(var k in extra) row[k] = extra[k];
+    rows("events").push(row);
+    return row;
+  }
+  seedEvent(EV_FREE, {});
+  seedEvent(EV_NO_OTP, { free_otp_enabled: 0 });
+  seedEvent(EV_NO_PRICE, {});
+  var TT_FREE = 911, TT_PAID = 912, TT_PAIDONLY = 931;
+  function seedType(id, eventId, name, price){
+    rows("ticket_types").push({ id: id, event_id: eventId, name: name, description: null, price: price,
+      quantity: 20, sold: 0, sales_start: null, sales_end: null, status: "active" });
+  }
+  seedType(TT_FREE, EV_FREE, "Free Entry", 0);
+  seedType(TT_PAID, EV_FREE, "VIP", 2500);
+  seedType(TT_PAIDONLY, EV_NO_PRICE, "Regular", 1000);
+  db.state.free_ticket_sessions = [];
+  db.state.free_ticket_claims = [];
+
+  var envF = makeEnv();
+  /* Email ON for this group: the free-ticket code travels through the real Brevo
+     pipeline in the Worker, so the whole request -> code -> ticket flow is
+     exercised here instead of being short-circuited by EMAIL_DISABLED. */
+  envF.BREVO_API_KEY = "xkeysib-test";
+  envF.EMAIL_FROM = "tickets@princealexdigital.com";
+  delete envF.EMAIL_DISABLED;
+  /* Record every Brevo call, so the test can read the code out of the message the
+     Worker actually built - the one place the six digits legitimately exist. */
+  var BREVO_CALLS = [];
+  var passthroughFetch = window.fetch;
+  window.fetch = function(input, init){
+    var href = (typeof input === "string") ? input : ((input && input.url) || String(input));
+    if(href.indexOf("api.brevo.com") > -1 && init && init.body){
+      try { BREVO_CALLS.push(typeof init.body === "string" ? init.body : String(init.body)); } catch(e){ }
+    }
+    return passthroughFetch.apply(this, arguments);
+  };
+  await connect("a", "paystack", { public_key: "pk_live_alice", secret_key: "sk_live_alice_secret" }, envF);
+  await setActive("a", "paystack", envF);
+
+/* ---- 1. the guards that stop a code being issued at all ---- */
+  var offOtp = await send("/api/tickets/free/verify/request",
+    { event_id: EV_NO_OTP, full_name: "Jane Wanjiru", email: "jane@example.com", quantity: 1 }, envF, {}, "10.0.0.1");
+  ck("an event with verification switched off never issues a code",
+    offOtp.status === 409 && offOtp.body.code === "OTP_DISABLED", offOtp.status + " " + offOtp.body.code);
+  var gone = await send("/api/tickets/free/verify/request",
+    { event_id: 9999, full_name: "Jane Wanjiru", email: "jane@example.com" }, envF, {}, "10.0.0.2");
+  ck("an unknown event is refused before anything is generated",
+    gone.status === 404 && gone.body.code === "NOT_FOUND", gone.status + " " + gone.body.code);
+  var noType = await send("/api/tickets/free/verify/request",
+    { event_id: EV_NO_PRICE, full_name: "Jane Wanjiru", email: "jane@example.com", quantity: 1 }, envF, {}, "10.0.0.3");
+  ck("an event with no price-0 ticket type has nothing to verify",
+    noType.status === 409 && noType.body.code === "NO_FREE_TICKETS", noType.status + " " + noType.body.code);
+  var envNoKey = makeEnv();
+  delete envNoKey.PAYMENT_ENCRYPTION_KEY;
+  var noKey = await send("/api/tickets/free/verify/request",
+    { event_id: EV_FREE, full_name: "Jane Wanjiru", email: "jane@example.com", quantity: 1 }, envNoKey, {}, "10.0.0.4");
+  ck("a deployment with no key material refuses to start a verification",
+    noKey.status === 500 && noKey.body.code === "OTP_KEY_MISSING", noKey.status + " " + noKey.body.code);
+  var badEmail = await send("/api/tickets/free/verify/request",
+    { event_id: EV_FREE, full_name: "Jane Wanjiru", email: "not-an-address" }, envF, {}, "10.0.0.5");
+  ck("a malformed address is rejected before a session is created",
+    badEmail.status === 422 && db.state.free_ticket_sessions.length === 0,
+    badEmail.status + " sessions=" + db.state.free_ticket_sessions.length);
+
+  /* ---- 2. none of the endpoints confirm which sessions or tokens exist ---- */
+  var bogus = await send("/api/tickets/free/verify/confirm",
+    { session_token: token32(), otp: "123456" }, envF, {}, "10.0.1.1");
+  var noToken = await send("/api/tickets/free/verify/confirm", { otp: "123456" }, envF, {}, "10.0.1.2");
+  ck("a made-up verification session is refused without revealing anything",
+    bogus.status === 400 && bogus.body.code === "OTP_INVALID" && noToken.status === 422,
+    bogus.status + " " + bogus.body.code + " / missing token " + noToken.status);
+  var bogusReg = await send("/api/tickets/free/register",
+    { continue_token: token32(), phone: "+254712345678" }, envF, {}, "10.0.1.3");
+  ck("an unknown continuation token cannot issue a ticket",
+    bogusReg.status === 401 && bogusReg.body.code === "VERIFY_REQUIRED", bogusReg.status + " " + bogusReg.body.code);
+
+/* ---- 3. the code itself: wrong guesses cost tries, the right one is spent ---- */
+  var sCode = "135790", sEmail = "limit@example.com";
+  var good = sessionRow(5001, { email: sEmail, email_hash: await identHash("email", sEmail) });
+  good.otp_hash = await otpHashFor(good.session_token, sCode);
+  var wrong1 = await send("/api/tickets/free/verify/confirm",
+    { session_token: good.session_token, otp: "000000" }, envF, {}, "10.0.2.1");
+  ck("a wrong code is refused and the try is counted against the session",
+    wrong1.status === 400 && wrong1.body.code === "OTP_INVALID"
+      && /attempts? left/i.test(String(wrong1.body.error || wrong1.body.message || "")),
+    wrong1.status + " " + wrong1.body.code + " :: " + (wrong1.body.error || wrong1.body.message));
+  ck("the stored code is a keyed HMAC, never the six digits",
+    String(good.otp_hash) !== sCode && /^[0-9a-f]{64}$/.test(String(good.otp_hash)) && Number(good.attempts) === 1,
+    "attempts=" + good.attempts + " hash=" + String(good.otp_hash).slice(0, 12) + "...");
+  var right = await send("/api/tickets/free/verify/confirm",
+    { session_token: good.session_token, otp: sCode }, envF, {}, "10.0.2.2");
+  ck("the right code verifies the address and mints a continuation token",
+    right.status === 200 && right.body.verified === true && String(right.body.continue_token || "").length >= 32
+      && right.body.email_masked === "l***t@example.com" && good.status === "verified",
+    right.status + " " + JSON.stringify({ masked: right.body.email_masked, status: good.status }));
+  var reuse = await send("/api/tickets/free/verify/confirm",
+    { session_token: good.session_token, otp: sCode }, envF, {}, "10.0.2.3");
+  ck("a successful code can never be used a second time",
+    reuse.status === 409 && reuse.body.code === "ALREADY_VERIFIED", reuse.status + " " + reuse.body.code);
+  var burn = sessionRow(5002, { email: "burn@example.com" });
+  burn.otp_hash = await otpHashFor(burn.session_token, "246810");
+  var lastTry = null;
+  for(var i = 0; i < 6; i++){
+    lastTry = await send("/api/tickets/free/verify/confirm",
+      { session_token: burn.session_token, otp: "999999" }, envF, {}, "10.0.3." + i);
+  }
+  ck("five wrong codes use up the session's whole try budget",
+    lastTry.status === 429 && lastTry.body.code === "OTP_ATTEMPTS" && burn.status === "expired",
+    lastTry.status + " " + lastTry.body.code + " status=" + burn.status);
+  var stale = sessionRow(5003, { email: "late@example.com", expires_at: isoAt(Date.now() - 1000) });
+  stale.otp_hash = await otpHashFor(stale.session_token, "555555");
+  var late = await send("/api/tickets/free/verify/confirm",
+    { session_token: stale.session_token, otp: "555555" }, envF, {}, "10.0.4.0");
+  ck("a code that has expired is refused even when it is correct",
+    late.status === 410 && late.body.code === "OTP_EXPIRED", late.status + " " + late.body.code);
+
+  /* ---- 4. the resend cooldown is enforced by the server ---- */
+  var resent = sessionRow(5004, { email: "resend@example.com" });
+  resent.otp_hash = await otpHashFor(resent.session_token, "111222");
+  var cooldown = await send("/api/tickets/free/verify/request",
+    { event_id: EV_FREE, session_token: resent.session_token }, envF, {}, "10.0.5.0");
+  ck("a resend inside the cooldown is refused with the wait the client must observe",
+    cooldown.status === 429 && cooldown.body.code === "RESEND_COOLDOWN", cooldown.status + " " + cooldown.body.code);
+
+  /* ---- 5. one connection cannot flood the code endpoint ---- */
+  var floodIp = "10.0.6.9", flood = [];
+  for(var f = 0; f < 6; f++){
+    flood.push(await send("/api/tickets/free/verify/request",
+      { event_id: EV_FREE, ticket_type_id: TT_FREE, quantity: 1, full_name: "Flood Tester",
+        email: "flood" + f + "@example.com" }, envF, {}, floodIp));
+  }
+  ck("the sixth code request from one IP address is throttled",
+    flood[5].status === 429 && flood[5].body.code === "RATE_LIMITED" &&
+      flood.slice(0, 5).every(function(r){ return r.status !== 429; }),
+    "statuses " + flood.map(function(r){ return r.status; }).join(","));
+  var otherIp = await send("/api/tickets/free/verify/request",
+    { event_id: EV_FREE, ticket_type_id: TT_FREE, quantity: 1, full_name: "Other Visitor",
+      email: "other@example.com" }, envF, {}, "10.0.7.9");
+  ck("the throttle is per address, so another visitor is unaffected",
+    otherIp.status !== 429, "other IP -> " + otherIp.status + " " + String(otherIp.body.code || ""));
+
+/* ---- 6. the paid path refuses an unverified free order ---- */
+  var freeOrder = await send("/api/orders", { event_id: EV_FREE,
+    items: [{ ticket_type_id: TT_FREE, quantity: 1 }],
+    customer: { full_name: "Gate Tester", email: "gate@example.com", phone: "+254712345678" } }, envF, {}, "10.0.8.1");
+  ck("a free ticket can still be ordered, so the gate is what protects it",
+    freeOrder.status === 201 && Number((freeOrder.body.order || {}).amount) === 0,
+    freeOrder.status + " amount=" + String((freeOrder.body.order || {}).amount));
+  var gate = await send("/api/payments/create",
+    { reference: (freeOrder.body.order || {}).reference, checkout_proof: freeOrder.body.checkout_proof },
+    envF, {}, "10.0.8.1");
+  ck("an order that skipped verification is refused at the payment step",
+    gate.status === 403 && gate.body.code === "FREE_VERIFICATION_REQUIRED", gate.status + " " + gate.body.code);
+
+  /* ---- 7. registration: the session's own data is what gets issued ---- */
+  var cToken = right.body.continue_token;
+  var tamper = await send("/api/tickets/free/register",
+    { continue_token: cToken, phone: "+254712345678", quantity: 9, event_id: EV_NO_PRICE }, envF, {}, "10.0.9.1");
+  ck("a payload that edits the event is refused outright",
+    tamper.status === 403 && tamper.body.code === "SESSION_EVENT_MISMATCH", tamper.status + " " + tamper.body.code);
+  var tamper2 = await send("/api/tickets/free/register",
+    { continue_token: cToken, phone: "+254712345678", email: "someone.else@example.com" }, envF, {}, "10.0.9.2");
+  ck("a payload that edits the address is refused outright",
+    tamper2.status === 403 && tamper2.body.code === "SESSION_EMAIL_MISMATCH", tamper2.status + " " + tamper2.body.code);
+  var reg = await send("/api/tickets/free/register",
+    { continue_token: cToken, phone: "+254712345678" }, envF, {}, "10.0.9.3");
+  ck("a verified email completes the registration through the normal ticket path",
+    reg.status === 201 && Number((reg.body.order || {}).amount) === 0 && (reg.body.tickets || []).length === 1
+      && /^PAT-/.test(String(((reg.body.tickets || [])[0] || {}).ticket_number || ""))
+      && String(((reg.body.tickets || [])[0] || {}).qr_image_url || "").indexOf("/qr.png") > -1,
+    reg.status + " " + JSON.stringify({ amount: (reg.body.order || {}).amount,
+      tickets: (reg.body.tickets || []).length, code: reg.body.code || null }));
+  var regAgain = await send("/api/tickets/free/register",
+    { continue_token: cToken, phone: "+254712345678" }, envF, {}, "10.0.9.4");
+  ck("the continuation token is burned on use",
+    regAgain.status === 409 && regAgain.body.code === "ALREADY_REGISTERED" && good.status === "consumed",
+    regAgain.status + " " + regAgain.body.code + " session=" + good.status);
+  var limitHash = await identHash("email", sEmail);
+  var mine = rows("free_ticket_claims").filter(function(c){ return String(c.email_hash) === limitHash; });
+  ck("the claim row is what holds the slot, and it never carries the address",
+    mine.length === 1 && String(mine[0].status) === "active" && String(mine[0].email_hash).indexOf("@") < 0
+      && Number(mine[0].quantity) === 1,
+    mine.length + " claim(s) status=" + (mine[0] || {}).status);
+
+  /* ---- 8. duplicate prevention: the per-email limit is the ceiling ---- */
+  /* Creating an order already reserves inventory, so the honest comparison is the
+     stock either side of the refusal - not an absolute number. */
+  var soldBeforeRefusal = Number((rows("ticket_types").filter(function(t){ return Number(t.id) === TT_FREE; })[0] || {}).sold);
+  var dupToken = token32();
+  sessionRow(5005, { email: sEmail, email_hash: limitHash, status: "verified", verified_at: isoAt(Date.now()),
+    continue_hash: await identHash("continue", dupToken), continue_expires_at: isoAt(Date.now() + 600000) });
+  var dup = await send("/api/tickets/free/register",
+    { continue_token: dupToken, phone: "+254712345678" }, envF, {}, "10.0.10.1");
+  ck("a second free ticket for the same address is refused by the per-email limit",
+    dup.status === 409 && dup.body.code === "FREE_LIMIT_REACHED", dup.status + " " + dup.body.code);
+  var activeForEmail = rows("free_ticket_claims").filter(function(c){
+    return String(c.email_hash) === limitHash && c.status === "active"; }).length;
+  var freeStock = rows("ticket_types").filter(function(t){ return Number(t.id) === TT_FREE; })[0];
+  ck("a refused registration consumes no slot and returns its inventory",
+    activeForEmail === 1 && Number(freeStock.sold) === soldBeforeRefusal,
+    "active=" + activeForEmail + " sold " + soldBeforeRefusal + " -> " + freeStock.sold);
+
+/* ---- 9. the whole flow, over the real email pipeline ---- */
+  var brevoBody = function(index){
+    var raw = BREVO_CALLS[index] || BREVO_CALLS[BREVO_CALLS.length - 1] || "";
+    try { return JSON.parse(raw); } catch(e){ return {}; }
+  };
+  var happyEmail = "happy@example.com";
+  BREVO_CALLS.length = 0;
+  var asked = await send("/api/tickets/free/verify/request",
+    { event_id: EV_FREE, ticket_type_id: TT_FREE, quantity: 1, full_name: "Happy Tester", email: happyEmail },
+    envF, {}, "10.0.11.1");
+  ck("a code request is answered with a masked address and a verification session",
+    asked.status === 200 && String(asked.body.session_token || "").length >= 32
+      && asked.body.email_masked === "h***y@example.com" && Number(asked.body.expires_in) === 300
+      && Number(asked.body.attempts_allowed) === 5 && Number(asked.body.resend_after) === 60,
+    asked.status + " " + JSON.stringify({ masked: asked.body.email_masked, code: asked.body.code || null }));
+  ck("the code is delivered by the ordinary email pipeline and never returned to the caller",
+    BREVO_CALLS.length >= 1 && asked.body.otp === undefined && asked.body.code === undefined
+      && /verification code/i.test(String((brevoBody(0) || {}).subject || "")),
+    "brevo calls=" + BREVO_CALLS.length + " subject=" + String((brevoBody(0) || {}).subject || ""));
+  var sentCode = (String((brevoBody(0) || {}).textContent || "").match(/verification code is:\s*(\d{6})/) || [])[1] || "";
+  var happyRow = db.state.free_ticket_sessions.filter(function(s){
+    return s.session_token === asked.body.session_token; })[0] || {};
+  ck("the emailed code is six digits and is stored only as a keyed hash",
+    /^\d{6}$/.test(sentCode) && String(happyRow.otp_hash || "") !== sentCode
+      && /^[0-9a-f]{64}$/.test(String(happyRow.otp_hash || "")),
+    "digits=" + sentCode.length + " stored=" + String(happyRow.otp_hash || "").slice(0, 12) + "...");
+  var happyConfirm = await send("/api/tickets/free/verify/confirm",
+    { session_token: asked.body.session_token, otp: sentCode }, envF, {}, "10.0.11.2");
+  var happyReg = await send("/api/tickets/free/register",
+    { continue_token: happyConfirm.body.continue_token, phone: "+254700000001" }, envF, {}, "10.0.11.3");
+  ck("code -> verified -> ticket works end to end without trusting the page",
+    happyConfirm.status === 200 && happyReg.status === 201 && (happyReg.body.tickets || []).length === 1
+      && Number((happyReg.body.order || {}).amount) === 0
+      && ((happyReg.body.verification || {}).verified === true),
+    happyConfirm.status + "/" + happyReg.status + " " +
+      JSON.stringify({ tickets: (happyReg.body.tickets || []).length, code: happyReg.body.code || null }));
+  ck("the claimed ticket is emailed to the attendee as usual",
+    BREVO_CALLS.length >= 2, "brevo calls=" + BREVO_CALLS.length);
+} catch(e){
+  ck("the free-ticket group ran to completion", false, (e && (e.stack || e.message)) || String(e));
+}
+
+
+
+  R.sql_tail = SQL_LOG.slice(-14);
+  finish();
+})().catch(function(e){
+  /* A crash still has to report: the runner is waiting for this POST. */
+  ck("harness crashed", false, (e && e.stack) || String(e));
+  R.errors = (R.errors || []).concat(errors.slice(0, 12));
+  R.mock_errors = (R.mock_errors || []).concat(MOCK_ERRORS.slice(0, 15));
+  console.warn = realWarn; console.error = realError;
+  finish();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body></html>

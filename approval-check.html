@@ -1,0 +1,509 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>event approval check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){ var b=document.getElementById("out"); if(b) b.textContent = "JS ERROR: " + (e.message||"") + " @ " + (e.lineno||0); });
+window.addEventListener("unhandledrejection", function(e){ var b=document.getElementById("out"); if(b){ var r=e&&e.reason; b.textContent = "REJECTED: " + ((r&&(r.stack||r.message))||r); } });
+</script>
+<script type="module">
+/* ============================================================================
+   Prince Alex TicketHub - event publishing needs owner approval
+   ----------------------------------------------------------------------------
+   An organizer must not be able to put an event live: asking for "active" is
+   stored as "pending", the platform owner is emailed to approve, and only an
+   owner can move the event to "active" (which emails the organizer). This
+   harness drives the real Worker with a genuinely signed Firebase token (it
+   mints its own RSA key and serves the matching JWKS) against a small in-memory
+   D1, so the gate, the outbox rows and the owner/organizer boundary are all
+   exercised for real.
+
+   Serve the folder over http and open /approval-check.html, or run it headless:
+     powershell -ExecutionPolicy Bypass -File tools\run-check.ps1 -Page approval-check.html
+   ========================================================================== */
+const R = { tests: [] };
+const KEEP = setInterval(function(){
+  const box = document.getElementById("out");
+  if(box && String(box.textContent).indexOf("RESULTS_JSON:") === 0) clearInterval(KEEP);
+}, 100);
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out"); if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name; }
+function finish(){ R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){} }
+
+const realFetch = window.fetch.bind(window);
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+const PROJECT = "prince-alex-tickethub";
+const KID = "harness-key-1";
+let W = null;
+const ctx = { waitUntil(){} };
+
+/* ----------------------------------------- a real (test) Firebase token ----
+   The same throwaway RSA key orders-detail-check.html uses: it signs tokens
+   this harness verifies against its own mocked JWKS and can never authenticate
+   anywhere else. Google's real JWKS is never consulted in this file. */
+const HARNESS_JWK = { "kty":"RSA", "kid":"harness-key-1", "alg":"RS256", "use":"sig", "n":"uBMNnY7q_88BFCRaEzk7UHiCC_jipYj4j1p8jKeqGj9Hy860AbB2SGwvJfe2p1PKPf4BEdcZyKf8w5esjiiZRlxE733cxLQQkxfmerxmbsNiZvwNBXGJtERoW3yl_Lr2_KamHeXPLcw9Jy8t44-EiUUj3UWRr5dx4NYhXnVnvjSodinvRC-Yit69WILIls360D89eEnF14Dy8VbbPBsNZYZUnXtN1sNFStsYU5i8fVTHTYC3-h8cfxNotzZZrmpCVlWGLMM2Zs_paOAXrL0O46BUqMsbL5Vnv-WnQAhXf6pHDqGENPuCLBVFi3kJoj01Ll68ypwilH7xDeGcpMGfhQ", "e":"AQAB" };;
+const HARNESS_PKCS8 = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4Ew2djur_zwEUJFoTOTtQeIIL-OKliPiPWnyMp6oaP0fLzrQBsHZIbC8l97anU8o9_gER1xnIp_zDl6yOKJlGXETvfdzEtBCTF-Z6vGZuw2Jm_A0FcYm0RGhbfKX8uvb8pqYd5c8tzD0nLy3jj4SJRSPdRZGvl3Hg1iFedWe-NKh2Ke9EL5iK3r1YgsiWzfrQPz14ScXXgPLxVts8Gw1lhlSde03Ww0VK2xhTmLx9VMdNgLf6Hxx_E2i3NlmuakJWVYYswzZmz-lo4BesvQ7joFSoyxsvlWe_5adACFd_qkcOoYQ0-4IsFUWLeQmiPTUuXrzKnCKUfvEN4ZykwZ-FAgMBAAECggEADYyZe_eBJMM_-ROT7cZQr2OvbuIrDLRAV4z5jgDpbHUr-7yDU3yBuGL-NXU-ZKKuSFHiEkYbB8IVwO_xK6WhYqR4DojdLz1x2uHvfSlRAOYw4BO9gaER2csPQ2yxayD3_TDnGVxJG73k4nV-kzmFL_V-5lKwnpQvNbWNTz6lHELz8aHXzfcEYB5Dlcy65I1OVlY1b7z4adjQBFKjHo-WSmUIyFS0Qm3gEPC2YBIzCs3519t3paLhpW0mookJqYd8Rrp9bXZbAeXPGwxTiWGFZurMi8QA2O6JGhUWh59ODOPUjjP5X6jqE961HgyudzsLSDr4M09LgZH1vPAvGXwjIQKBgQDsC5vl0_l46kMwOyqguCR_XY43ajci94eQ2cUqqYw2XpN23jhdl_aX007jrtaOo6GoKE1LRPh4Ru8shO2MF3Ei__-y1DPARsqAWV8LciEBm_bqogH76GmxQxdxvfz7549KEvp_nx_maVE7XQpWiS6nEdDTQzzOZ3Qcj4e0esqiEwKBgQDHorZK1AqyJBOAKaOwFJGN70Qj4crhWHrFKa8DS4P4CVHLoa1BYRME_GN8WZVv0E5CEqnmEZE9dp0Dv6zFz80WF5F3OPGBkwd62I5IosdrgWOa7Nv7WruGezQRK_oTMvbTRRIGg-fT-KQlhjexndvmqt6NfnvWCl06cUz0z8orBwKBgQCWshKld98dQvICKMPeN7GVXrUcy8LHoB_8agtmYTgSve6HRPfXSN01sMH8ufJgvjbGlHRESZQXtbGcSoEdnxmrrqQgFzmy138Q0f3L4OERlfDdevCpUoenk520EAcjC4J_V_5027IR98rUi2G-PXZ7UvRu6842N_X5BektX_dd4QKBgAWv6feJwOBATNnq1cHvZBIiDdPj2869oYm6XUT_wruvMEhXy8LADDWpJwBk4O_1hDU3qOVn_LY-icyQilB8UgBeHYPC-IZTdPQX9T22fW3fmsHQG5g2hn8XRW1zzkT7v7JXFmNfIJyWSb7T6wRBVgFlPr_TKZ34X52JmsKipMTDAoGAVGOouSIjwvYlpVj_rgpvDEBQPePrfITvsS5UI2j56AIXQ186H1wKB2RQSsEzED025qlnX-8LOmwfFm7CRxCSIk0l-ArjhGKN-_7YgZuZhy5aMovx0nh58Lgr-VVXP8om8X7DHnknuRW7vnMyE1wgc3r56dNF6QONK9XMJq1WZes";
+const b64u = (bytes) => btoa(String.fromCharCode.apply(null, new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const utf8 = (s) => new TextEncoder().encode(s);
+let signingKey = null, publicJwk = null;
+async function makeKey(){
+  const b64 = HARNESS_PKCS8.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  signingKey = await crypto.subtle.importKey("pkcs8", bytes, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  publicJwk = HARNESS_JWK;
+}
+async function mintToken(uid, email, extra){
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64u(utf8(JSON.stringify({ alg: "RS256", kid: KID, typ: "JWT" })));
+  const payload = b64u(utf8(JSON.stringify(Object.assign({
+    iss: "https://securetoken.google.com/" + PROJECT, aud: PROJECT, sub: uid,
+    email: email, iat: now, exp: now + 3600, email_verified: true
+  }, extra || {}))));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", signingKey, utf8(header + "." + payload));
+  return header + "." + payload + "." + b64u(sig);
+}
+
+/* ------------------------------------------------------------------ D1 ----
+   One organizer (user 1) and one platform owner (user 9). The owner also has an
+   organizer profile (id 2) so the "an owner publishes their own event" path can
+   be exercised too. Email sending is enabled but BREVO_API_KEY is absent, so
+   every template lands in email_outbox as `queued` - what the owner outbox page
+   shows - and nothing goes to the network. */
+function makeDb(){
+  const state = {
+    users: [
+      { id: 1, firebase_uid: "uid-organizer-1", full_name: "Amina Organizer", email: "amina@example.com", role: "organizer", status: "active", created_at: "2026-01-01 00:00:00" },
+      { id: 9, firebase_uid: "uid-owner-1", full_name: "Prince Alex", email: "owner@example.com", role: "owner", status: "active", created_at: "2026-01-01 00:00:00" }
+    ],
+    organizers: [
+      { id: 1, user_id: 1, business_name: "Sunrise Events", business_email: "hello@sunrise.test", business_phone: "+254700000001", logo_url: null, status: "active", updated_at: "2026-02-01 00:00:00" },
+      { id: 2, user_id: 9, business_name: "Alex Live", business_email: "alex@princealex.test", business_phone: "+254700000002", logo_url: null, status: "active", updated_at: "2026-02-01 00:00:00" }
+    ],
+    /* The agreement system (0008) is a precondition of publication, so this
+       harness seeds an ACTIVE version and both organizer signatures: every
+       approval-flow assertion below then runs with the gate satisfied.
+       agreement-check.html is the harness that exercises the gate itself. */
+    platform_agreements: [
+      { id: 1, version: "1.0", title: "TicketHub Organizer Agreement", content: "These are the terms.", summary: null,
+        fee_config_json: "{\"commission_percent\":5}", status: "active", effective_date: "2026-01-01",
+        content_hash: "seedhash", created_by: 9, activated_at: "2026-01-01 00:00:00", activated_by: 9,
+        created_at: "2026-01-01 00:00:00", updated_at: "2026-01-01 00:00:00" }
+    ],
+    organizer_agreements: [
+      { id: 1, organizer_id: 1, user_id: 1, agreement_id: 1, agreement_version: "1.0", signatory_name: "Amina Organizer",
+        signatory_email: "amina@example.com", signatory_role: "Director", status: "accepted",
+        accepted_at: "2026-02-01 00:00:00", content_snapshot: "These are the terms.", fee_snapshot_json: "{\"commission_percent\":5}",
+        reference: "AGR-2026-SUNRISE01", verification_method: "firebase_authenticated_email_and_single_use_token",
+        evidence_json: null, invitation_id: null, document_key: null, document_sha256: null,
+        confirmation_email_status: "queued", created_at: "2026-02-01 00:00:00" },
+      { id: 2, organizer_id: 2, user_id: 9, agreement_id: 1, agreement_version: "1.0", signatory_name: "Prince Alex",
+        signatory_email: "owner@example.com", signatory_role: "Director", status: "accepted",
+        accepted_at: "2026-02-01 00:00:00", content_snapshot: "These are the terms.", fee_snapshot_json: "{\"commission_percent\":5}",
+        reference: "AGR-2026-ALEXLIVE1", verification_method: "firebase_authenticated_email_and_single_use_token",
+        evidence_json: null, invitation_id: null, document_key: null, document_sha256: null,
+        confirmation_email_status: "queued", created_at: "2026-02-01 00:00:00" }
+    ],
+    agreement_invitations: [],
+    agreement_audit_log: [],
+    events: [ { id: 10, organizer_id: 1, title: "Nairobi Live 2027", slug: "nairobi-live-2027", status: "active", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00", venue: "KICC", location: "Nairobi", category: "Music", description: "Live music.", poster_url: null, poster_key: null, is_featured: 0, sales_start: null, sales_end: null, payment_provider: null, created_at: "2026-01-01 00:00:00", updated_at: "2026-01-01 00:00:00" } ],
+    ticket_types: [ { id: 11, event_id: 10, name: "Regular", price: 1500, quantity: 50, sold: 0, status: "active" } ],
+    orders: [], order_items: [], payments: [], tickets: [],
+    email_outbox: [], rate_limits: [],
+    app_settings: [ { key: "email_from_email", value: "tickets@princealexdigital.com" }, { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "true" } ]
+  };
+  let nextEventId = 20, nextTicketId = 20, nextMailId = 1;
+  let nextAgreementId = 10, nextSigId = 10, nextInviteId = 10, nextAuditId = 10;
+  const unhandled = [];
+  /* The event card the Worker's eventSelectSql projects. */
+  const withOrganizer = (e) => {
+    const org = state.organizers.filter(o => String(o.id) === String(e.organizer_id))[0];
+    const live = state.ticket_types.filter(t => String(t.event_id) === String(e.id) && t.status === "active");
+    const prices = live.map(t => Number(t.price || 0));
+    return Object.assign({}, e, {
+      organizer_name: org ? org.business_name : null,
+      organizer_logo: org ? org.logo_url : null,
+      organizer_status: org ? org.status : null,
+      starting_price: prices.length ? Math.min.apply(null, prices) : null,
+      available_total: live.length ? live.reduce((sum, t) => sum + Math.max(0, Number(t.quantity || 0) - Number(t.sold || 0)), 0) : null
+    });
+  };
+  /* D1 hands back fresh objects on every read; a shared reference would make an
+     UPDATE visible to a row the Worker read earlier and hide before/after checks. */
+  const cloneEvents = (list) => list.map(e => Object.assign({}, e));
+  const rows = (sql, p) => {
+    const s = String(sql);
+    /* --- agreement tables (0008): matched before the generic FROM handlers,
+       because several agreement queries also mention organizers/users. --- */
+    if(/AS organizers,/.test(s) && /COUNT\(\*\)/i.test(s)){
+      return [{ organizers: state.organizers.filter(o => o.status === "active").length,
+                signatures: state.organizer_agreements.filter(o => o.status === "accepted").length }];
+    }
+    if(/NOT EXISTS/.test(s) && /FROM organizers og/.test(s)){
+      return [{ n: state.organizers.filter(o => o.status === "active" &&
+        !state.organizer_agreements.some(a => String(a.organizer_id) === String(o.id) && String(a.agreement_id) === String(p[0]) && a.status === "accepted")).length }];
+    }
+    if(/FROM organizers og JOIN users u/.test(s)){
+      return state.organizers.filter(o => o.status === "active").map(o => {
+        const u = state.users.filter(x => String(x.id) === String(o.user_id))[0] || {};
+        return { organizer_id: o.id, user_id: o.user_id, full_name: u.full_name || "", email: u.email || "",
+          signed_before: state.organizer_agreements.filter(a => String(a.organizer_id) === String(o.id) && a.status === "accepted").length };
+      });
+    }
+    if(/FROM platform_agreements/.test(s)){
+      if(/WHERE version = \?/.test(s)) return state.platform_agreements.filter(a => a.version === p[0]);
+      if(/WHERE id = \?/.test(s)) return state.platform_agreements.filter(a => String(a.id) === String(p[0]));
+      if(/status = 'active'/.test(s)) return state.platform_agreements.filter(a => a.status === "active");
+      return state.platform_agreements.slice();
+    }
+    if(/FROM organizer_agreements/.test(s)){
+      const list = state.organizer_agreements;
+      if(/COUNT\(\*\)/i.test(s)){
+        const agreementFirst = /WHERE agreement_id = \? AND status = 'accepted'/.test(s);
+        const base = agreementFirst ? list.filter(o => String(o.agreement_id) === String(p[0])) : list;
+        return [{ n: base.filter(o => o.status === "accepted").length }];
+      }
+      if(/WHERE reference = \? AND organizer_id = \?/.test(s)) return list.filter(o => o.reference === p[0] && String(o.organizer_id) === String(p[1]));
+      if(/AND agreement_id = \? AND status = 'accepted'/.test(s)) return list.filter(o => String(o.organizer_id) === String(p[0]) && String(o.agreement_id) === String(p[1]) && o.status === "accepted");
+      if(/WHERE id = \?/.test(s)) return list.filter(o => String(o.id) === String(p[0]));
+      if(/organizer_id = \?/.test(s)) return list.filter(o => String(o.organizer_id) === String(p[0]));
+      return list.slice();
+    }
+    if(/FROM agreement_invitations/.test(s)) return state.agreement_invitations.slice();
+    if(/FROM agreement_audit_log/.test(s)) return state.agreement_audit_log.slice();
+    if(/FROM users/.test(s)){
+      if(/firebase_uid = \?/.test(s)) return state.users.filter(u => u.firebase_uid === p[0]);
+      if(/role = 'owner'/.test(s)) return state.users.filter(u => u.role === "owner" && u.status === "active");
+      if(/id = \?/.test(s)) return state.users.filter(u => String(u.id) === String(p[0]));
+      return state.users.slice();
+    }
+    if(/FROM organizers/.test(s)){
+      if(/user_id = \?/.test(s)) return state.organizers.filter(o => String(o.user_id) === String(p[0]));
+      if(/id = \?/.test(s)) return state.organizers.filter(o => String(o.id) === String(p[0]));
+      return state.organizers.slice();
+    }
+    if(/FROM events/.test(s)){
+      if(/COUNT\(\*\)/i.test(s)) return [{ n: state.events.length }];
+      if(/e\.status IN \('active','sold_out'\)/.test(s)) return cloneEvents(state.events.filter(e => e.status === "active" || e.status === "sold_out")).map(withOrganizer);
+      if(/e\.status = 'active'/.test(s)) return cloneEvents(state.events.filter(e => e.status === "active")).map(withOrganizer);
+      if(/WHERE e\.id = \?/.test(s)) return cloneEvents(state.events.filter(e => String(e.id) === String(p[0]))).map(withOrganizer);
+      if(/WHERE id = \?/.test(s)) return cloneEvents(state.events.filter(e => String(e.id) === String(p[0])));
+      if(/WHERE e\.slug = \?/.test(s)) return cloneEvents(state.events.filter(e => e.slug === p[0])).map(withOrganizer);
+      if(/WHERE slug = \?/.test(s)) return cloneEvents(state.events.filter(e => e.slug === p[0]));
+      return cloneEvents(state.events).map(withOrganizer);
+    }
+    if(/FROM ticket_types/.test(s)){
+      if(/COUNT\(\*\)/i.test(s)){
+        const hits = state.ticket_types.filter(t => String(t.event_id) === String(p[0]) && (!/status = 'active'/.test(s) || t.status === "active"));
+        return [{ n: hits.length }];
+      }
+      if(/event_id = \?/.test(s)) return state.ticket_types.filter(t => String(t.event_id) === String(p[0]));
+      return state.ticket_types.slice();
+    }
+    if(/FROM app_settings/.test(s)) return state.app_settings.slice();
+    if(/FROM email_outbox/.test(s)){
+      if(/WHERE template = \?/.test(s)) return state.email_outbox.filter(m => m.template === p[0] && String(m.to_email) === String(p[1]) && (m.status === "queued" || m.status === "sent"));
+      if(/status = 'queued'/.test(s)) return state.email_outbox.filter(m => m.status === "queued").slice(0, Number(p[0]) || 10);
+      return state.email_outbox.slice();
+    }
+    if(/FROM rate_limits/.test(s)) return [];
+    unhandled.push(s.slice(0, 140));
+    return [];
+  };
+
+  const write = (sql, p) => {
+    const s = String(sql);
+    /* D1 refuses a statement whose placeholder count differs from its bindings;
+       modelling that here keeps a mis-built INSERT from passing silently. */
+    const placeholders = (String(sql).match(/\?/g) || []).length;
+    if(placeholders !== p.length) throw new Error("bindings count mismatch (" + placeholders + " vs " + p.length + ")");
+    /* --- agreement tables (0008) --- */
+    const mIns = /^INSERT INTO (\w+) \(([^)]+)\) VALUES \(([\s\S]+)\)\s*$/i.exec(s.trim());
+    if(mIns && /^(platform_agreements|organizer_agreements|agreement_invitations|agreement_audit_log)$/.test(mIns[1])){
+      const cols = mIns[2].split(",").map(c => c.trim());
+      const parts = mIns[3].split(",").map(v => v.trim());
+      const row = {}; let pi = 0;
+      cols.forEach((c, i) => { const v = parts[i]; row[c] = (v === "?") ? p[pi++] : String(v).replace(/^'/, "").replace(/'$/, ""); });
+      if(mIns[1] === "platform_agreements") row.id = nextAgreementId++;
+      if(mIns[1] === "organizer_agreements") row.id = nextSigId++;
+      if(mIns[1] === "agreement_invitations") row.id = nextInviteId++;
+      if(mIns[1] === "agreement_audit_log") row.id = nextAuditId++;
+      row.created_at = row.created_at || "2026-05-01 09:00:00";
+      row.updated_at = row.updated_at || "2026-05-01 09:00:00";
+      state[mIns[1]].push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/^UPDATE platform_agreements/i.test(s)){
+      /* every shape binds the row id last: ... WHERE id = ? [AND status ...] */
+      const row = state.platform_agreements.filter(a => String(a.id) === String(p[p.length - 1]))[0];
+      if(/status = 'superseded'/.test(s)){
+        if(row && row.status === "active"){ row.status = "superseded"; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      if(/activated_at/.test(s) && /status = 'active'/.test(s)){
+        if(row && row.status !== "active"){ row.status = "active"; row.activated_at = p[0]; row.activated_by = p[1]; row.updated_at = p[2]; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      /* generic draft PATCH: SET a = ?, ... WHERE id = ? */
+      const target = state.platform_agreements.filter(a => String(a.id) === String(p[p.length - 1]))[0];
+      if(target){
+        const m = /SET\s+([\s\S]+?)\s+WHERE\s+id\s*=\s*\?$/i.exec(s.trim());
+        if(m) m[1].split(", ").forEach((a, i) => { target[a.split("=")[0].trim()] = p[i]; });
+        return { meta: { changes: 1 } };
+      }
+      return { meta: { changes: 0 } };
+    }
+    if(/^UPDATE agreement_invitations/i.test(s)){
+      if(/SET status = 'revoked'/.test(s)){
+        let changes = 0;
+        state.agreement_invitations.forEach(inv => {
+          if(inv.status === "pending" && String(inv.agreement_id) === String(p[0]) && String(inv.user_id) === String(p[1])){ inv.status = "revoked"; changes++; }
+        });
+        return { meta: { changes: changes } };
+      }
+      if(/SET status='used'/.test(s)){
+        const inv = state.agreement_invitations.filter(x => String(x.id) === String(p[1]))[0];
+        if(inv && inv.status === "pending" && inv.token_hash === p[2]){ inv.status = "used"; inv.used_at = p[0]; return { meta: { changes: 1 } }; }
+        return { meta: { changes: 0 } };
+      }
+      return { meta: { changes: 0 } };
+    }
+    if(/^UPDATE organizer_agreements/i.test(s)){
+      const row = state.organizer_agreements.filter(x => String(x.id) === String(p[p.length - 1]))[0];
+      if(!row) return { meta: { changes: 0 } };
+      if(/document_key/.test(s)){ row.document_key = p[0]; row.document_sha256 = p[1]; }
+      else if(/confirmation_email_status/.test(s)){ row.confirmation_email_status = p[0]; }
+      return { meta: { changes: 1 } };
+    }
+    if(/UPDATE events SET agreement_id/i.test(s)){
+      const ev = state.events.filter(e => String(e.id) === String(p[3]))[0];
+      if(ev && String(ev.agreement_id || "") !== String(p[0] || "")){ ev.agreement_id = p[0]; ev.agreement_version = p[1]; return { meta: { changes: 1 } }; }
+      return { meta: { changes: 0 } };
+    }
+    if(/INSERT INTO events/i.test(s)){
+      const row = {};
+      /\(([^)]+)\)/.exec(s)[1].split(",").forEach((c, i) => { row[c.trim()] = p[i]; });
+      row.id = nextEventId++;
+      row.created_at = "2026-05-01 09:00:00";
+      row.updated_at = "2026-05-01 09:00:00";
+      state.events.push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/^UPDATE\s+events/i.test(s)){
+      const m = /^UPDATE\s+events\s+SET\s+([\s\S]+?)\s+WHERE\s+id\s*=\s*\?$/i.exec(s.trim());
+      const ev = state.events.filter(e => String(e.id) === String(p[p.length - 1]))[0];
+      if(ev && m) m[1].split(", ").forEach((a, i) => { ev[a.split("=")[0].trim()] = p[i]; });
+      return { meta: { changes: ev ? 1 : 0 } };
+    }
+    if(/INSERT INTO email_outbox/i.test(s)){
+      const row = { id: nextMailId++, to_email: p[0], subject: p[1], template: p[2], payload_json: p[3],
+        status: "queued", error: null, sent_at: null, created_at: "2026-05-01 09:00:00" };
+      state.email_outbox.push(row);
+      return { meta: { last_row_id: row.id, changes: 1 } };
+    }
+    if(/UPDATE email_outbox/i.test(s)){
+      const row = state.email_outbox.filter(m => String(m.id) === String(p[p.length - 1]))[0];
+      if(row){ row.status = p[0]; row.error = p[1]; row.payload_json = p[2]; if(row.status === "sent") row.sent_at = "2026-05-01 09:01:00"; }
+      return { meta: { changes: row ? 1 : 0 } };
+    }
+    return { meta: { changes: 0 } };
+  };
+  const stmt = (sql, bound) => {
+    const p = bound || [];
+    return { bind: (...a) => stmt(sql, a),
+      all: async () => ({ results: rows(sql, p), success: true, meta: {} }),
+      first: async () => ({ result: rows(sql, p)[0] || null, success: true, meta: {} }),
+      run: async () => write(sql, p) };
+  };
+  return { DB: { prepare: sql => stmt(sql, []),
+      /* No rate_limits table here: the Worker's D1 limiter degrades to its
+         in-memory tier, exactly as it would on an un-migrated database. */
+      batch: async () => { throw new Error("no such table: rate_limits"); } },
+    state: state, unhandled: unhandled,
+    addTicket: (eventId, name) => state.ticket_types.push({ id: nextTicketId++, event_id: eventId,
+      name: name || "Regular", price: 1000, quantity: 50, sold: 0, status: "active" }),
+    mail: (template) => state.email_outbox.filter(m => m.template === template),
+    event: (id) => state.events.filter(e => String(e.id) === String(id))[0] || null };
+}
+function makeEnv(extra){
+  const d = makeDb();
+  const env = { DB: d.DB, FIREBASE_PROJECT_ID: PROJECT, ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital" };
+  for(const k of Object.keys(extra || {})) env[k] = String(extra[k]);
+  env.db = d;
+  return env;
+}
+
+
+/* ----------------------------------------------------------------- call ---- */
+let ipSeq = 0;
+function nextIp(){ ipSeq++; return "41.91." + Math.floor(ipSeq / 200) + "." + (1 + (ipSeq % 200)); }
+async function call(path, token, env, opts){
+  const o = opts || {};
+  const headers = { "CF-Connecting-IP": o.ip || nextIp() };
+  if(token) headers["Authorization"] = "Bearer " + token;
+  let body;
+  if(o.body !== undefined){ headers["Content-Type"] = "application/json"; body = JSON.stringify(o.body); }
+  const res = await W.default.fetch(new Request(API + path, { method: o.method || "GET", headers: headers, body: body }), env, ctx);
+  let parsed = null;
+  try { parsed = await res.clone().json(); } catch(e){ parsed = null; }
+  return { status: res.status, body: parsed || {} };
+}
+const newEvent = (title, extra) => Object.assign({ title: title, venue: "KICC", location: "Nairobi",
+  category: "Music", description: "A good night out.", event_date: "2027-03-20", start_time: "19:00" }, extra || {});
+const payloadOf = (row) => { try { return JSON.parse(row.payload_json || "{}"); } catch(e){ return {}; } };
+
+(async () => {
+  const realError = console.error.bind(console);
+  console.error = (...a) => { (R.errors = R.errors || []).push(a.map(x => String(x)).join(" ")); };
+  try {
+    /* The JWKS the Worker will fetch, signed with the harness key. Everything
+       else (including this page's own /report hand-off) goes to the network. */
+    window.fetch = async (url, init) => {
+      const href = String(url && url.url ? url.url : url);
+      if(href.indexOf("googleapis.com") > -1 || href.indexOf("securetoken") > -1){
+        return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return realFetch(url, init);
+    };
+    await makeKey();
+    const src = await (await realFetch("./worker/worker.js")).text();
+    W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    ck("the Worker compiles with the approval gate", typeof W.default.fetch === "function", "bytes " + src.length);
+  } catch(e){ ck("the Worker compiles with the approval gate", false, (e && e.message) || String(e)); finish(); return; }
+
+  const T_ORG = await mintToken("uid-organizer-1", "amina@example.com");
+  const T_OWNER = await mintToken("uid-owner-1", "owner@example.com");
+  const env = makeEnv();
+  const db = env.db;
+
+  try {
+    /* ---------------- 1. an organizer cannot publish by themselves -------- */
+    const created = await call("/api/organizer/events", T_ORG, env,
+      { method: "POST", body: newEvent("Garage Sale Nairobi", { status: "active" }) });
+    ck("POST /api/organizer/events still answers 201", created.status === 201, created.status + " " + (created.body.code || ""));
+    const ev = created.body.event || {};
+    ck("an organizer asking for active is stored as pending", ev.status === "pending", "status " + ev.status);
+    ck("the answer explains the event is waiting for approval", /approval/i.test(created.body.message || ""), created.body.message);
+    ck("D1 really holds pending", (db.event(ev.id) || {}).status === "pending", (db.event(ev.id) || {}).status);
+    ck("no event_published mail goes out on submission", db.mail("event_published").length === 0, db.mail("event_published").length + " rows");
+    const requests = db.mail("event_pending_approval");
+    ck("the platform owner is emailed to approve", requests.length === 1 && requests[0].to_email === "owner@example.com",
+      requests.map(m => m.to_email).join(",") || "none");
+    const review = requests.length ? payloadOf(requests[0]) : {};
+    ck("the approval mail names the event, the organizer and the review page",
+      /Garage Sale/.test(requests[0].subject) && review.event && review.event.organizer_name === "Sunrise Events" &&
+      /owner-events/.test(String((review.links || {}).owner_events || "")), requests[0].subject);
+    ck("the approval mail is addressed to the owner only, never the organizer",
+      requests.every(m => m.to_email !== "hello@sunrise.test"), requests.map(m => m.to_email).join(","));
+    ck("the organizer gets a confirmation of the submission, not a publish",
+      /approval/i.test(created.body.message) && !/created as active/.test(created.body.message), created.body.message);
+
+    const hidden = await call("/api/events/" + encodeURIComponent(ev.slug), null, env);
+    ck("a pending event is not public (404 by slug)", hidden.status === 404, hidden.status + " " + (hidden.body.code || ""));
+    const listed = await call("/api/events", null, env);
+    const slugs = ((listed.body.events) || []).map(e => e.slug);
+    ck("a pending event is absent from the public listing", slugs.indexOf(ev.slug) === -1, slugs.join(","));
+    const noToken = await call("/api/owner/events/" + ev.id, null, env, { method: "PUT", body: { status: "active" } });
+    ck("approving without a token is refused (401)", noToken.status === 401, noToken.status + " " + (noToken.body.code || ""));
+
+    /* ---------------- 2. the owner approves, and the organizer is told ---- */
+    db.addTicket(ev.id, "Regular");
+    const approved = await call("/api/owner/events/" + ev.id, T_OWNER, env, { method: "PUT", body: { status: "active" } });
+    ck("the owner approves it and it goes live", approved.status === 200 && (approved.body.event || {}).status === "active",
+      approved.status + " status=" + ((approved.body.event || {}).status));
+    ck("the approval emails the organizer (event_published)",
+      db.mail("event_published").filter(m => m.to_email === "hello@sunrise.test").length === 1,
+      db.mail("event_published").map(m => m.to_email).join(",") || "none");
+    const nowLive = await call("/api/events/" + encodeURIComponent(ev.slug), null, env);
+    ck("an approved event is public", nowLive.status === 200, nowLive.status);
+    const asOrganizer = await call("/api/owner/events/" + ev.id, T_ORG, env, { method: "PUT", body: { status: "paused" } });
+    ck("an organizer cannot use the owner route to change status", asOrganizer.status === 403, asOrganizer.status + " " + (asOrganizer.body.code || ""));
+  } catch(e){ ck("group 1 and 2 (submit, then approve)", false, (e && e.stack) || String(e)); }
+
+
+  try {
+    /* ---------------- 3. send back with a reason, and the rules around it -- */
+    const second = await call("/api/organizer/events", T_ORG, env, { method: "POST", body: newEvent("Riverside Comedy Night") });
+    const s2 = second.body.event || {};
+    db.addTicket(s2.id, "Regular");
+    const submit = await call("/api/organizer/events/" + s2.id, T_ORG, env, { method: "PUT", body: { status: "active" } });
+    ck("submitting a saved event for publishing stores pending",
+      submit.status === 200 && (submit.body.event || {}).status === "pending", submit.status + " status=" + ((submit.body.event || {}).status));
+    ck("the organizer is told it was submitted for approval",
+      submit.body.submitted_for_approval === true && /approval/i.test(submit.body.message || ""), submit.body.message);
+
+    const before = db.mail("event_pending_approval").length;
+    await call("/api/organizer/events/" + s2.id, T_ORG, env, { method: "PUT", body: { venue: "KICC Annex" } });
+    const after = db.mail("event_pending_approval").length;
+    ck("re-saving a pending event does not email the owners again", before === after && after === 2, before + " -> " + after);
+
+    const back = await call("/api/owner/events/" + s2.id, T_OWNER, env,
+      { method: "PUT", body: { status: "draft", reason: "The poster is unreadable" } });
+    ck("the owner can send a submission back to draft", back.status === 200 && (back.body.event || {}).status === "draft",
+      back.status + " status=" + ((back.body.event || {}).status));
+    const changes = db.mail("event_changes_requested");
+    ck("the organizer is emailed the reason it was sent back",
+      changes.length === 1 && /unreadable/i.test(payloadOf(changes[0]).reason || "") && changes[0].to_email === "hello@sunrise.test",
+      changes.length + " rows");
+    ck("a sent-back event is not public", (await call("/api/events/" + encodeURIComponent(s2.slug), null, env)).status === 404);
+
+    /* nothing to sell: neither side may push it live. The event is SUBMITTED
+       (status active -> pending) so the owner is the one who tries to publish it. */
+    const third = await call("/api/organizer/events", T_ORG, env, { method: "POST", body: newEvent("Empty Weekend Event", { status: "active" }) });
+    const t3 = third.body.event || {};
+    const approveEmpty = await call("/api/owner/events/" + t3.id, T_OWNER, env, { method: "PUT", body: { status: "active" } });
+    ck("an event with no active ticket type cannot be approved",
+      approveEmpty.status === 409 && approveEmpty.body.code === "NO_TICKETS", approveEmpty.status + " " + (approveEmpty.body.code || ""));
+    ck("it is still pending after the refused approval", (db.event(t3.id) || {}).status === "pending", (db.event(t3.id) || {}).status);
+    const noTicket = await call("/api/organizer/events/" + t3.id, T_ORG, env, { method: "PUT", body: { status: "active" } });
+    ck("submitting an event without ticket types is refused too",
+      noTicket.status === 409 && noTicket.body.code === "NO_TICKETS", noTicket.status + " " + (noTicket.body.code || ""));
+
+    /* the approver is not queued for their own approval */
+    const own = await call("/api/organizer/events", T_OWNER, env,
+      { method: "POST", body: newEvent("Owner Run Show", { status: "active" }) });
+    const ownEv = own.body.event || {};
+    ck("the platform owner's own event publishes straight away", own.status === 201 && ownEv.status === "active",
+      own.status + " status=" + ownEv.status);
+    const ownReqs = db.mail("event_pending_approval").filter(m => payloadOf(m).event && payloadOf(m).event.title === "Owner Run Show");
+    ck("no approval request is sent for an owner's own event", ownReqs.length === 0, ownReqs.length + " rows");
+  } catch(e){ ck("group 3 (send back, guards, owner self-publish)", false, (e && e.stack) || String(e)); }
+
+
+  try {
+    /* ---------------- 4. the pages talk to the API the way it now answers - */
+    const ownerPage = await (await realFetch("./owner-events/index.html")).text();
+    ck("the owner events page offers Approve and Request changes",
+      /data-approve=/.test(ownerPage) && /data-sendback=/.test(ownerPage) && /approveEvent/.test(ownerPage) && /sendBackEvent/.test(ownerPage), "");
+    ck("the owner events page sends the approval and the reason",
+      /status: "active"/.test(ownerPage) && /status: "draft", reason/.test(ownerPage), "");
+    ck("the owner events page filters the approval queue", /option value="pending">Pending approval/.test(ownerPage), "");
+
+    const editPage = await (await realFetch("./edit-event/index.html")).text();
+    ck("the organizer edit page can show a pending event",
+      /option value="pending"/.test(editPage) && /submitted_for_approval/.test(editPage), "");
+
+    const listPage = await (await realFetch("./organizer-events/index.html")).text();
+    ck("the organizer list can filter on pending approval", /option value="pending">Pending approval/.test(listPage), "");
+
+    const workerSrc = await (await realFetch("./worker/index.js")).text();
+    ck("the gate is one shared function: active from an organizer becomes pending",
+      /function organizerEventStatus\(requested, ownerSelf\)/.test(workerSrc) &&
+      /return status === "active" \? "pending" : status;/.test(workerSrc), "");
+    ck("the approval request goes to the owner role rows", /role = 'owner' AND status = 'active'/.test(workerSrc), "");
+
+    const unhandled = Array.from(new Set(db.unhandled));
+    ck("every statement the approval flow runs was understood by this harness", unhandled.length === 0, unhandled.join(" | ") || "none");
+  } catch(e){ ck("group 4 (page wiring and the mock database)", false, (e && e.stack) || String(e)); }
+
+  console.error = realError;
+  finish();
+})().catch(e => { ck("harness completed", false, (e && e.stack) || String(e)); finish(); });
+</script>
+</body>
+</html>
+

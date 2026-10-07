@@ -1,0 +1,241 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>order lookup check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){ var b=document.getElementById("out"); if(b) b.textContent = "JS ERROR: " + (e.message||"") + " @ " + (e.lineno||0); });
+window.addEventListener("unhandledrejection", function(e){ var b=document.getElementById("out"); var r=e&&e.reason; if(b) b.textContent = "REJECTED: " + ((r&&(r.stack||r.message))||r); });
+</script>
+<script type="module">
+/* =============================================================================
+   Prince Alex TicketHub - POST /api/orders/lookup (the check-ticket endpoint)
+   ----------------------------------------------------------------------------
+   check-ticket/index.html asks the Worker to confirm an Order ID against the
+   email address the order was placed with. Both halves are checked server
+   side: this harness drives the real route out of worker/worker.js against a
+   mock D1 and asserts the happy path, the normalisation, the refusal (identical
+   for "wrong email" and "no such order", and silent), validation, the unpaid
+   state, the rate limit, the page wiring - and that GET
+   /api/orders/:reference/tickets kept working after the shared payload helper
+   was extracted. Serve the folder over http (tools\run-check.ps1) and open
+   /order-lookup-check.html.
+   ========================================================================== */
+const R = { tests: [] };
+const KEEP = setInterval(function(){}, 100);
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out"); if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name; }
+function finish(){ R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){}
+}
+const realFetch = window.fetch.bind(window);
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+let W = null;
+const ctx = { waitUntil(){} };
+
+/* --------------------------------------------------------------- mock D1 ----
+   Three orders: one paid with two issued tickets, one belonging to somebody
+   else (cross-tenant noise), one still pending with no tickets. */
+function makeDb(){
+  const state = {
+    events: [{ id: 10, title: "Nairobi Live 2027", slug: "nairobi-live-2027", status: "active",
+      event_date: "2027-10-05", start_time: "18:00", venue: "KICC", location: "Nairobi", poster_url: null }],
+    orders: [
+      { id: 100, order_number: "PAT-AAAAA11111", event_id: 10, organizer_id: 1, customer_name: "Jane Wanjiru",
+        customer_email: "jane@example.com", customer_phone: "+254700111222", total_amount: 3000, currency: "KES",
+        status: "paid", paid_at: "2026-03-01 10:05:00", created_at: "2026-03-01 10:00:00" },
+      { id: 200, order_number: "PAT-BBBBB22222", event_id: 10, organizer_id: 2, customer_name: "Someone Else",
+        customer_email: "other@example.com", customer_phone: "+254700999999", total_amount: 9000, currency: "KES",
+        status: "paid", paid_at: "2026-03-02 10:05:00", created_at: "2026-03-02 10:00:00" },
+      { id: 300, order_number: "PAT-CCCCC33333", event_id: 10, organizer_id: 1, customer_name: "Pending Buyer",
+        customer_email: "pending@example.com", customer_phone: "+254700333333", total_amount: 1500, currency: "KES",
+        status: "pending", paid_at: null, created_at: "2026-03-03 10:00:00" }
+    ],
+    tickets: [
+      { id: 1, order_id: 100, event_id: 10, ticket_type_id: 11, attendee_name: "Jane Wanjiru",
+        attendee_email: "jane@example.com", ticket_number: "PAT-AAAAA11111-A", qr_token: "qr-1",
+        status: "valid", checked_in: 0, checked_in_at: null, created_at: "2026-03-01 10:05:00" },
+      { id: 2, order_id: 100, event_id: 10, ticket_type_id: 11, attendee_name: "Jane Wanjiru",
+        attendee_email: "jane@example.com", ticket_number: "PAT-AAAAA11111-B", qr_token: "qr-2",
+        status: "used", checked_in: 1, checked_in_at: "2026-03-01 18:30:00", created_at: "2026-03-01 10:05:00" }
+    ],
+    ticket_types: [{ id: 11, event_id: 10, name: "Regular", price: 1500, quantity: 50, sold: 2, status: "active" }],
+    rate_limits: []
+  };
+  const stmt = (sql, bound) => {
+    const p = bound || [];
+    const rows = () => {
+      if(/FROM orders\b/.test(sql)){
+        let out = state.orders;
+        if(/order_number = \?/.test(sql)) out = out.filter(o => o.order_number === p[0]);
+        return out;
+      }
+      if(/FROM events/.test(sql)) return /(e\.id|id) = \?/.test(sql) ? state.events.filter(e => String(e.id) === String(p[0])) : state.events.slice();
+      if(/FROM tickets/.test(sql)){
+        /* Mirror the LEFT JOINs of TICKET_SELECT: ticket type, event, order. */
+        const list = state.tickets.filter(t => /order_id = \?/.test(sql) ? String(t.order_id) === String(p[0]) : true);
+        return list.map(t => {
+          const tt = state.ticket_types.filter(x => x.id === t.ticket_type_id)[0] || {};
+          const ev = state.events.filter(x => x.id === t.event_id)[0] || {};
+          const od = state.orders.filter(x => x.id === t.order_id)[0] || {};
+          return Object.assign({}, t, {
+            ticket_type_name: tt.name || null,
+            event_title: ev.title || null, event_date: ev.event_date || null,
+            start_time: ev.start_time || null, venue: ev.venue || null,
+            location: ev.location || null, poster_url: ev.poster_url || null,
+            order_number: od.order_number || null, order_status: od.status || null
+          });
+        });
+      }
+      if(/FROM ticket_types/.test(sql)) return state.ticket_types.slice();
+      if(/FROM rate_limits/.test(sql)) return [];
+      return [];
+    };
+    return {
+      sql: sql, params: p,
+      bind: (...a) => stmt(sql, a),
+      all: async () => ({ results: rows() }),
+      first: async () => rows()[0] || null,
+      run: async () => ({ meta: { changes: 0, last_row_id: null } })
+    };
+  };
+  return { db: { prepare: sql => stmt(sql, []), batch: async () => [{ results: [] }, { results: [] }] }, state: state };
+}
+function makeEnv(extra){
+  const d = makeDb();
+  const env = { DB: d.db, ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital" };
+  for(const k of Object.keys(extra || {})) env[k] = String(extra[k]);
+  return env;
+}
+/* ----------------------------------------------------------------- call ---- */
+async function post(path, payload, env, ip){
+  const res = await W.default.fetch(new Request(API + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip },
+    body: JSON.stringify(payload || {})
+  }), env || makeEnv(), ctx);
+  let body = null;
+  try { body = await res.clone().json(); } catch(e){ body = null; }
+  return { status: res.status, body: body || {} };
+}
+async function get(path, env, ip){
+  const res = await W.default.fetch(new Request(API + path, { method: "GET",
+    headers: { "CF-Connecting-IP": ip } }), env || makeEnv(), ctx);
+  let body = null;
+  try { body = await res.clone().json(); } catch(e){ body = null; }
+  return { status: res.status, body: body || {} };
+}
+/* Compiles every inline classic script of a page - a syntax error on
+   check-ticket/index.html fails the run, same idea as frontend-check.html. */
+function pageScripts(html){
+  const out = [], re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let m;
+  while((m = re.exec(html))){
+    if(/\bsrc\s*=/i.test(m[1] || "")) continue;
+    out.push(m[2]);
+  }
+  if(!out.length) return "no inline script found";
+  for(let i = 0; i < out.length; i++){
+    try { new Function(out[i]); }
+    catch(e){ return "script #" + (i + 1) + " failed to compile: " + ((e && e.message) || String(e)); }
+  }
+  return out.length + " inline scripts compiled";
+}
+(async () => {
+  try {
+    const src = await (await realFetch("./worker/worker.js")).text();
+    W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    ck("the Worker compiles and serves POST /api/orders/lookup", typeof W.default.fetch === "function", "bytes " + src.length);
+  } catch(e){ ck("the Worker compiles and serves POST /api/orders/lookup", false, (e && e.message) || String(e)); finish(); return; }
+
+  /* ---- 1. the happy path ---- */
+  try {
+    const ok = await post("/api/orders/lookup", { order_number: "PAT-AAAAA11111", email: "jane@example.com" }, makeEnv(), "41.90.71.1");
+    const d = ok.body;
+    ck("a matching email + Order ID answers 200 with the order summary",
+      ok.status === 200 && d.order_number === "PAT-AAAAA11111" && d.status === "paid" &&
+      d.customer_name === "Jane Wanjiru" && d.amount === 3000 && d.ticket_count === 2 &&
+      d.event_title === "Nairobi Live 2027",
+      ok.status + " " + (d.code || "") + " " + JSON.stringify({ n: d.order_number, t: d.ticket_count }));
+    ck("it returns both issued tickets with server-built QR urls and never the opaque token",
+      (d.tickets || []).length === 2 &&
+      /\/api\/tickets\/PAT-AAAAA11111-A\/qr\.png$/.test(String((d.tickets[0] || {}).qr_image_url || "")) &&
+      (d.tickets[0] || {}).attendee_name === "Jane Wanjiru" &&
+      (d.tickets[0] || {}).ticket_type_name === "Regular" &&
+      JSON.stringify(d).indexOf("qr-1") === -1,
+      JSON.stringify((d.tickets || []).map(t => t.ticket_number)));
+    const ci = await post("/api/orders/lookup", { order_number: "  pat-aaaaa11111 ", email: "  JANE@Example.COM " }, makeEnv(), "41.90.71.2");
+    ck("matching ignores case and surrounding spaces on both halves", ci.status === 200, ci.status + " " + (ci.body.code || ""));
+    /* the pre-existing read must keep behaving identically after the refactor */
+    const legacy = await get("/api/orders/PAT-AAAAA11111/tickets", makeEnv(), "41.90.71.3");
+    ck("GET /api/orders/:reference/tickets still answers the same after the shared-payload refactor",
+      legacy.status === 200 && legacy.body.order_number === "PAT-AAAAA11111" &&
+      legacy.body.ticket_count === 2 && legacy.body.customer_name === "Jane Wanjiru",
+      legacy.status + " " + (legacy.body.code || ""));
+  } catch(e){ ck("group 1: happy path", false, (e && e.stack) || String(e)); }
+
+  /* ---- 2. the refusal: identical and silent ---- */
+  try {
+    const wrongEmail = await post("/api/orders/lookup", { order_number: "PAT-AAAAA11111", email: "not-jane@example.com" }, makeEnv(), "41.90.71.4");
+    const noOrder = await post("/api/orders/lookup", { order_number: "PAT-ZZZZZ99999", email: "jane@example.com" }, makeEnv(), "41.90.71.5");
+    ck("a wrong email is refused with 404 NOT_FOUND",
+      wrongEmail.status === 404 && wrongEmail.body.code === "NOT_FOUND",
+      wrongEmail.status + " " + (wrongEmail.body.code || ""));
+    ck("a wrong pair answers exactly like a missing order (neither half can be probed)",
+      wrongEmail.status === noOrder.status && wrongEmail.body.code === noOrder.body.code &&
+      wrongEmail.body.message === noOrder.body.message,
+      JSON.stringify({ wrong: wrongEmail.body.message, missing: noOrder.body.message }));
+    const leak = JSON.stringify(wrongEmail.body);
+    ck("the refusal carries no order, customer or ticket data",
+      leak.indexOf("Jane") === -1 && leak.indexOf("jane@example.com") === -1 &&
+      leak.indexOf("PAT-AAAAA11111") === -1 && leak.indexOf("Nairobi") === -1,
+      leak);
+  } catch(e){ ck("group 2: refusal", false, (e && e.stack) || String(e)); }
+  /* ---- 3. validation ---- */
+  try {
+    const noEmail = await post("/api/orders/lookup", { order_number: "PAT-AAAAA11111" }, makeEnv(), "41.90.71.6");
+    const badEmail = await post("/api/orders/lookup", { order_number: "PAT-AAAAA11111", email: "jane at example" }, makeEnv(), "41.90.71.7");
+    const noOrder = await post("/api/orders/lookup", { email: "jane@example.com" }, makeEnv(), "41.90.71.8");
+    ck("a missing email is rejected with 422 VALIDATION", noEmail.status === 422 && noEmail.body.code === "VALIDATION", noEmail.status + " " + (noEmail.body.code || ""));
+    ck("a malformed email is rejected with 422 VALIDATION", badEmail.status === 422 && badEmail.body.code === "VALIDATION", badEmail.status + " " + (badEmail.body.code || ""));
+    ck("a missing Order ID is rejected with 422 VALIDATION", noOrder.status === 422 && noOrder.body.code === "VALIDATION", noOrder.status + " " + (noOrder.body.code || ""));
+  } catch(e){ ck("group 3: validation", false, (e && e.stack) || String(e)); }
+
+  /* ---- 4. an unpaid order is confirmed but honestly reported ---- */
+  try {
+    const pending = await post("/api/orders/lookup", { order_number: "PAT-CCCCC33333", email: "pending@example.com" }, makeEnv(), "41.90.71.9");
+    ck("an unpaid order answers 200 with its real status and zero tickets (the page shows waiting, not confirmed)",
+      pending.status === 200 && pending.body.status === "pending" && pending.body.ticket_count === 0 &&
+      Array.isArray(pending.body.tickets) && pending.body.tickets.length === 0,
+      pending.status + " " + JSON.stringify({ s: pending.body.status, t: pending.body.ticket_count }));
+  } catch(e){ ck("group 4: unpaid order", false, (e && e.stack) || String(e)); }
+
+  /* ---- 5. rate limit (env override on the first tier) ---- */
+  try {
+    const envLimited = makeEnv({ RATE_ORDER_LOOKUP_LIMIT: "2", RATE_ORDER_LOOKUP_WINDOW: "600" });
+    const codes = [];
+    for(let i = 0; i < 3; i++){
+      codes.push((await post("/api/orders/lookup", { order_number: "PAT-CCCCC33333", email: "pending@example.com" }, envLimited, "41.90.71.10")).status);
+    }
+    ck("the route honours its rate limit (2 allowed, 3rd is 429)", codes.join(",") === "200,200,429", codes.join(","));
+  } catch(e){ ck("group 5: rate limit", false, (e && e.stack) || String(e)); }
+
+  /* ---- 6. the page wiring ---- */
+  try {
+    const html = await (await realFetch("./check-ticket/index.html")).text();
+    ck("check-ticket/index.html posts email + order_number to the new endpoint",
+      /api\("\/api\/orders\/lookup"/.test(html) && /order_number: order/.test(html) && /email: email/.test(html), "");
+    ck("the page has the email and Order ID fields and the result region",
+      /id="email"/.test(html) && /id="order"/.test(html) && /id="result"/.test(html) && /id="checkForm"/.test(html), "");
+    const compiled = pageScripts(html);
+    ck("every inline script on check-ticket/index.html compiles",
+      !/failed|no inline/.test(compiled), compiled);
+  } catch(e){ ck("group 6: page wiring", false, (e && e.stack) || String(e)); }
+
+  finish();
+
+})();
+
+</script>
+</body></html>

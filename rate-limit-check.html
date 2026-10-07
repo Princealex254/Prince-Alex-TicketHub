@@ -1,0 +1,584 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>rate limit check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){
+  var b = document.getElementById("out");
+  if(b) b.textContent = "JS ERROR: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || 0);
+});
+window.addEventListener("unhandledrejection", function(e){
+  var b = document.getElementById("out");
+  var r = e && e.reason;
+  if(b) b.textContent = "REJECTED: " + ((r && (r.stack || r.message)) || r);
+});
+</script>
+<script type="module">
+/* ============================================================================
+   Prince Alex TicketHub - rate limiter harness
+   ----------------------------------------------------------------------------
+   Loads the real Worker (worker/worker.js) and drives it with a stateful D1
+   mock that actually implements the rate_limits table semantics (atomic upsert
+   + read inside one batched transaction) plus mocked Cloudflare Siteverify, so
+   the limiter, its interaction with Turnstile, and the untouched routes can all
+   be checked deterministically.
+
+   Serve the repository over http (python -m http.server 8000) and open
+   /rate-limit-check.html - ES modules cannot be loaded from file://.
+   ========================================================================== */
+const R = { tests: [] };
+const KEEP = setInterval(function(){
+  const box = document.getElementById("out");
+  if(box && String(box.textContent).indexOf("RESULTS_JSON:") === 0) clearInterval(KEEP);
+}, 100);
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  const box = document.getElementById("out"); if(box) box.textContent = "PROGRESS " + R.tests.length + ": " + name; }
+function finish(){
+  R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+}
+const realFetch = window.fetch.bind(window);
+const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const PROD_SECRET = "0x4AAAAAAATestSecretValueNotReal";
+const DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+let made = 0;
+function tok(label){ made++; return "0." + label.replace(/[^A-Za-z0-9-]/g, "-") + "y" + made + "." + "C".repeat(600) + ".token"; }
+const API = "https://princealextickethub.princealexdigital.workers.dev";
+const H = { "Content-Type": "application/json" };
+let W = null;
+const ctx = { waitUntil(){} };
+
+/* --------------------------------------------------------------- mock D1 ---
+   Rate-limit rows are modelled for real: the batched upsert increments (capped)
+   and the batched read returns the post-increment value, which is what makes the
+   concurrency check meaningful rather than cosmetic. */
+function makeDb(opts){
+  const o = opts || {};
+  const state = {
+    rate_limits: [],            // { rate_key, action, window_start, request_count, expires_at, updated_at }
+    events: [{ id: 1, organizer_id: 1, title: "Nairobi Live 2027", slug: "nairobi-live-2027", description: "Live music.",
+      category: "Music", venue: "KICC", location: "Nairobi", event_date: "2027-10-05", start_time: "18:00", end_time: "22:00",
+      poster_url: null, status: "active", is_featured: 0, sales_start: null, sales_end: null, created_at: "2026-01-01 00:00:00" }],
+    ticket_types: [{ id: 11, event_id: 1, name: "Regular", price: 1500, quantity: 100, sold: 0, status: "active", sales_start: null, sales_end: null }],
+    orders: [], order_items: [], payments: [], tickets: [], contact_messages: [], email_outbox: [],
+    app_settings: [{ key: "email_from_email", value: "tickets@princealexdigital.com" },
+      { key: "platform_name", value: "Prince Alex TicketHub" }, { key: "email_enabled", value: "false" }]
+  };
+  const calls = { batches: 0, statements: 0, rateWrites: 0, sweeps: 0 };
+  const rateSql = (sql) => {
+    if(/INSERT INTO rate_limits/.test(sql)) return "rate-upsert";
+    if(/FROM rate_limits WHERE rate_key/.test(sql)) return "rate-read";
+    if(/DELETE FROM rate_limits/.test(sql)) return "rate-sweep";
+    return "";
+  };
+  const runRate = (kind, p) => {
+    if(kind === "rate-upsert"){
+      calls.rateWrites++;
+      if(o.noRateTable) throw new Error("no such table: rate_limits");
+      const key = p[0], action = p[1], windowStart = p[2], expiresAt = p[3], updatedAt = p[4], cap = p[5];
+      const row = state.rate_limits.filter(r => r.rate_key === key)[0];
+      if(row){ row.request_count = Math.min(row.request_count + 1, cap); row.updated_at = updatedAt; }
+      else state.rate_limits.push({ rate_key: key, action: action, window_start: windowStart,
+        request_count: 1, expires_at: expiresAt, updated_at: updatedAt });
+      return { results: [] };
+    }
+    if(kind === "rate-read") return { results: state.rate_limits.filter(r => r.rate_key === p[0]) };
+    if(kind === "rate-sweep"){
+      calls.sweeps++;
+      if(o.noRateTable) throw new Error("no such table: rate_limits");
+      const cutoff = p[0], before = state.rate_limits.length;
+      state.rate_limits = state.rate_limits.filter(r => r.expires_at > cutoff);
+      return { results: [], meta: { changes: before - state.rate_limits.length } };
+    }
+    return null;
+  };
+  const rows = (sql, p) => {
+    if(/FROM app_settings/.test(sql)) return state.app_settings.slice();
+    if(/FROM events/.test(sql)) return /(e\.id|id) = \?/.test(sql) ? state.events.filter(r => String(r.id) === String(p[0])) : state.events.slice();
+    if(/FROM ticket_types/.test(sql)){
+      if(/(^|\W)id = \?/.test(sql)) return state.ticket_types.filter(r => String(r.id) === String(p[0]));
+      return state.ticket_types.filter(r => String(r.event_id) === String(p[0]));
+    }
+    if(/FROM orders\b/.test(sql)){
+      if(/status = 'pending'/.test(sql)) return state.orders.filter(r => r.status === "pending" && String(r.created_at) < String(p[0]));
+      if(/order_number = \?/.test(sql)) return state.orders.filter(r => r.order_number === p[0]);
+      return state.orders.filter(r => String(r.id) === String(p[0]));
+    }
+    if(/FROM order_items/.test(sql)) return state.order_items.filter(r => String(r.order_id) === String(p[0]));
+    if(/FROM payments\b/.test(sql)) return state.payments.filter(r => String(r.order_id) === String(p[0]));
+    if(/FROM email_outbox/.test(sql)) return [];
+    return [];
+  };
+  const write = (sql, p) => {
+    const kind = rateSql(sql);
+    if(kind === "rate-sweep"){ runRate(kind, p); return { meta: { changes: 1 } }; }
+    let id = null;
+    if(/INSERT INTO contact_messages/.test(sql)) state.contact_messages.push({ id: state.contact_messages.length + 1, name: p[0], email: p[1], subject: p[2], message: p[3] });
+    else if(/INSERT INTO orders/.test(sql)){
+      id = state.orders.length + 1;
+      state.orders.push({ id: id, order_number: p[0], event_id: p[1], organizer_id: p[2], customer_name: p[3],
+        customer_email: p[4], customer_phone: p[5], total_amount: p[6], currency: p[7], status: "pending",
+        inventory_held: 1, created_at: new Date().toISOString().replace("T", " ").slice(0, 19) });
+    }
+    else if(/INSERT INTO order_items/.test(sql)) state.order_items.push({ id: state.order_items.length + 1, order_id: p[0], ticket_type_id: p[1], ticket_type_name: p[2], quantity: p[3], unit_price: p[4], subtotal: p[5] });
+    else if(/INSERT INTO payments/.test(sql)){
+      id = state.payments.length + 1;
+      state.payments.push({ id: id, order_id: p[0], provider: p[1], reference: p[2], amount: p[3], currency: p[4], status: "pending", provider_ref: null });
+    }
+    else if(/INSERT INTO email_outbox/.test(sql)) state.email_outbox.push({ id: state.email_outbox.length + 1, to_email: p[0], template: p[2] });
+    return { meta: { last_row_id: id, changes: 1 } };
+  };
+  /* `sql` and `params` are exposed so the batch mock can route a statement to
+     the right handler (the worker's batch receives the prepared statements). */
+  const stmt = (sql, bound) => ({
+    sql: sql, params: bound,
+    bind: (...a) => stmt(sql, a),
+    all: async () => { calls.statements++; return { results: rows(sql, bound) }; },
+    first: async () => { calls.statements++; return rows(sql, bound)[0] || null; },
+    run: async () => { calls.statements++; return write(sql, bound); }
+  });
+  const db = {
+    prepare: sql => stmt(sql, []),
+    /* D1 batch = one transaction. noBatch simulates a D1 binding without the
+       batch API; noRateTable simulates the migration not having been run. */
+    batch: async (list) => {
+      calls.batches++;
+      if(o.noBatch) throw new Error("batch is not supported by this mock");
+      const out = [];
+      for(const st of list){
+        const kind = rateSql(st.sql);
+        out.push(kind ? runRate(kind, st.params || []) : { results: rows(st.sql, st.params || []), meta: { changes: 0 } });
+      }
+      return out;
+    }
+  };
+  return { db: db, state: state, calls: calls };
+}
+
+/* ------------------------------------------------------------------ env ---- */
+function makeEnv(opts){
+  const o = opts || {};
+  const d = makeDb(o);
+  const env = {
+    DB: d.db,
+    PAYSTACK_SECRET_KEY: "sk_test_fake",
+    FIREBASE_PROJECT_ID: "prince-alex-tickethub",
+    ALLOWED_ORIGINS: "https://tickethub.princealex.digital",
+    FRONTEND_URL: "https://tickethub.princealex.digital",
+    TURNSTILE_SECRET: (o.secret === undefined) ? PROD_SECRET : o.secret
+  };
+  /* envRateNumber() reads RATE_<ACTION>[_<TIER>]_LIMIT/_WINDOW, and the shorter
+     <ACTION>_LIMIT/_WINDOW form, so tests can shrink a window to prove both the
+     expiry behaviour and the central configuration. */
+  for(const k of ["RATE_LOGIN_LIMIT","RATE_LOGIN_WINDOW","RATE_LOGIN_EMAIL_LIMIT","RATE_LOGIN_EMAIL_WINDOW",
+    "RATE_CONTACT_LIMIT","RATE_CONTACT_WINDOW","RATE_CHECKOUT_LIMIT","RATE_CHECKOUT_WINDOW",
+    "RATE_CHECKOUT_REF_LIMIT","RATE_TICKET_EMAIL_WINDOW","RATE_PASSWORD_RESET_EMAIL_WINDOW"]){
+    if(o[k] !== undefined) env[k] = String(o[k]);
+  }
+  if(o.binding) env.RATE_LIMITER = o.binding;
+  env.__state = d.state; env.__calls = d.calls;
+  return env;
+}
+/* ------------------------------------------- mocked Cloudflare Siteverify --- */
+let siteverify = { mode: "ok", hostname: "tickethub.princealex.digital", action: "checkout", calls: 0 };
+function json(obj, status){ return new Response(JSON.stringify(obj), { status: status || 200, headers: { "Content-Type": "application/json" } }); }
+function mockFetch(){
+  window.fetch = async (url, init) => {
+    const href = String(url && url.url ? url.url : url);
+    if(href.indexOf(SITEVERIFY) === 0){
+      siteverify.calls++;
+      if(siteverify.mode === "fail") return json({ success: false, "error-codes": ["invalid-input-response"] });
+      return json({ success: true, hostname: siteverify.hostname, action: siteverify.action, "error-codes": [] });
+    }
+    if(href.indexOf("googleapis.com") > -1 || href.indexOf("securetoken") > -1) return json({}, 401);
+    if(href.indexOf("paystack.co") > -1) return json({ status: false, message: "mock provider" }, 400);
+    return json({ error: "unexpected_outbound_call", url: href }, 599);
+  };
+}
+function resetSiteverify(mode, action){
+  siteverify = { mode: mode || "ok", hostname: "tickethub.princealex.digital", action: action || "checkout", calls: 0 };
+}
+let ipSeq = 0, mailSeq = 0;
+function nextIp(){ ipSeq++; return "41.90." + Math.floor(ipSeq / 200) + "." + (1 + (ipSeq % 200)); }
+async function call(path, init, env, ip, origin){
+  const base = Object.assign({}, init || {});
+  const headers = Object.assign({}, base.headers || {}, { "CF-Connecting-IP": ip || nextIp() });
+  if(origin) headers["Origin"] = origin;
+  base.headers = headers;
+  const res = await W.default.fetch(new Request(API + path, base), env || makeEnv({}), ctx);
+  let body = null;
+  try { body = await res.clone().json(); } catch(e){ body = null; }
+  return { status: res.status, body: body || {}, res: res,
+    retryAfter: res.headers.get("Retry-After"), headerNames: Array.from(res.headers.keys()) };
+}
+async function send(path, body, env, ip){
+  return call(path, { method: "POST", headers: H, body: JSON.stringify(body || {}) }, env, ip);
+}
+const AUTH_T = "/api/auth/turnstile", CONTACT = "/api/contact", ORDERS = "/api/orders", PAY = "/api/payments/paystack/initiate";
+function contactBody(token, email){
+  /* Layered limits mean a test that only wants to exercise the IP tier must vary
+     the recipient, otherwise the per-address tier fires first (by design). */
+  mailSeq++;
+  return { name: "Jane Wanjiru", email: (email || ("box" + mailSeq + "@example.com")), phone: "+254700111222", subject: "Help",
+    message: "Please help me with my order PAT-1234567890.", turnstile_token: token };
+}
+function authBody(action, token, email){
+  return { action: action, turnstile_token: token, email: email };
+}
+function orderBody(token){
+  return { event_id: 1, items: [{ ticket_type_id: 11, quantity: 1 }],
+    customer: { full_name: "Jane Wanjiru", email: "jane@example.com", phone: "+254700111222" }, turnstile_token: token };
+}
+const warnings = [], errors = [];
+
+(async () => {
+  const realWarn = console.warn, realError = console.error;
+  console.warn = (...a) => warnings.push(a.map(x => String(x)).join(" "));
+  console.error = (...a) => errors.push(a.map(x => String(x)).join(" "));
+  const mark = (m) => { const b = document.getElementById("out"); if(b) b.textContent = "MARK " + m; };
+  mark("start");
+  try {
+    try {
+      const src = await (await realFetch("./worker/worker.js")).text();
+      mark("fetched " + src.length);
+      W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+      mark("imported bundle");
+      ck("the deployed single-file Worker compiles as a module", typeof W.default.fetch === "function", "bytes " + src.length);
+    } catch(e){ ck("the deployed single-file Worker compiles as a module", false, (e && e.message) || String(e)); finish(); return; }
+    try {
+      const emailsSrc = await (await realFetch("./worker/emails.js")).text();
+      const url = URL.createObjectURL(new Blob([emailsSrc], { type: "text/javascript" }));
+      let idx = await (await realFetch("./worker/index.js")).text();
+      idx = idx.replace(/from\s+["']\.\/emails\.js["']/g, 'from "' + url + '"');
+      const two = await import(URL.createObjectURL(new Blob([idx], { type: "text/javascript" })));
+      ck("the wrangler layout (index.js + emails.js) compiles too", typeof two.default.fetch === "function", "");
+    } catch(e){ ck("the wrangler layout (index.js + emails.js) compiles too", false, (e && e.message) || String(e)); }
+    mockFetch();
+
+    /* ------------------------------------------- 1. health reports the store -- */
+    resetSiteverify("ok", "login");
+    const health = await call("/api/health", { method: "GET", headers: H }, makeEnv({}));
+    ck("GET /api/health still answers 200 and reports the rate-limit store",
+       health.status === 200 && !!health.body.rate_limit_store && health.body.rate_limit_actions > 10,
+       "store=" + health.body.rate_limit_store + ", actions=" + health.body.rate_limit_actions);
+
+    /* ------------------------- 2. normal usage, then the limit, then Retry-After */
+    /* contact: 5 per hour per IP by default. Six submissions from one IP. */
+    resetSiteverify("ok", "contact");
+    const envC = makeEnv({});
+    const ip = "41.90.10.5";
+    const codes = [];
+    for(let i = 0; i < 5; i++) codes.push((await send(CONTACT, contactBody(tok("contact-ok")), envC, ip)).status);
+    ck("requests 1..5 in the window are all accepted (201)",
+       codes.join(",") === "201,201,201,201,201", codes.join(","));
+    const over = await send(CONTACT, contactBody(tok("contact-over")), envC, ip);
+    ck("request 6 is refused with 429 and code RATE_LIMITED",
+       over.status === 429 && over.body.code === "RATE_LIMITED", over.status + " " + over.body.code);
+    ck("the refusal carries a Retry-After header", !!over.retryAfter && Number(over.retryAfter) > 0, String(over.retryAfter));
+    ck("the body repeats the wait as retry_after and message",
+       Number(over.body.retry_after) > 0 && /try again/i.test(String(over.body.message || over.body.error || "")),
+       "retry_after=" + over.body.retry_after);
+    ck("the 429 exposes no internal detail (no SQL, no table, no limits table)",
+       !/rate_limits|SELECT|INSERT|sqlite|limit\s*=/i.test(JSON.stringify(over.body)), JSON.stringify(over.body).slice(0, 120));
+    ck("the refused submission was not stored", envC.__state.contact_messages.length === 5, "stored " + envC.__state.contact_messages.length);
+    /* CORS on a 429: the browser forbids scripts from setting Origin, so the
+       allow-origin header is asserted through the preflight instead, and the
+       refusal body/headers are checked for shape. */
+    const preflight = await call("/api/contact", { method: "OPTIONS", headers: { Origin: "https://tickethub.princealex.digital" } }, envC, "41.90.10.5");
+    const lower = preflight.headerNames.map(n => String(n).toLowerCase());
+    ck("OPTIONS preflight for a limited route still answers 204 with CORS headers",
+       preflight.status === 204 && lower.indexOf("access-control-allow-methods") > -1 &&
+       lower.indexOf("access-control-allow-headers") > -1,
+       preflight.status + " " + lower.join(",").slice(0, 90));
+    const lowerBody = over.headerNames.map(n => String(n).toLowerCase());
+    ck("the 429 is a normal JSON error response (no leaked debug headers)",
+       lowerBody.indexOf("content-type") > -1 && !lowerBody.some(n => /x-rate|debug|sql/i.test(n)),
+       lowerBody.join(",").slice(0, 90));
+
+    /* ------------------------ 3. a different IP is unaffected by the first one */
+    const other = await send(CONTACT, contactBody(tok("contact-other-ip")), envC, "41.90.10.6");
+    ck("a different IP is not blocked by the first IP hitting its limit", other.status === 201, other.status + " " + other.body.code);
+
+    /* --------------------- 4. the per-email tier stops address spraying */
+    const envE = makeEnv({});
+    const sprayIp = "41.90.11.1";
+    const spray = [];
+    for(let i = 0; i < 3; i++) spray.push((await send(CONTACT, contactBody(tok("spray-" + i), "victim@example.com"), envE, sprayIp)).status);
+    const sprayBlocked = await send(CONTACT, contactBody(tok("spray-4"), "victim@example.com"), envE, sprayIp);
+    ck("3 submissions to the same address are accepted and the 4th is refused (3/hour per address)",
+       spray.join(",") === "201,201,201" && sprayBlocked.status === 429,
+       spray.join(",") + " then " + sprayBlocked.status);
+    const sprayOther = await send(CONTACT, contactBody(tok("spray-other"), "someone-else@example.com"), envE, sprayIp);
+    ck("the same IP can still reach a different address (tiers are independent)",
+       sprayOther.status === 201, sprayOther.status + " " + sprayOther.body.code);
+  } catch(e){ ck("harness completed group 1", false, (e && e.stack) || String(e)); }
+  await group2();
+})();
+
+/* ------------- 5. email normalisation, window expiry, env-driven config ---- */
+async function group2(){
+  try {
+    /* 3 per hour per address; the same address spelled differently is the same
+       bucket (case + surrounding spaces), and a different address is not. */
+    resetSiteverify("ok", "password-reset");
+    const envP = makeEnv({});
+    const ip2 = "41.90.12.1";
+    const forms = ["Person@Example.com", "  person@example.COM  ", "PERSON@example.com"];
+    const seen = [];
+    for(let i = 0; i < 3; i++) seen.push((await send(AUTH_T, authBody("password-reset", tok("reset-" + i), forms[i]), envP, ip2)).status);
+    const fourth = await send(AUTH_T, authBody("password-reset", tok("reset-4"), "person@example.com"), envP, ip2);
+    ck("3 reset challenges per address are accepted and the 4th is refused (3/hour per email)",
+       seen.join(",") === "200,200,200" && fourth.status === 429, seen.join(",") + " then " + fourth.status);
+    const otherAddr = await send(AUTH_T, authBody("password-reset", tok("reset-other"), "another@example.com"), envP, ip2);
+    ck("email tiers normalise case and surrounding spaces (same bucket) and separate real addresses",
+       otherAddr.status === 200, otherAddr.status + " " + otherAddr.body.code);
+
+    /* Central configuration: shrink the window to 1s and prove the counter really
+       resets when it expires, and that the override is honoured. */
+    const envShort = makeEnv({ RATE_CONTACT_LIMIT: "2", RATE_CONTACT_WINDOW: "1", RATE_CONTACT_EMAIL_LIMIT: "2", RATE_CONTACT_EMAIL_WINDOW: "1" });
+    const ip3 = "41.90.13.1";
+    resetSiteverify("ok", "contact");
+    const a1 = await send(CONTACT, contactBody(tok("short-1"), "short@example.com"), envShort, ip3);
+    const a2 = await send(CONTACT, contactBody(tok("short-2"), "short@example.com"), envShort, ip3);
+    const a3 = await send(CONTACT, contactBody(tok("short-3"), "short@example.com"), envShort, ip3);
+    ck("RATE_CONTACT_LIMIT=2 is honoured (2 allowed, 3rd refused)",
+       a1.status === 201 && a2.status === 201 && a3.status === 429,
+       [a1.status, a2.status, a3.status].join(","));
+    const retry = Number(a3.retryAfter || 0);
+    ck("Retry-After is plausible for a 1 second window", retry >= 1 && retry <= 2, String(retry));
+    await new Promise(r => setTimeout(r, 1300));
+    const afterWindow = await send(CONTACT, contactBody(tok("short-4"), "short@example.com"), envShort, ip3);
+    ck("after the window expires the same request is allowed again",
+       afterWindow.status === 201, afterWindow.status + " " + afterWindow.body.code);
+
+    /* --------------------- 6. D1 hygiene: one row per identity per window --- */
+    const envRows = makeEnv({ RATE_CONTACT_LIMIT: "50", RATE_CONTACT_WINDOW: "600", RATE_CONTACT_EMAIL_LIMIT: "50", RATE_CONTACT_EMAIL_WINDOW: "600" });
+    const ip4 = "41.90.14.1";
+    for(let i = 0; i < 10; i++) await send(CONTACT, contactBody(tok("rows-" + i), "rows@example.com"), envRows, ip4);
+    const rows = envRows.__state.rate_limits;
+    ck("10 requests in one window create exactly 2 rows (one per identity tier)",
+       rows.length === 2, rows.length + " rows: " + rows.map(r => r.action).join(","));
+    ck("no row stores a raw IP, email address or identity",
+       !/41\.90\.14\.1/.test(JSON.stringify(rows)) && !/rows@example\.com/i.test(JSON.stringify(rows)),
+       "sample row: " + JSON.stringify(rows[0] || {}).slice(0, 150));
+    ck("the counter is capped at limit+1 (a flood cannot inflate the row)",
+       rows.every(r => r.request_count <= 51), "counts " + rows.map(r => r.request_count).join(","));
+    /* Expired windows are removed by the cron trigger: use a 1s window, wait it
+       out, then let the scheduled handler sweep. */
+    const envSweep = makeEnv({ RATE_CONTACT_LIMIT: "9", RATE_CONTACT_WINDOW: "1", RATE_CONTACT_EMAIL_LIMIT: "9", RATE_CONTACT_EMAIL_WINDOW: "1" });
+    for(let i = 0; i < 2; i++) await send(CONTACT, contactBody(tok("sweep-" + i), "sweep@example.com"), envSweep, "41.90.27.1");
+    ck("short-window traffic leaves live rows behind", envSweep.__state.rate_limits.length === 2, "rows " + envSweep.__state.rate_limits.length);
+    await new Promise(r => setTimeout(r, 1300));
+    await W.default.scheduled({}, envSweep, ctx);
+    const left = envSweep.__state.rate_limits;
+    ck("the cron handler sweeps expired windows and no expired window survives",
+       envSweep.__calls.sweeps > 0 && left.every(r => r.expires_at > Date.now()),
+       "sweeps=" + envSweep.__calls.sweeps + ", rows left=" + left.length +
+       (left.length ? " (the current window is still live)" : ""));
+  } catch(e){ ck("harness completed group 2", false, (e && e.stack) || String(e)); }
+  await group3();
+}
+
+/* ------------------ 7. concurrency: the limit cannot be raced past ------- */
+async function group3(){
+  try {
+    /* 3 allowed, 8 fired at once: exactly 3 must come back 201. With a
+       read-then-write limiter this is where 4, 5, 6 and 7 would slip through. */
+    const envRace = makeEnv({ RATE_CONTACT_LIMIT: "3", RATE_CONTACT_WINDOW: "600",
+      RATE_CONTACT_EMAIL_LIMIT: "3", RATE_CONTACT_EMAIL_WINDOW: "600" });
+    const ipRace = "41.90.15.1";
+    resetSiteverify("ok", "contact");
+    const burst = [];
+    for(let i = 0; i < 8; i++) burst.push(send(CONTACT, contactBody(tok("race-" + i), "race@example.com"), envRace, ipRace));
+    const results = await Promise.all(burst);
+    const okCount = results.filter(r => r.status === 201).length;
+    const limited = results.filter(r => r.status === 429).length;
+    ck("8 simultaneous requests against a limit of 3 yield exactly 3 accepted",
+       okCount === 3, okCount + " accepted, " + limited + " refused, " +
+       results.map(r => r.status).join(","));
+    ck("every surplus request is refused with 429, never 500",
+       limited === 5 && results.every(r => r.status === 201 || r.status === 429),
+       results.map(r => r.status).join(","));
+    ck("the shared D1 counter counts every accepted request exactly once (no lost or double increments)",
+       envRace.__state.rate_limits.filter(r => r.action === "contact").every(r => r.request_count === 3),
+       "counters " + envRace.__state.rate_limits.map(r => r.action + ":" + r.request_count).join(","));
+  } catch(e){ ck("harness completed group 3", false, (e && e.stack) || String(e)); }
+  await group4();
+}
+
+/* ------------ 8. rate limiting and Turnstile are independent controls ---- */
+async function group4(){
+  try {
+    /* (a) under the limit, no token: Turnstile still refuses. */
+    const envT = makeEnv({ RATE_CONTACT_LIMIT: "10", RATE_CONTACT_WINDOW: "600" });
+    resetSiteverify("ok", "contact");
+    const noToken = await send(CONTACT, contactBody(""), envT, "41.90.16.1");
+    ck("under the rate limit but without a Turnstile token: still rejected by Turnstile",
+       noToken.status >= 400 && noToken.status < 500 && String(noToken.body.code).indexOf("TURNSTILE") === 0,
+       noToken.status + " " + noToken.body.code);
+    /* (b) a valid token does not exempt the caller from the limit. */
+    const envT2 = makeEnv({ RATE_CONTACT_LIMIT: "2", RATE_CONTACT_WINDOW: "600", RATE_CONTACT_EMAIL_LIMIT: "2", RATE_CONTACT_EMAIL_WINDOW: "600" });
+    const ipT = "41.90.17.1";
+    const withTokens = [];
+    for(let i = 0; i < 3; i++) withTokens.push((await send(CONTACT, contactBody(tok("ts-" + i)), envT2, ipT)).status);
+    ck("a solved challenge is not a rate-limit exemption (3rd valid token still 429)",
+       withTokens.join(",") === "201,201,429", withTokens.join(","));
+    /* (c) an exhausted limit short-circuits before the Siteverify call. */
+    const before = siteverify.calls;
+    const blocked = await send(CONTACT, contactBody(tok("ts-4")), envT2, ipT);
+    ck("once refused, the request never reaches Cloudflare's Siteverify",
+       blocked.status === 429 && siteverify.calls === before,
+       "429, siteverify calls " + (siteverify.calls - before));
+    /* (d) order of operations: the limit is charged even when Turnstile then
+       rejects, so a bot cannot burn unlimited attempts for free. */
+    const envT3 = makeEnv({ RATE_CONTACT_LIMIT: "2", RATE_CONTACT_WINDOW: "600", RATE_CONTACT_EMAIL_LIMIT: "2", RATE_CONTACT_EMAIL_WINDOW: "600" });
+    resetSiteverify("fail", "contact");
+    const fail1 = await send(CONTACT, contactBody(tok("fail-1")), envT3, "41.90.18.1");
+    const fail2 = await send(CONTACT, contactBody(tok("fail-2")), envT3, "41.90.18.1");
+    const fail3 = await send(CONTACT, contactBody(tok("fail-3")), envT3, "41.90.18.1");
+    ck("Turnstile failures are still counted against the limit (1st and 2nd rejected, 3rd is 429)",
+       fail1.status === 403 && fail2.status === 403 && fail3.status === 429,
+       [fail1.status, fail2.status, fail3.status].join(","));
+  } catch(e){ ck("harness completed group 4", false, (e && e.stack) || String(e)); }
+  await group5();
+}
+
+/* ------- 9. auth, authorisation and payments are untouched by the limiter -- */
+async function group5(){
+  try {
+    /* Public browsing: no limit at all, and no rate rows. */
+    const envB = makeEnv({});
+    const browseCodes = [];
+    for(let i = 0; i < 25; i++) browseCodes.push((await call("/api/events", { method: "GET", headers: H }, envB, "41.90.20.1")).status);
+    ck("25 public event-browsing requests are all allowed and write no rate rows",
+       browseCodes.every(c => c === 200) && envB.__state.rate_limits.length === 0,
+       browseCodes.join("") + " / rows " + envB.__state.rate_limits.length);
+    /* Payment callbacks stay receivable, and are not rate limited. */
+    const ipn1 = await send("/api/webhooks/paystack", {}, envB, "41.90.21.1");
+    const ipn2 = await call("/api/webhooks/pesapal", { method: "GET", headers: H }, envB, "41.90.21.1");
+    ck("payment webhooks / IPN callbacks are never rate limited",
+       ipn1.status === 200 && ipn2.status !== 429 && envB.__state.rate_limits.length === 0,
+       "paystack " + ipn1.status + ", pesapal " + ipn2.status + ", rows " + envB.__state.rate_limits.length);
+    /* Firebase auth still required under the limit. */
+    resetSiteverify("ok", "register");
+    const envR = makeEnv({ RATE_REGISTER_LIMIT: "10", RATE_REGISTER_WINDOW: "600" });
+    const regOk = await send("/api/auth/register", { full_name: "Jane Wanjiru", email: "jane@example.com",
+      phone: "+254700111222", turnstile_token: tok("reg-ok") }, envR, "41.90.22.1");
+    ck("organizer registration under the limit still demands a Firebase token (401)",
+       regOk.status === 401 && regOk.body.code === "UNAUTHENTICATED", regOk.status + " " + regOk.body.code);
+    const regNoToken = await send("/api/auth/register", { full_name: "Jane Wanjiru", email: "jane@example.com",
+      phone: "+254700111222" }, envR, "41.90.22.1");
+    ck("without a Turnstile token registration is refused by Turnstile, not by the limiter",
+       regNoToken.body.code === "TURNSTILE_TOKEN_INVALID", regNoToken.status + " " + regNoToken.body.code);
+    /* Registration limit is enforced (5/hour per IP). */
+    const regCodes = [];
+    for(let i = 0; i < 5; i++) regCodes.push((await send("/api/auth/register", { full_name: "Jane Wanjiru",
+      email: "reg@example.com", phone: "+254700111222", turnstile_token: tok("reg-loop-" + i) }, envR, "41.90.23.1")).status);
+    const regOver = await send("/api/auth/register", { full_name: "Jane Wanjiru", email: "reg@example.com",
+      phone: "+254700111222", turnstile_token: tok("reg-over") }, envR, "41.90.23.1");
+    ck("5 registrations per hour per IP are allowed and the 6th is refused",
+       regCodes.filter(c => c === 401).length === 5 && regOver.status === 429,
+       regCodes.join(",") + " then " + regOver.status);
+    /* Event creation: user tier needs identity, so a signed-out caller is only
+       charged the IP tier and still rejected by the challenge/auth layer. */
+    resetSiteverify("ok", "event-create");
+    const envE2 = makeEnv({ RATE_EVENT_CREATE_LIMIT: "3", RATE_EVENT_CREATE_WINDOW: "600" });
+    const ev = await send("/api/organizer/events", { title: "Test", venue: "KICC", location: "Nairobi",
+      event_date: "2027-01-01", start_time: "10:00", turnstile_token: tok("ev-ok") }, envE2, "41.90.24.1");
+    ck("event creation under the limit is still refused for missing auth (401), never 2xx",
+       ev.status === 401, ev.status + " " + ev.body.code);
+    /* Checkout: the order reference tier is counted on the payment route. */
+    resetSiteverify("ok", "checkout");
+    const envO = makeEnv({ RATE_CHECKOUT_LIMIT: "10", RATE_CHECKOUT_WINDOW: "600" });
+    const order = await send(ORDERS, orderBody(tok("order-ok")), envO, "41.90.25.1");
+    ck("checkout under the limit still works end to end (201 with a server-side amount)",
+       order.status === 201 && JSON.stringify(order.body).indexOf("1500") > -1, order.status);
+    const ref = envO.__state.orders[0] ? envO.__state.orders[0].order_number : "";
+    const payNoCred = await send(PAY, { reference: ref }, envO, "41.90.25.1");
+    ck("payment initiation without a receipt or token is still refused (not rate limited, Turnstile refuses)",
+       payNoCred.body.code === "TURNSTILE_TOKEN_INVALID", payNoCred.status + " " + payNoCred.body.code);
+    /* That refused call is itself counted, so four more reach the provider and
+       the reference tier refuses the fifth (5 per 10 minutes per order). */
+    const payCodes = [];
+    for(let i = 0; i < 5; i++) payCodes.push((await send(PAY, { reference: ref, turnstile_token: tok("pay-" + i) }, envO, "41.90.25.1")).status);
+    ck("5 payment initiations per order reference are allowed and the 6th is refused (429)",
+       payCodes.filter(c => c !== 429).length === 4 && payCodes[4] === 429, payCodes.join(","));
+    const payOtherRef = await send(PAY, { reference: "PAT-SOMEONE-ELSE", turnstile_token: tok("pay-x") }, envO, "41.90.25.1");
+    ck("a different order reference has its own allowance", payOtherRef.status !== 429, payOtherRef.status + " " + payOtherRef.body.code);
+
+    /* ------------------------------------ 9b. login: 5 per 15 minutes per IP --- */
+    resetSiteverify("ok", "login");
+    const envL = makeEnv({});
+    const loginIp = "41.90.26.1";
+    const loginCodes = [];
+    for(let i = 0; i < 6; i++) loginCodes.push((await send(AUTH_T, authBody("login", tok("login-" + i), "actor" + i + "@example.com"), envL, loginIp)).status);
+    ck("5 login challenges per IP are accepted and the 6th is refused",
+       loginCodes.join(",") === "200,200,200,200,200,429", loginCodes.join(","));
+    const loginOther = await send(AUTH_T, authBody("login", tok("login-other"), "other@example.com"), envL, "41.90.26.2");
+    ck("a second IP may still try (the account tier is separate)", loginOther.status === 200, loginOther.status + " " + loginOther.body.code);
+  } catch(e){ ck("harness completed group 5", false, (e && e.stack) || String(e)); }
+  await group6();
+}
+
+/* -------- 10. store fallbacks, the native binding, and log hygiene --------- */
+async function group6(){
+  try {
+    /* (a) migration not run yet: the memory tier still protects the site. */
+    const envNoTable = makeEnv({ noRateTable: true, RATE_CONTACT_LIMIT: "2", RATE_CONTACT_WINDOW: "600" });
+    resetSiteverify("ok", "contact");
+    const n1 = await send(CONTACT, contactBody(tok("notable-1")), envNoTable, "41.90.30.1");
+    const n2 = await send(CONTACT, contactBody(tok("notable-2")), envNoTable, "41.90.30.1");
+    const n3 = await send(CONTACT, contactBody(tok("notable-3")), envNoTable, "41.90.30.1");
+    ck("with the rate_limits table missing the memory tier still refuses the 3rd request",
+       n1.status === 201 && n2.status === 201 && n3.status === 429,
+       [n1.status, n2.status, n3.status].join(","));
+    ck("the missing table is reported as a loud store warning",
+       errors.concat(warnings).some(l => l.indexOf("RATE_LIMIT_STORE") > -1), "");
+    const healthDeg = await call("/api/health", { method: "GET", headers: H }, envNoTable, "41.90.30.9");
+    ck("GET /api/health reports the degraded store so the migration is noticed",
+       healthDeg.body.rate_limit_store === "degraded", String(healthDeg.body.rate_limit_store));
+
+    /* (b) no batch API on the binding: same fail-safe behaviour. */
+    const envNoBatch = makeEnv({ noBatch: true, RATE_CONTACT_LIMIT: "1", RATE_CONTACT_WINDOW: "600" });
+    resetSiteverify("ok", "contact");
+    const b1 = await send(CONTACT, contactBody(tok("nobatch-1"), "nobatch@example.com"), envNoBatch, "41.90.31.1");
+    const b2 = await send(CONTACT, contactBody(tok("nobatch-2"), "nobatch@example.com"), envNoBatch, "41.90.31.1");
+    ck("a D1 binding without batch() degrades to the memory tier instead of failing",
+       b1.status === 201 && b2.status === 429, [b1.status, b2.status].join(","));
+
+    /* (c) a bound Cloudflare Rate Limiting binding is consulted first. */
+    let bindingCalls = 0;
+    const binding = { limit: async () => { bindingCalls++; return { success: true }; } };
+    const envB2 = makeEnv({ binding: binding, RATE_CONTACT_LIMIT: "50", RATE_CONTACT_WINDOW: "600" });
+    resetSiteverify("ok", "contact");
+    const bind1 = await send(CONTACT, contactBody(tok("bind-1"), "bind@example.com"), envB2, "41.90.32.1");
+    ck("when a native binding is bound it is used and the request still succeeds",
+       bind1.status === 201 && bindingCalls > 0, "201, binding calls " + bindingCalls);
+    const denyBinding = { limit: async () => ({ success: false }) };
+    const envB3 = makeEnv({ binding: denyBinding, RATE_CONTACT_LIMIT: "50", RATE_CONTACT_WINDOW: "600" });
+    const bind2 = await send(CONTACT, contactBody(tok("bind-2"), "bind2@example.com"), envB3, "41.90.33.1");
+    ck("a native binding that denies answers 429 without writing a D1 row",
+       bind2.status === 429 && envB3.__state.rate_limits.length === 0,
+       bind2.status + " / rows " + envB3.__state.rate_limits.length);
+
+    /* (d) security logging. */
+    const logText = warnings.concat(errors).join(" | ");
+    ck("rate-limit refusals are logged as TICKETHUB_SECURITY events",
+       /TICKETHUB_SECURITY.*(RATE_LIMIT_EXCEEDED|EXCESSIVE_|SUSPICIOUS_AUTH)/i.test(logText), "");
+    ck("the specific abuse events are used (auth / reset / checkout / contact)",
+       /SUSPICIOUS_AUTH_ACTIVITY/.test(logText) && /EXCESSIVE_PASSWORD_RESET_REQUESTS/.test(logText) &&
+       /EXCESSIVE_CONTACT_SUBMISSIONS/.test(logText),
+       ["SUSPICIOUS_AUTH_ACTIVITY", "EXCESSIVE_PASSWORD_RESET_REQUESTS", "EXCESSIVE_CONTACT_SUBMISSIONS"]
+         .filter(e => logText.indexOf(e) > -1).join(", ") || "none of the three");
+    ck("logs contain no email address, no Turnstile secret and no token",
+       !/victim@example\.com|person@example\.com|rows@example\.com/.test(logText) &&
+       logText.indexOf(PROD_SECRET) === -1 && !/0\.[A-Za-z0-9]{40,}/.test(logText), "");
+    ck("logs name the action, the tier and the retry hint",
+       /"action":"contact"/.test(logText) && /"tier":"ip"/.test(logText) && /retry_after/.test(logText), "");
+  } catch(e){ ck("harness completed group 6", false, (e && e.stack) || String(e)); }
+  window.fetch = realFetch;
+  finish();
+}
+</script>
+</body></html>
+

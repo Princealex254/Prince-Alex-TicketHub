@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>syntax</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body><div id="out">running</div><script>
+/* Parses worker/index.js and worker/worker.js as ES modules in the browser.
+   A SyntaxError means the file is broken; module-resolution/runtime errors are
+   acceptable here (index.js imports ./emails.js, which blob URLs cannot resolve). */
+const R = { compiled: false, compileErr: "", tests: [], notes: [] };
+function ck(name, pass, detail){ R.tests.push({ name: name, pass: !!pass, detail: detail || "" }); }
+async function loadAsModule(url){
+  const res = await fetch(url, { cache: "no-store" });
+  if(!res.ok) return { ok: false, name: "HttpError", message: url + " -> " + res.status };
+  const src = await res.text();
+  const blob = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+  try { await import(blob); return { ok: true }; }
+  catch(e){ return { ok: false, name: (e && e.name) || "Error", message: (e && e.message) || String(e) }; }
+  finally { URL.revokeObjectURL(blob); }
+}
+(async function(){
+  try {
+    const a = await loadAsModule("/worker/index.js");
+    ck("worker/index.js parses as ES module", a.ok || a.name !== "SyntaxError", a.ok ? "" : a.name + ": " + a.message);
+    if(!a.ok) R.notes.push("index.js import: " + a.name + ": " + a.message);
+    const b = await loadAsModule("/worker/worker.js");
+    ck("worker/worker.js parses as ES module", b.ok || b.name !== "SyntaxError", b.ok ? "" : b.name + ": " + b.message);
+    if(!b.ok) R.notes.push("worker.js import: " + b.name + ": " + b.message);
+    const c = await loadAsModule("/worker/emails.js");
+    ck("worker/emails.js parses as ES module", c.ok || c.name !== "SyntaxError", c.ok ? "" : c.name + ": " + c.message);
+    /* Parse (not run) the inline scripts of every page this change touched. */
+    const pages = ["/owner-dashboard/index.html", "/owner-orders/index.html", "/organizer-dashboard/index.html", "/organizer-agreement/index.html", "/edit-event/index.html", "/orders/index.html", "/event/index.html"];
+    for(const url of pages){
+      try {
+        const html = await (await fetch(url, { cache: "no-store" })).text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const scripts = Array.from(doc.querySelectorAll("script"))
+          .filter(s => !s.src && (!s.type || s.type === "text/javascript"))
+          .map(s => s.textContent || "");
+        const code = scripts.join("\n;\n");
+        if(!code){ ck(url + " inline scripts parse", false, "no inline script found"); continue; }
+        new Function(code);
+        ck(url + " inline scripts parse", true, "");
+      } catch(e){
+        ck(url + " inline scripts parse", false, (e && e.name) + ": " + (e && e.message));
+      }
+    }
+  } catch(e){
+    ck("harness ran", false, String(e));
+  }
+  R.compiled = true;
+  const passed = R.tests.filter(t => t.pass).length;
+  const out = { compiled: true, summary: { total: R.tests.length, passed: passed, failed: R.tests.length - passed }, tests: R.tests, notes: R.notes };
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(out);
+  try { await fetch("/__result", { method: "POST", body: JSON.stringify(out) }); } catch(e){}
+})();
+</script></body></html>
