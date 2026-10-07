@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -199,7 +199,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);ou
         <div class="viewport" id="viewport">
           <video id="video" playsinline muted aria-label="QR scanner camera preview"></video>
           <div class="reticle hidden" id="reticle" aria-hidden="true"></div>
-          <div class="hintbox" id="viewportHint">Start the camera and point it at the attendee QR code.</div>
+          <div class="hintbox" id="viewportHint">Start the camera and point it at the attendee QR code. Each scan shows the ticket for review first — nothing is checked in until you press “Check in attendee”.</div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
           <button class="btn btn-primary" type="button" id="startCamera">Start camera</button>
@@ -465,6 +465,12 @@ let scanning = false;
 let busy = false;
 let lastCode = "";
 let lastCodeAt = 0;
+/* While a scanned / looked-up ticket is awaiting review, the camera loop
+   pauses so the same QR in view cannot re-fire or auto-check-in. Cleared
+   when staff press "Check in attendee", "Scan next ticket", or a lookup
+   resolves as used / invalid / error. */
+let pendingReviewCode = "";
+let pendingReviewMode = "manual";
 const session = [];
 const eventId = () => $("#eventSelect").value;
 
@@ -588,11 +594,18 @@ async function submitCode(code, mode){
     const used = status === "already_checked_in" || status === "used" || payload.already_checked_in === true;
     const who = attendeeOf(payload), type = typeOf(payload), num = numberOf(payload);
     if(valid){
-      showResult("ok", "VALID TICKET", "Admit this attendee.", "<div class=\"kv\" style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div>" + (payload.checked_in_at ? "<div class=\"small\">Checked in " + esc(fmtDateTime(payload.checked_in_at)) + "</div>" : "") + "</div>");
+      showResult("ok", "VALID TICKET", "Admit this attendee.", "<div class=\"kv\" style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div>" + (payload.checked_in_at ? "<div class=\"small\">Checked in " + esc(fmtDateTime(payload.checked_in_at)) + "</div>" : "") + (scanning ? "<div style=\"display:flex;gap:10px;flex-wrap:wrap;margin-top:4px\"><button class=\"btn btn-ghost\" type=\"button\" id=\"scanNextAfterCheckin\">Scan next ticket</button></div>" : "") + "</div>");
       logRow("ok", who, type + " - " + num);
       buzz(60);
       toast("Admitted: " + who, "ok");
       checkedIn = true;
+      const nextAfter = $("#scanNextAfterCheckin");
+      if(nextAfter) nextAfter.addEventListener("click", () => {
+        pendingReviewCode = "";
+        lastCode = ""; lastCodeAt = 0;
+        $("#scanStatus").textContent = scanning ? "Scanning" : "Camera off";
+        toast("Ready for the next ticket", "ok");
+      });
     } else if(used){
       showResult("warn", "TICKET ALREADY USED", "This ticket has already been checked in.", "<div style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div><div class=\"small\">First check-in: " + esc(payload.checked_in_at ? fmtDateTime(payload.checked_in_at) : "recorded earlier") + "</div></div>");
       logRow("warn", "Already used: " + who, type + " - " + num);
@@ -612,7 +625,9 @@ async function submitCode(code, mode){
   }
   return checkedIn;
 }
-async function lookupCode(code){
+async function lookupCode(code, origin){
+  const fromScan = origin === "qr";
+  pendingReviewMode = fromScan ? "qr" : "manual";
   const value = String(code || "").trim();
   if(!value) return;
   if(!eventId()){
@@ -622,7 +637,7 @@ async function lookupCode(code){
   }
   if(busy) return;
   busy = true;
-  $("#scanStatus").textContent = "Looking up...";
+  $("#scanStatus").textContent = fromScan ? "Ticket found - review to check in" : "Looking up...";
   try {
     const res = await api("/api/check-in", { method: "POST", body: { event_id: eventId(), code: value, mode: "lookup" } });
     const payload = res.result || res.data || res;
@@ -631,44 +646,79 @@ async function lookupCode(code){
     const used = status === "already_checked_in" || status === "used" || payload.already_checked_in === true;
     const who = attendeeOf(payload), type = typeOf(payload), num = numberOf(payload);
     if(valid){
-      showResult("ok", "TICKET FOUND", "Review these details before checking in the attendee.", "<div style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div>" + (payload.event_title ? "<div class=\"small\">" + esc(payload.event_title) + "</div>" : "") + "<button class=\"btn btn-primary\" type=\"button\" id=\"confirmManualCheckin\">Check in attendee</button></div>");
-      $("#confirmManualCheckin").addEventListener("click", async () => {
-        const button = $("#confirmManualCheckin");
+      /* Review-first for BOTH paths: nothing is checked in until staff press
+         "Check in attendee". Camera keeps running (preview stays live) but
+         detection is paused via pendingReviewCode until they confirm or scan
+         the next ticket. Result panel is scrolled into view so phone users
+         actually see it below the fold. */
+      pendingReviewCode = value;
+      buzz(60);
+      const confirmId = "confirmCheckin";
+      const nextId = "scanNextTicket";
+      showResult("ok", "TICKET FOUND", "Review these details before checking in the attendee.", "<div style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div>" + (payload.event_title ? "<div class=\"small\">" + esc(payload.event_title) + "</div>" : "") + "<div style=\"display:flex;gap:10px;flex-wrap:wrap;margin-top:4px\"><button class=\"btn btn-primary\" type=\"button\" id=\"" + confirmId + "\">Check in attendee</button>" + (fromScan ? "<button class=\"btn btn-ghost\" type=\"button\" id=\"" + nextId + "\">Scan next ticket</button>" : "") + "</div></div>");
+      $("#" + confirmId).addEventListener("click", async () => {
+        const button = $("#" + confirmId);
         if(button) button.disabled = true;
-        const checkedIn = await submitCode(value, "manual");
-        if(checkedIn){
+        const checkedIn = await submitCode(value, pendingReviewMode);
+        pendingReviewCode = "";
+        if(checkedIn && !fromScan){
           $("#ticketNumber").value = "";
           $("#ticketNumber").focus();
-        } else if(button){
+        } else if(!checkedIn && button){
           button.disabled = false;
         }
       });
+      if(fromScan){
+        const next = $("#" + nextId);
+        if(next) next.addEventListener("click", () => {
+          pendingReviewCode = "";
+          lastCode = ""; lastCodeAt = 0;
+          $("#scanStatus").textContent = scanning ? "Scanning" : "Camera off";
+          toast("Ready for the next ticket", "ok");
+        });
+      }
     } else if(used){
+      pendingReviewCode = "";
       showResult("warn", "TICKET ALREADY USED", "This ticket has already been checked in.", "<div style=\"display:grid;gap:8px\"><div><strong>" + esc(who) + "</strong></div><div class=\"small muted\">" + esc(type) + " &middot; " + esc(num) + "</div><div class=\"small\">First check-in: " + esc(payload.checked_in_at ? fmtDateTime(payload.checked_in_at) : "recorded earlier") + "</div></div>");
+      logRow("warn", "Already used: " + who, type + " - " + num);
+      buzz([40, 60, 40]);
     } else {
+      pendingReviewCode = "";
       const reason = payload.reason || payload.message || "This ticket could not be validated.";
       showResult("err", "INVALID TICKET", "Do not admit this attendee.", "<div style=\"display:grid;gap:8px\"><div class=\"small\">" + esc(reason) + "</div><div class=\"small muted\">Code checked: " + esc(value.slice(0, 40)) + "</div></div>");
+      logRow("err", "Invalid code", value.slice(0, 30));
+      buzz([120]);
     }
   } catch (err) {
+    pendingReviewCode = "";
     const msg = err.code === "NOT_CONFIGURED" ? err.message : (err.status === 403 ? "You do not have permission to check in tickets for this event." : err.message);
     showResult("err", "NOT VERIFIED", "We could not look up this ticket. Try again.", "<div class=\"small\">" + esc(msg) + "</div>");
   } finally {
     busy = false;
-    if(scanning) $("#scanStatus").textContent = "Scanning"; else $("#scanStatus").textContent = "Camera off";
+    /* Keep "review" status while a ticket awaits confirmation so staff know
+       to look at the result panel; otherwise restore Scanning/Camera off. */
+    if(!pendingReviewCode){ if(scanning) $("#scanStatus").textContent = "Scanning"; else $("#scanStatus").textContent = "Camera off"; }
+    /* Always scroll to the result on mobile: after a camera scan the result
+       panel is below the fold and staff would otherwise miss it. */
     focusCheckinResult();
   }
 }
 async function tick(){
   if(!scanning) return;
   try {
-    if(!busy && detector && $("#video").readyState >= 2){
+    /* Pause detection while a ticket awaits review: the QR is usually still
+       in frame on a phone, and we must never auto-check-in or double-scan. */
+    if(!busy && !pendingReviewCode && detector && $("#video").readyState >= 2){
       const codes = await detector.detect($("#video"));
       if(codes && codes.length){
         const raw = String(codes[0].rawValue || "").trim();
         const now = Date.now();
-        if(raw && (raw !== lastCode || now - lastCodeAt > 5000)){
+        if(raw && (raw !== lastCode || now - lastCodeAt > 8000)){
           lastCode = raw; lastCodeAt = now;
-          await submitCode(raw, "qr");
+          /* Camera path is lookup-first: shows "TICKET FOUND" with a
+             "Check in attendee" button, then scrolls to the result panel
+             (critical on mobile where the result is below the fold). */
+          await lookupCode(raw, "qr");
         }
       }
     }
