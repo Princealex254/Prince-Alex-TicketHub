@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Secure Checkout | Prince Alex TicketHub</title>
+<meta name="description" content="Complete your ticket purchase securely with Paystack on Prince Alex TicketHub." />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+/* ==========================================================
+   Prince Alex TicketHub - inline design system (per page)
+   ========================================================== */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --brand-600:#4F46E5;--brand-700:#3730A3;--brand:#4338CA;--accent:#7C3AED;
+  --ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;
+  --line:#E6E8F0;--bg:#F6F7FB;--card:#FFFFFF;
+  --ok:#0E9F6E;--okbg:#E8F7F1;--okink:#04674A;
+  --warn:#B45309;--warnbg:#FEF4E6;--warnink:#8A4103;
+  --err:#D92D20;--errbg:#FEECEB;--errink:#9B1C1C;--infobg:#EEF2FF;
+  --r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;
+  --sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);
+  --sh3:0 14px 34px rgba(16,24,40,.10);
+  --max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em;color:var(--ink)}
+h1{font-size:clamp(1.65rem,3.2vw,2.3rem)}
+h2{font-size:clamp(1.3rem,2.3vw,1.7rem)}
+h3{font-size:1.06rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.faint{color:var(--faint)}
+.small{font-size:.875rem}.tiny{font-size:.78rem}
+.hidden{display:none!important}.center{text-align:center}
+section{padding:46px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.sec-head p{margin:0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;text-decoration:none;white-space:nowrap;min-height:44px}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid var(--brand-600);outline-offset:2px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:#C9CEE0;box-shadow:var(--sh2)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.btn-block{width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);min-width:0}
+.pad{padding:20px}
+.pad-lg{padding:24px}
+.divider{height:1px;background:var(--line);border:0;margin:18px 0}
+label{display:block;font-weight:600;font-size:.86rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;min-height:44px}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700)}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+.state{padding:46px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em;box-shadow:0 6px 16px rgba(79,70,229,.26)}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem;letter-spacing:-.02em}
+.logo-txt small{font-size:.65rem;color:var(--faint);letter-spacing:.03em}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.nav a.btn-primary:hover{background:var(--brand-700)}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){
+  .burger{display:grid}
+  .nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}
+  .nav.open{display:flex}
+  .nav a{padding:13px 12px;border-radius:12px}
+  .nav a.btn{margin-top:6px;justify-content:center}
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .container{padding:0 16px}
+  section{padding:32px 0}
+}
+.sf{background:#0B1220;color:#C3CADE;margin-top:56px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+.hero{padding:30px 0 26px;background:linear-gradient(180deg,#FFFFFF 0%,var(--bg) 100%);border-bottom:1px solid var(--line)}
+.hero h1{margin-bottom:8px}
+.hero .lead{max-width:620px;color:var(--muted);font-size:1.02rem;margin-bottom:0}
+.searchbar{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:var(--pill);padding:8px;box-shadow:var(--sh2);margin-top:18px;max-width:840px}
+.searchbar .f{flex:1 1 200px;min-width:0}
+.searchbar .f.sel{flex:0 1 215px}
+.searchbar input,.searchbar select{border:0;background:transparent;min-height:44px;padding:8px 14px;border-radius:var(--pill)}
+.searchbar input:focus,.searchbar select:focus{outline:none;background:#F7F8FC}
+.searchbar .sep{width:1px;background:var(--line);margin:8px 0;flex:none}
+@media(max-width:700px){
+  .searchbar{flex-wrap:wrap;border-radius:var(--r-lg);padding:10px}
+  .searchbar .f,.searchbar .f.sel{flex:1 1 100%}
+  .searchbar .sep{display:none}
+  .searchbar .btn{width:100%}
+}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:var(--pill);padding:8px 15px;font-size:.85rem;font-weight:600;cursor:pointer;min-height:38px}
+.chip:hover{border-color:#C9CEE0}
+.chip[aria-pressed="true"]{background:var(--brand-600);border-color:var(--brand-600);color:#fff}
+.ev-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media(max-width:980px){.ev-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ev-grid{grid-template-columns:1fr}}
+.ev-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh1);display:flex;flex-direction:column;transition:transform .18s ease,box-shadow .18s ease}
+.ev-card:hover{box-shadow:var(--sh3);transform:translateY(-2px)}
+.ev-media{position:relative;display:block;aspect-ratio:16/9;background:#EDEFF6;overflow:hidden}
+.ev-media img{width:100%;height:100%;object-fit:cover}
+.ev-cat{position:absolute;left:12px;top:12px;background:rgba(11,18,32,.78);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:var(--pill)}
+.ev-body{display:flex;gap:14px;padding:16px;flex:1}
+.ev-date{flex:none;width:54px;height:56px;border-radius:12px;background:var(--infobg);color:var(--brand-700);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.ev-date strong{font-size:1.12rem}
+.ev-date span{font-size:.64rem;font-weight:700;letter-spacing:.07em}
+.ev-main{min-width:0;flex:1;display:flex;flex-direction:column}
+.ev-main h3{font-size:1rem;margin-bottom:4px}
+.ev-main h3 a{color:var(--ink)}
+.ev-meta{font-size:.84rem;color:var(--muted);margin:0}
+.ev-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px}
+.price{font-weight:700;font-size:.95rem}
+.ph-media{width:100%;height:100%;display:grid;place-items:center;color:#B7BECE;background:linear-gradient(135deg,#EDEFF6,#F7F8FC);font-size:1.5rem;font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh1)}
+.step-n{width:34px;height:34px;border-radius:10px;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;margin-bottom:12px}
+.trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.trust{grid-template-columns:1fr}}
+.trust-item{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.trust-item strong{display:block;margin-bottom:4px;font-size:.94rem}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:34px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}
+.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.checkout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:start;padding:26px 0 10px}
+@media(max-width:980px){.checkout{grid-template-columns:minmax(0,1fr)}}
+.back-link{font-size:.86rem;margin-top:16px;display:inline-block}
+.line{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.94rem;min-width:0;align-items:flex-start}
+.line:last-of-type{border-bottom:0}
+.line strong{font-weight:600;overflow-wrap:break-word;word-break:normal;line-height:1.5}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-weight:800;font-size:1.2rem;letter-spacing:-.01em;padding-top:14px;margin-top:6px;border-top:1px solid var(--line)}
+.total>span:last-child{flex:none;white-space:nowrap;padding-left:12px}
+.trust-line{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;color:var(--muted);margin-top:6px;min-width:0;overflow-wrap:break-word}
+.trust-line span{min-width:0;overflow-wrap:break-word}
+/* ---------------------------------------------------------------
+   Word fit (same fix as event page): normal words wrap at word
+   boundaries, never cut mid-word. Only long unbreakable tokens
+   may break via break-word. Flex/grid children get min-width:0
+   so text shrinks inside its card.
+   --------------------------------------------------------------- */
+.checkout,.card,.alert,.trust-line,.steps-mini,.line,.total,#eventLine,#summaryLines{overflow-wrap:break-word;word-break:normal}
+.card h2,.card h3,#orderTitle,#detailsTitle,.line strong{text-wrap:pretty;line-height:1.4}
+#eventLine,#summaryLines{min-width:0}
+#eventLine strong{display:block;overflow-wrap:break-word;word-break:normal;line-height:1.5;text-wrap:pretty}
+.line>span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:break-word;word-break:normal;line-height:1.5}
+.line>span:last-child{flex:none;white-space:nowrap;padding-left:12px;line-height:1.5}
+.back-link{overflow-wrap:break-word}
+@media(max-width:560px){
+  .pad,.card.pad-lg{padding:16px}
+  .line{flex-wrap:wrap}
+  .line>span:first-child{flex:1 1 100%}
+  .line>span:last-child{padding-left:0}
+}
+/* --- end word-fit rules --- */
+.trust-line::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--brand-600);margin-top:6px}
+.steps-mini{display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;color:var(--muted);margin-bottom:14px}
+.steps-mini span{background:#fff;border:1px solid var(--line);border-radius:var(--pill);padding:5px 10px}
+.steps-mini span[aria-current="step"]{background:var(--infobg);border-color:#DDE3FF;color:var(--brand-700);font-weight:700}
+.alert{padding:13px 15px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+</style></head>
+<body><header class="sh">
+  <div class="container sh-in">
+    <a class="logo" href="/" aria-label="Prince Alex TicketHub, powered by Prince Alex Digital">
+      <span class="logo-mark" aria-hidden="true">PAT</span>
+      <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><span></span></button>
+    <nav class="nav" id="mainNav" aria-label="Main navigation">
+      <a href="/events/">Events</a>
+      <a href="/organizer/">For Organizers</a>
+      <a href="/check-ticket/">Check Ticket</a>
+      <a href="/login/">Login</a>
+      <a class="btn btn-primary btn-sm" href="/sell-your-tickets/">Sell Your Event</a>
+    </nav>
+  </div>
+</header><main id="main">
+  <div class="container" style="padding-top:20px">
+    <div class="steps-mini" aria-label="Checkout progress"><span>1. Choose tickets</span><span aria-current="step">2. Your details</span><span>3. Payment</span><span>4. Ticket</span></div>
+    <h1 style="font-size:1.5rem">Checkout</h1>
+    <p class="muted small" style="margin:0">Enter the details of the person attending. Their ticket will be issued to this name.</p>
+  </div>
+  <div class="container" id="pageState" aria-live="polite"></div>
+  <div class="container checkout hidden" id="checkoutWrap">
+    <section class="card pad-lg" aria-labelledby="detailsTitle">
+      <div id="pageAlert" class="alert hidden" role="alert"></div>
+      <h2 id="detailsTitle" style="font-size:1.15rem">Your details</h2>
+      <form id="checkoutForm" novalidate>
+        <div class="field">
+          <label for="full_name">Full name</label>
+          <input id="full_name" type="text" autocomplete="name" required maxlength="120" placeholder="As it should appear on the ticket" />
+          <p class="err hidden" data-for="full_name"></p>
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" type="email" autocomplete="email" required maxlength="160" placeholder="you@example.com" />
+          <p class="hint">Your ticket confirmation and ticket link are sent here.</p>
+          <p class="err hidden" data-for="email"></p>
+        </div>
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input id="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="20" placeholder="07XX XXX XXX" />
+          <p class="hint">Used for entry verification and event updates.</p>
+          <p class="err hidden" data-for="phone"></p>
+        </div>
+        <div class="field" id="turnstileHost"></div>
+      </form>
+<!-- ===== Free-ticket email verification (see the checkout logic below) ===== -->
+      <div id="otpBlock" class="hidden">
+        <hr class="divider" />
+        <h3 style="font-size:1rem">Verify your email</h3>
+        <p class="small muted" style="margin-bottom:12px">We sent a 6-digit verification code to <strong id="otpEmail">your email address</strong>. Enter it below to claim your free ticket.</p>
+        <div class="field">
+          <label for="otpCode">Verification code</label>
+          <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="max-width:230px;letter-spacing:7px;font-weight:700;font-size:1.1rem" />
+          <p class="hint" id="otpHint">The code expires in 5 minutes and can only be used once.</p>
+          <p class="err hidden" data-for="otpCode"></p>
+        </div>
+        <div id="otpAlert" class="alert hidden" role="alert"></div>
+        <button class="btn btn-primary btn-block" type="button" id="otpVerifyBtn">Verify and get my ticket</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" type="button" id="otpResendBtn">Resend code</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="otpBackBtn">Change my details</button>
+        </div>
+        <p class="tiny faint" style="margin:12px 0 0">Free tickets are limited per email address for this event, and repeated requests from one connection are throttled automatically.</p>
+      </div>
+      <div id="doneBlock" class="hidden">
+        <hr class="divider" />
+        <h3 style="font-size:1rem" id="doneTitle">Your free ticket is confirmed</h3>
+        <p class="small muted" id="doneText">A copy has been emailed to you with the QR code for entry.</p>
+        <div id="doneTickets"></div>
+        <a class="btn btn-primary btn-block" href="/ticket/" style="margin-top:14px">Open my ticket</a>
+      </div>
+      <div class="alert info hidden" id="freeNote" role="status"></div>
+      <div id="payBlock">
+      <hr class="divider" />
+      <h3 style="font-size:1rem" id="payTitle">Payment</h3>
+      <p class="small muted" id="payHow">Pay securely to complete your order.</p>
+      <div class="trust-line" id="payTrust">Your order is only marked paid after the payment provider confirms the payment to our servers.</div>
+      <div class="trust-line" id="payTrust2">Card and mobile money details are entered with the payment provider and never touch this website.</div>
+      </div>
+      <div id="stkPanel" class="hidden" role="status" aria-live="polite" style="margin:14px 0 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff)">
+        <strong id="stkTitle">Check your phone</strong>
+        <p class="small muted" style="margin:6px 0 0" id="stkBody">An M-Pesa prompt has been sent to the number on this order. Enter your PIN to approve the payment.</p>
+        <p class="tiny faint" style="margin:8px 0 0" id="stkHint">This page updates by itself. You can leave it open while you approve the payment.</p>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="button" id="payBtn" style="margin-top:18px">Pay now</button>
+      <p class="tiny faint" id="termsLine" style="margin:12px 0 0">By paying you accept our <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> and the organizer's event terms.</p>
+      <a class="back-link" href="#" id="backLink">&larr; Back to the event</a>
+    </section>
+    <aside class="card pad-lg" aria-labelledby="orderTitle">
+      <h2 id="orderTitle" style="font-size:1.15rem">Order summary</h2>
+      <div id="eventLine" class="small muted" style="margin-bottom:10px">Loading...</div>
+      <div id="summaryLines"><span class="skel" style="display:block;height:16px;margin-bottom:10px"></span><span class="skel" style="display:block;height:16px;width:60%"></span></div>
+      <div class="total"><span>Total</span><span id="summaryTotal">KSh 0</span></div>
+    </aside>
+  </div>
+</main><footer class="sf">
+  <div class="container">
+    <div class="sf-grid">
+      <div>
+        <div class="logo" style="margin-bottom:12px" aria-label="Prince Alex TicketHub">
+          <span class="logo-mark" aria-hidden="true">PAT</span>
+          <span class="logo-txt" style="color:#fff"><strong>Prince Alex TicketHub</strong><small style="color:#8A93A6">Powered by Prince Alex Digital</small></span>
+        </div>
+        <p class="small" style="color:#8A93A6;max-width:310px">Event ticketing for Kenya. Discover events, sell tickets online and manage attendance from one place.</p>
+      </div>
+      <div><h4>Platform</h4><a href="/events/">Events</a><a href="/sell-your-tickets/">Sell Your Event</a><a href="/organizer/">For Organizers</a><a href="/ticket/">My Ticket</a><a href="/check-ticket/">Check Ticket</a></div>
+      <div><h4>Company</h4><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/login/">Sign in</a></div>
+      <div><h4>Legal</h4><a href="/terms/">Terms of Service</a><a href="/privacy/">Privacy Policy</a></div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; <span id="year">2026</span> Prince Alex TicketHub. All rights reserved.</span>
+      <span>Powered by Prince Alex Digital</span>
+    </div>
+  </div>
+</footer><div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>
+/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "0x4AAAAAAFFfPC7TnnFT83yZ";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (managed widget, verified by the Worker) ----
+   The widget yields a single-use token that is sent only to the TicketHub
+   Worker, which validates it with Cloudflare's Siteverify API (hostname,
+   action, single use, five minute life). It is never stored in the browser,
+   never reused and never treated as an authentication credential.
+   ---------------------------------------------------------------------------- */
+const TURNSTILE_ACTION = "checkout";
+const Turnstile = {
+  token_: "", state: "idle", note: null, action: "",
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  configured(){ return !!(TURNSTILE_SITE_KEY && !/^YOUR_/i.test(TURNSTILE_SITE_KEY)); },
+  status(kind, msg){ if(!this.note) return; this.note.className = kind === "err" ? "err" : "hint"; this.note.textContent = msg; },
+  async mount(host, action){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    /* Loading / success / failure / retry feedback, shown under the widget. */
+    if(!this.note){
+      this.note = document.createElement("p");
+      this.note.className = "hint";
+      this.note.setAttribute("role", "status");
+      this.note.setAttribute("aria-live", "polite");
+      el.parentNode.insertBefore(this.note, el.nextSibling);
+    }
+    if(!this.configured()){ this.note.textContent = "Bot protection is disabled on this environment."; return null; }
+    this.state = "loading";
+    this.status("", "Checking your browser...");
+    try {
+      if(!await this.load()){ this.state = "unavailable"; this.status("err", "Bot protection could not be loaded. Please refresh the page and try again."); el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection could not be loaded.</p>"; return null; }
+      this.action = action || TURNSTILE_ACTION;
+      const self = this;
+      this.id = window.turnstile.render(el, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "light",
+        size: "flexible",
+        action: this.action,
+        callback: function(token){ self.state = "ready"; self.token_ = token || ""; self.status("", "Bot check complete."); },
+        "error-callback": function(){ self.state = "error"; self.token_ = ""; self.status("err", "The bot check failed. Please complete it again."); },
+        "expired-callback": function(){ self.state = "expired"; self.token_ = ""; self.status("err", "The bot check expired. Please complete it again."); },
+        "timeout-callback": function(){ self.state = "timeout"; self.token_ = ""; self.status("err", "The bot check timed out. Please complete it again."); },
+        "unsupported-callback": function(){ self.state = "unsupported"; self.token_ = ""; self.status("err", "Your browser could not run the bot check. Please try another browser."); }
+      });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){
+    if(!this.id) return "";
+    try { const t = window.turnstile.getResponse(this.id) || ""; if(t) this.token_ = t; return t || this.token_; }
+    catch(err){ return this.token_ || ""; }
+  },
+  /* A submitted token is spent: the next attempt waits for a fresh one instead
+     of replaying the old value (the Worker refuses replays by design). */
+  reset(){
+    this.token_ = "";
+    try { if(this.id) window.turnstile.reset(this.id); } catch(err){}
+    if(this.id && this.configured()){ this.state = "loading"; this.status("", "Checking your browser..."); }
+  },
+  /* Wait briefly for a brand new token after a failed or refused attempt.
+     Returns "" when the visitor has not solved the challenge in time. */
+  async fresh(ms){
+    this.reset();
+    const until = Date.now() + (ms || 8000);
+    while(Date.now() < until){
+      const t = this.token();
+      if(t) return t;
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return "";
+  }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Checkout logic
+   Flow: validate -> Worker creates the pending order -> Worker
+   creates the Paystack transaction -> customer pays on Paystack.
+   This page NEVER decides that a payment succeeded.
+   ============================================================ */
+const KEY = "pat_checkout_v1";
+let EVENT = null;
+let TICKETS = [];
+let ITEMS = [];
+function readSelection(){
+  let raw = null;
+  try { raw = sessionStorage.getItem(KEY); } catch (err) { raw = null; }
+  if(!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
+    return parsed;
+  } catch (err) { return null; }
+}
+function setErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+function availableOf(t){
+  if(t.available != null) return Number(t.available);
+  if(t.remaining != null) return Number(t.remaining);
+  if(t.quantity != null) return Math.max(0, Number(t.quantity) - Number(t.sold || t.quantity_sold || 0));
+  return null;
+}
+function paintSummary(){
+  let total = 0;
+  const lines = [];
+  ITEMS.forEach(item => {
+    const t = TICKETS.filter(x => String(x.id) === String(item.ticket_type_id))[0];
+    const price = t ? Number(t.price || 0) : 0;
+    const amount = price * item.quantity;
+    total += amount;
+    lines.push("<div class=\"line\"><span><strong>" + esc(item.name) + "</strong> <span class=\"muted\">&times; " + item.quantity + "</span></span><span>" + esc(KES(amount)) + "</span></div>");
+  });
+  $("#summaryLines").innerHTML = lines.join("");
+  $("#summaryTotal").textContent = KES(total);
+  return total;
+}
+function renderEventLine(){
+  if(!EVENT){ $("#eventLine").textContent = ""; return; }
+  const poster = safeUrl(EVENT.poster_url);
+  $("#eventLine").innerHTML = (poster ? "<img src=\"" + esc(poster) + "\" alt=\"\" style=\"width:100%;border-radius:12px;margin-bottom:10px;aspect-ratio:16/9;object-fit:cover\" />" : "")
+    + "<strong style=\"color:var(--ink);font-size:.98rem\">" + esc(EVENT.title || "Event") + "</strong><br />"
+    + esc([fmtDate(EVENT.event_date), fmtTime(EVENT.start_time), EVENT.venue, EVENT.location].filter(Boolean).join(" \u00b7 "));
+  const back = $("#backLink");
+  if(back) back.href = "/event/?slug=" + encodeURIComponent(EVENT.slug || EVENT.id || "");
+}
+async function prepare(){
+  const saved = readSelection();
+  if(!saved){
+    $("#pageState").innerHTML = stateBox("Your ticket selection has expired", "Please choose your tickets again to continue to checkout.", "<a class=\"btn btn-primary\" href=\"/events/\">Browse events</a>");
+    return;
+  }
+  const slug = param("slug") || saved.slug;
+  try {
+    const payload = await api("/api/events/" + encodeURIComponent(slug), { auth: false });
+    EVENT = payload.event || payload.data || payload;
+    ITEMS = saved.items.slice();
+    renderEventLine();
+    paintPayCopy();
+    $("#checkoutWrap").classList.remove("hidden");
+  } catch (err) {
+    $("#pageState").innerHTML = stateBox(err.code === "NOT_CONFIGURED" ? "Payments are not connected yet" : "We could not load this event", err.message, "<a class=\"btn btn-primary\" href=\"/events/\">Browse events</a>");
+    return;
+  }
+  try {
+    const payload = await api("/api/events/" + encodeURIComponent(EVENT.id) + "/tickets", { auth: false });
+    TICKETS = normList(payload, "tickets");
+    reconcile();
+    if(isFreeSelection()) enterFreeMode();
+  } catch (err) {
+    $("#summaryLines").innerHTML = "<div class=\"line\"><span class=\"muted\">We could not refresh availability.</span></div>";
+  }
+}
+/* The buyer never chooses a gateway, but the page can still say what to expect:
+   an M-Pesa prompt on the phone, or a redirect to a hosted page. The event
+   payload names the provider and the server always has the final say. */
+function paintPayCopy(){
+  /* In owner payment mode the effective gateway is the platform owner's active
+     account, which this page cannot know - the event's own payment_provider is
+     irrelevant there, so generic copy is used and the server still has the
+     final say at POST /api/payments/create. */
+  const ownerMode = String((EVENT && EVENT.payment_mode) || "").toLowerCase() === "owner";
+  const key = ownerMode ? "" : String((EVENT && EVENT.payment_provider) || "").toLowerCase();
+  const how = $("#payHow"), btn = $("#payBtn");
+  if(key === "payhero"){
+    if(how) how.textContent = "You will get an M-Pesa prompt on your phone. Enter your PIN to approve the payment.";
+    if(btn) btn.textContent = "Pay with M-Pesa";
+  } else if(key === "pesapal"){
+    if(how) how.textContent = "You will be redirected to Pesapal to pay securely with card or mobile money.";
+    if(btn) btn.textContent = "Pay with Pesapal";
+  } else if(key === "paystack"){
+    if(how) how.textContent = "You will be redirected to Paystack to pay securely with card or mobile money.";
+    if(btn) btn.textContent = "Pay with Paystack";
+  } else {
+    if(how) how.textContent = "Pay securely to complete your order with card or mobile money.";
+    if(btn) btn.textContent = "Pay now";
+  }
+  /* Owner payment mode: money goes to the platform owner's merchant account, so
+     the paybill or merchant name shown by the gateway may not match the
+     organizer. Saying it up front avoids a "who am I paying?" drop-off. */
+  if(how && String((EVENT && EVENT.payment_mode) || "").toLowerCase() === "owner"){
+    how.textContent += " Payments for this event are collected securely by the platform's payment partner.";
+  }
+}
+function reconcile(){
+  const removed = [];
+  ITEMS.forEach(item => {
+    const t = TICKETS.filter(x => String(x.id) === String(item.ticket_type_id))[0];
+    if(!t){ item.quantity = 0; removed.push(item.name); return; }
+    item.name = t.name || item.name;
+    const available = availableOf(t);
+    if(available !== null && item.quantity > available){
+      item.quantity = Math.max(0, available);
+      removed.push(t.name + " reduced to " + available);
+    }
+  });
+  ITEMS = ITEMS.filter(i => i.quantity > 0);
+  if(!ITEMS.length){
+    $("#pageAlert").className = "alert err";
+    $("#pageAlert").textContent = "The tickets you selected are no longer available. Please choose again.";
+    $("#pageAlert").classList.remove("hidden");
+    $("#payBtn").disabled = true;
+  } else if(removed.length){
+    $("#pageAlert").className = "alert info";
+    $("#pageAlert").textContent = "Availability changed: " + removed.join(", ") + ". Please review your order before paying.";
+    $("#pageAlert").classList.remove("hidden");
+  }
+  paintSummary();
+}
+function validate(){
+  let ok = true;
+  ["full_name","email","phone"].forEach(id => setErr(id, ""));
+  if($("#full_name").value.trim().length < 3){ setErr("full_name", "Enter the attendee's full name."); ok = false; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($("#email").value.trim())){ setErr("email", "Enter a valid email address."); ok = false; }
+  if($("#phone").value.trim().length < 9){ setErr("phone", "Enter a reachable phone number."); ok = false; }
+  return ok;
+}
+/* ============================================================
+   Free tickets: email verification, then registration
+   ------------------------------------------------------------
+   When every selected ticket costs KSh 0 the payment step is
+   replaced by a one-time-code step. This page is never trusted:
+   the Worker re-checks the price, mints the code, applies the
+   per-email free-ticket limit and issues the ticket only after
+   the code is confirmed. The paid flow is left untouched.
+   ============================================================ */
+let FREE_MODE = false;
+let OTP_SESSION = null;     /* session_token from the request step */
+let OTP_TYPE_ID = null;     /* the free ticket type the code covers */
+let OTP_TIMER = null;       /* resend cooldown ticker */
+function digits(v){ return String(v == null ? "" : v).replace(/\D/g, ""); }
+function priceOfType(typeId){
+  const t = TICKETS.filter(x => String(x.id) === String(typeId))[0];
+  return t ? Number(t.price || 0) : null;
+}
+/* Free mode needs at least one selected line and EVERY line priced at 0. One
+   paid line keeps the whole selection on the normal payment path. */
+function isFreeSelection(){
+  if(!ITEMS.length) return false;
+  return ITEMS.every(i => priceOfType(i.ticket_type_id) === 0);
+}
+function enterFreeMode(){
+  FREE_MODE = true;
+  const note = $("#freeNote");
+  if(note){
+    note.innerHTML = "<strong>This is a free ticket.</strong> Nothing is charged. We email a single-use code to confirm your address, then your ticket is issued immediately.";
+    note.classList.remove("hidden");
+  }
+  const pay = $("#payBlock"); if(pay) pay.classList.add("hidden");
+  const sum = $("#summaryTotal"); if(sum) sum.textContent = "Free";
+  const summaryNote = $("#summaryNote");
+  if(summaryNote) summaryNote.textContent = "Free tickets are confirmed by email verification. The server checks every claim against the free-ticket limit for this event before a ticket is issued.";
+  const btn = $("#payBtn"); if(btn) btn.textContent = "Send verification code";
+  const trust = $("#payTrust"); if(trust) trust.textContent = "Your ticket is only issued after the one-time code confirms your email address.";
+}
+/* One primary button, two paths: the paid flow, or the free one. */
+async function onPrimaryAction(){
+  if(FREE_MODE) return startFreeVerification();
+  return pay();
+}
+function showOtpAlert(kind, msg){
+  const box = $("#otpAlert"); if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideOtpAlert(){
+  const box = $("#otpAlert"); if(!box) return;
+  box.classList.add("hidden"); box.textContent = "";
+}
+function startResendCooldown(seconds){
+  const btn = $("#otpResendBtn");
+  let left = Math.max(1, Math.round(Number(seconds) || 60));
+  if(OTP_TIMER){ clearInterval(OTP_TIMER); OTP_TIMER = null; }
+  const paint = () => {
+    if(!btn) return;
+    if(left > 0){ btn.disabled = true; btn.textContent = "Resend in " + left + "s"; }
+    else { btn.disabled = false; btn.textContent = "Resend code"; }
+  };
+  paint();
+  OTP_TIMER = setInterval(() => {
+    left -= 1;
+    if(left <= 0){ clearInterval(OTP_TIMER); OTP_TIMER = null; }
+    paint();
+  }, 1000);
+}
+/* The code screen replaces the details form (and the whole payment block). */
+function showOtpStep(res){
+  OTP_SESSION = res.session_token;
+  if(!OTP_TYPE_ID) OTP_TYPE_ID = ITEMS[0] && ITEMS[0].ticket_type_id;
+  const masked = $("#otpEmail"); if(masked) masked.textContent = res.email_masked || "your email address";
+  const code = $("#otpCode"); if(code) code.value = "";
+  setErr("otpCode", "");
+  const hint = $("#otpHint");
+  if(hint) hint.textContent = "The code expires in " + Math.max(1, Math.round(Number(res.expires_in || 300) / 60)) + " minutes and can only be used once.";
+  const form = $("#checkoutForm"); if(form) form.classList.add("hidden");
+  const payBlock = $("#payBlock"); if(payBlock) payBlock.classList.add("hidden");
+  const payBtn = $("#payBtn"); if(payBtn) payBtn.classList.add("hidden");
+  const terms = $("#termsLine"); if(terms) terms.classList.add("hidden");
+  const otp = $("#otpBlock"); if(otp) otp.classList.remove("hidden");
+  showAlert("ok", res.message || "We sent your verification code.");
+  startResendCooldown(Number(res.resend_after || 60));
+  if(code) code.focus();
+}
+
+/* Step 1: ask the Worker for a code. The Worker resolves the free ticket type,
+   the per-email limit and every rate limit - this page only reports the answer.
+   One free ticket type is claimed per registration, so the button sits on the
+   first selected free line. */
+async function startFreeVerification(){
+  const btn = $("#payBtn");
+  if(!ITEMS.length){ toast("Your selection is empty", "err"); return; }
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); return; }
+  const token = Turnstile.token();
+  if(Turnstile.configured() && !token){ showAlert("err", "Please complete the bot protection check above, then try again."); Turnstile.reset(); return; }
+  if(ITEMS.length > 1){
+    showAlert("info", "One free ticket type can be claimed per registration. Complete this one, then register again for the others.");
+  }
+  OTP_TYPE_ID = ITEMS[0].ticket_type_id;
+  btn.disabled = true; btn.textContent = "Sending your code..."; hideAlert();
+  try {
+    const res = await api("/api/tickets/free/verify/request", { auth: false, method: "POST", body: {
+      event_id: EVENT && EVENT.id,
+      ticket_type_id: OTP_TYPE_ID,
+      quantity: ITEMS[0].quantity,
+      full_name: $("#full_name").value.trim(),
+      email: $("#email").value.trim(),
+      phone: $("#phone").value.trim(),
+      turnstile_token: token
+    } });
+    showOtpStep(res);
+  } catch (err) {
+    if(err && err.code) console.warn("checkout: free verification request failed [" + err.code + "] status " + (err.status || "?"));
+    showAlert("err", err.message);
+    Turnstile.reset();
+    btn.disabled = false; btn.textContent = "Send verification code";
+  }
+}
+/* A resend re-uses the same session: the server enforces the cooldown and the
+   reissue cap, so a tap here can never outrun them. */
+async function resendOtp(){
+  const btn = $("#otpResendBtn");
+  if(!OTP_SESSION) return;
+  btn.disabled = true; btn.textContent = "Sending..."; hideOtpAlert();
+  try {
+    const res = await api("/api/tickets/free/verify/request", { auth: false, method: "POST", body: {
+      event_id: EVENT && EVENT.id, session_token: OTP_SESSION
+    } });
+    const code = $("#otpCode"); if(code) code.value = "";
+    setErr("otpCode", "");
+    const masked = $("#otpEmail"); if(masked && res.email_masked) masked.textContent = res.email_masked;
+    showOtpAlert("ok", res.message || "A new code is on its way.");
+    startResendCooldown(Number(res.resend_after || 60));
+  } catch (err) {
+    if(err && err.code) console.warn("checkout: free code resend failed [" + err.code + "] status " + (err.status || "?"));
+    showOtpAlert("err", err.message);
+    startResendCooldown(Number(err.retryAfter || 0) > 0 ? Number(err.retryAfter) : 60);
+  }
+}
+
+/* Step 2: check the code, then complete the registration in the same breath -
+   the server hands back a single-use continuation token that is spent here. */
+async function confirmOtp(){
+  const btn = $("#otpVerifyBtn");
+  const code = digits($("#otpCode").value);
+  if(code.length !== 6){ setErr("otpCode", "Enter the 6-digit code from the email."); return; }
+  setErr("otpCode", "");
+  btn.disabled = true; btn.textContent = "Checking your code..."; hideOtpAlert();
+  let continueToken = "";
+  try {
+    const res = await api("/api/tickets/free/verify/confirm", { auth: false, method: "POST", body: {
+      session_token: OTP_SESSION, otp: code
+    } });
+    continueToken = res.continue_token || "";
+  } catch (err) {
+    if(err && err.code) console.warn("checkout: free code check failed [" + err.code + "] status " + (err.status || "?"));
+    showOtpAlert("err", err.message);
+    btn.disabled = false; btn.textContent = "Verify and get my ticket";
+    /* Only a fresh code can rescue a session that has expired or run out of tries. */
+    if(["OTP_EXPIRED","SESSION_EXPIRED","SESSION_CLOSED","OTP_ATTEMPTS"].indexOf(err.code) > -1){
+      if(OTP_TIMER){ clearInterval(OTP_TIMER); OTP_TIMER = null; }
+      const rb = $("#otpResendBtn"); if(rb){ rb.disabled = false; rb.textContent = "Send a new code"; }
+    }
+    return;
+  }
+  if(!continueToken){
+    showOtpAlert("err", "We could not confirm the verification. Please try again.");
+    btn.disabled = false; btn.textContent = "Verify and get my ticket";
+    return;
+  }
+  btn.textContent = "Issuing your ticket...";
+  try {
+    const res = await api("/api/tickets/free/register", { auth: false, method: "POST", body: {
+      continue_token: continueToken, phone: $("#phone").value.trim()
+    } });
+    showDone(res);
+  } catch (err) {
+    if(err && err.code) console.warn("checkout: free registration failed [" + err.code + "] status " + (err.status || "?"));
+    showOtpAlert("err", err.message || "We could not complete your registration. Please try again.");
+    btn.disabled = false; btn.textContent = "Verify and get my ticket";
+  }
+}
+
+/* The ticket the Worker just issued: number, type and its QR image. */
+function showDone(res){
+  const order = res.order || {};
+  const tickets = res.tickets || order.tickets || [];
+  if(OTP_TIMER){ clearInterval(OTP_TIMER); OTP_TIMER = null; }
+  const otp = $("#otpBlock"); if(otp) otp.classList.add("hidden");
+  const done = $("#doneBlock"); if(done) done.classList.remove("hidden");
+  const title = $("#doneTitle");
+  if(title) title.textContent = tickets.length === 1 ? "Your free ticket is confirmed" : "Your free tickets are confirmed";
+  const text = $("#doneText");
+  if(text) text.textContent = res.message || "A copy has been emailed to you with the QR code for entry.";
+  const box = $("#doneTickets");
+  if(box){
+    box.innerHTML = tickets.map(t => {
+      const qr = safeUrl(t.qr_image_url || t.qr_url);
+      return "<div style=\"display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px\">"
+        + (qr ? "<img src=\"" + esc(qr) + "\" alt=\"Ticket QR code\" style=\"width:74px;height:74px;flex:none;border-radius:8px;background:#fff\" />" : "")
+        + "<div style=\"min-width:0\">"
+        + "<div class=\"small\"><strong>" + esc(t.ticket_number || "") + "</strong></div>"
+        + "<div class=\"tiny faint\">" + esc(t.ticket_type_name || "Free ticket") + (t.attendee_name ? " &middot; " + esc(t.attendee_name) : "") + "</div>"
+        + "<div class=\"tiny faint\">Order " + esc(order.order_number || "") + "</div>"
+        + "</div></div>";
+    }).join("");
+    if(!tickets.length) box.innerHTML = "<p class=\"small muted\" style=\"margin-top:10px\">Your ticket is in your inbox. Open \"My Ticket\" to view it any time.</p>";
+  }
+  try { sessionStorage.removeItem(KEY); } catch (err) {}
+  Turnstile.reset();
+}
+/* Back to the details form. The code the server already sent stays valid until it
+   expires, so nothing is cancelled here - the session is simply left alone. */
+function backToDetails(){
+  if(OTP_TIMER){ clearInterval(OTP_TIMER); OTP_TIMER = null; }
+  hideOtpAlert(); setErr("otpCode", "");
+  const otp = $("#otpBlock"); if(otp) otp.classList.add("hidden");
+  const form = $("#checkoutForm"); if(form) form.classList.remove("hidden");
+  const terms = $("#termsLine"); if(terms) terms.classList.remove("hidden");
+  if(!FREE_MODE){ const payBlock = $("#payBlock"); if(payBlock) payBlock.classList.remove("hidden"); }
+  const btn = $("#payBtn");
+  if(btn){ btn.disabled = false; btn.classList.remove("hidden"); btn.textContent = FREE_MODE ? "Send verification code" : "Pay now"; }
+  hideAlert();
+}
+
+async function pay(){
+  const btn = $("#payBtn");
+  if(!ITEMS.length){ toast("Your selection is empty", "err"); return; }
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); return; }
+  const token = Turnstile.token();
+  if(Turnstile.configured() && !token){ showAlert("err", "Please complete the bot protection check above, then try again."); Turnstile.reset(); return; }
+  btn.disabled = true; btn.textContent = "Creating your order..."; hideAlert();
+  try {
+    const orderRes = await api("/api/orders", { auth: false, method: "POST", body: {
+      event_id: EVENT && EVENT.id,
+      items: ITEMS.map(i => ({ ticket_type_id: i.ticket_type_id, quantity: i.quantity })),
+      customer: { full_name: $("#full_name").value.trim(), email: $("#email").value.trim(), phone: $("#phone").value.trim() },
+      turnstile_token: token
+    } });
+    const order = orderRes.order || orderRes.data || orderRes;
+    const reference = order.reference || order.order_number || order.id;
+    if(!reference) throw new ApiError("We could not create your order reference. Please try again.", 200, "NO_REFERENCE");
+    /* The Worker resolved the gateway while answering POST /api/orders and told
+       us here whether usable credentials exist for it. Requesting a payment URL
+       anyway would only come back as a 409 the buyer cannot act on, so the
+       written reason is shown and the payment step stops before the call. */
+    if(orderRes.provider_ready === false){
+      console.warn("checkout: payment stopped [PROVIDER_NOT_CONNECTED] provider " + (orderRes.provider || "unknown"));
+      showAlert("info", orderRes.payment_message || "Payments are not connected for this event yet. Your order was not charged and no ticket was issued.");
+      btn.disabled = false; btn.textContent = "Pay now";
+      Turnstile.reset();
+      return;
+    }
+    if(order.amount != null){
+      const shown = Number(order.amount);
+      $("#summaryTotal").textContent = KES(shown);
+      const prev = ITEMS.reduce((sum, i) => { const t = TICKETS.filter(x => String(x.id) === String(i.ticket_type_id))[0]; return sum + Number((t && t.price) || 0) * i.quantity; }, 0);
+      if(prev !== shown){
+        showAlert("info", "The server-calculated amount is " + KES(shown) + ". That is the amount you will be charged.");
+      }
+    }
+    btn.textContent = "Starting your payment...";
+    /* The Turnstile token was spent creating the order, so the payment step is
+       authorised by the short-lived receipt the Worker issued with that order.
+       A fresh token is sent as well when the widget has already produced one:
+       the Worker accepts either. */
+    const payBody = { reference: reference, order_id: order.id, checkout_proof: orderRes.checkout_proof || "" };
+    const payToken = Turnstile.token();
+    if(payToken) payBody.turnstile_token = payToken;
+    /* POST /api/payments/create is provider-neutral: the server decides which
+       gateway this event is sold through, so this page never offers a choice
+       and never has to know a gateway name in advance. */
+    const payRes = await api("/api/payments/create", { auth: false, method: "POST", body: payBody });
+    const res = payRes.data || payRes;
+    if(res.mode === "stk_push" || res.awaiting_customer){
+      /* The phone prompt IS the checkout: all that is left is to wait for the
+         provider to confirm, which the server does on its own. */
+      await watchPhonePrompt(res.status_url || ("/api/payments/" + encodeURIComponent(reference)));
+      return;
+    }
+    const url = res.authorization_url || res.checkout_url || (res.data && res.data.authorization_url);
+    try { sessionStorage.setItem("pat_pending_order", JSON.stringify({ reference: reference, order_number: order.order_number || reference, amount: order.amount || null, email: $("#email").value.trim(), provider: res.provider || null })); } catch (err) {}
+    btn.textContent = "Redirecting to " + (res.provider_label || "the payment provider") + "...";
+    if(!url) throw new ApiError("The payment provider did not return a checkout link. Please try again or contact support.", 200, "NO_URL");
+    window.location.href = url;
+  } catch (err) {
+    /* The code is the diagnostic an operator needs: it names the failure without
+       revealing anything to the buyer. The page shows only the message. */
+    if(err && err.code) console.warn("checkout: payment step failed [" + err.code + "] status " + (err.status || "?"));
+    if(err.code === "NOT_CONFIGURED" || err.code === "PROVIDER_NOT_CONNECTED"){
+      showAlert("info", err.message || "Payments are not connected yet. The order was not charged and no ticket was issued.");
+    } else {
+      showAlert("err", err.message);
+    }
+    Turnstile.reset();
+    btn.disabled = false; btn.textContent = "Pay now";
+  }
+}
+/* M-Pesa (STK) flow: the customer approves the prompt on their phone and this
+   page simply follows the server's answer. Polling stops on every terminal
+   state, and a ticket is only ever issued by the server after the provider
+   confirms the payment. */
+async function watchPhonePrompt(statusUrl){
+  const btn = $("#payBtn"), panel = $("#stkPanel");
+  if(panel) panel.classList.remove("hidden");
+  btn.disabled = true;
+  btn.textContent = "Waiting for your phone...";
+  const attempts = 60;            /* about three minutes at one poll every 3s */
+  for(let i = 0; i < attempts; i++){
+    let s = null;
+    try {
+      const res = await api(statusUrl, { auth: false });
+      s = res.data || res;
+    } catch (err) {
+      /* A blip while the provider is answering is not a failure: keep waiting. */
+      await sleep(3000);
+      continue;
+    }
+    if(s.status === "paid"){
+      btn.textContent = "Payment received";
+      window.location.href = "/payment-success/?reference=" + encodeURIComponent(s.reference || "");
+      return;
+    }
+    if(s.status === "failed" || s.status === "abandoned" || s.status === "cancelled"){
+      btn.disabled = false;
+      btn.textContent = "Pay now";
+      if(panel) panel.classList.add("hidden");
+      showAlert("err", s.message || "That payment was not completed, so no ticket was issued. You can try again.");
+      Turnstile.reset();
+      return;
+    }
+    if(i === 9) setStkHint("Still waiting. If no M-Pesa prompt arrived, check your phone balance and network, then try again.");
+    await sleep(3000);
+  }
+  btn.disabled = false;
+  btn.textContent = "Pay now";
+  if(panel) panel.classList.add("hidden");
+  showAlert("info", "We could not confirm the payment in time. If you approved the M-Pesa prompt, your ticket will appear here shortly; otherwise you can try again.");
+}
+function setStkHint(text){ const el = $("#stkHint"); if(el) el.textContent = text; }
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  Turnstile.mount($("#turnstileHost"), TURNSTILE_ACTION);
+  /* Free-ticket verification wiring: one primary button, plus the code screen. */
+  if($("#payBtn")) $("#payBtn").addEventListener("click", onPrimaryAction);
+  if($("#otpVerifyBtn")) $("#otpVerifyBtn").addEventListener("click", confirmOtp);
+  if($("#otpResendBtn")) $("#otpResendBtn").addEventListener("click", resendOtp);
+  if($("#otpBackBtn")) $("#otpBackBtn").addEventListener("click", backToDetails);
+  const otpInput = $("#otpCode");
+  if(otpInput){
+    otpInput.addEventListener("input", () => { otpInput.value = digits(otpInput.value).slice(0, 6); setErr("otpCode", ""); });
+    otpInput.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); confirmOtp(); } });
+  }
+  await prepare();
+});
+</script>
+</body>
+</html>

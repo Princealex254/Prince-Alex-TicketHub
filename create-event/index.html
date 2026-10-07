@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Create Event | Prince Alex TicketHub</title>
+<meta name="description" content="Create a new event on Prince Alex TicketHub." />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}.center{text-align:center}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+.page-head{background:#fff;border-bottom:1px solid var(--line);padding:34px 0 30px}
+.lead{max-width:660px;color:var(--muted)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+/* ===== shared app/dashboard CSS (#DASHCSS#) ===== */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;align-items:start}
+.side{background:#0B1220;color:#C3CADE;padding:16px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo-txt strong{color:#fff}
+.side .logo-txt small{color:#8A93A6}
+.side-brand{padding:6px 6px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side h5{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7C8AA5;margin:18px 8px 8px}
+.side a{display:flex;align-items:center;gap:10px;color:#C3CADE;font-size:.9rem;font-weight:600;padding:10px 12px;border-radius:11px;margin-bottom:2px;text-decoration:none}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a[aria-current="page"]{background:var(--brand-600);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.15rem;margin:0}
+.main{padding:22px;min-width:0}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat span{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat strong{display:block;font-size:1.5rem;margin-top:6px;letter-spacing:-.02em}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-top:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-head h2{font-size:1.02rem;margin:0}
+.panel-body{padding:18px}
+.tablewrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .t-right{text-align:right}
+.tbl-thumb{width:46px;height:32px;border-radius:8px;object-fit:cover;background:#EDEFF6;flex:none}
+.row-flex{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.alert{padding:12px 14px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+.state{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.94rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .field{margin:0;min-width:170px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+.qty input{width:64px;text-align:center;min-height:38px}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:block;border-radius:0}
+  .side nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .side nav a{flex:none}
+  .side h5{display:none}
+  .topbar{padding:12px 14px;position:static}
+  .main{padding:14px}
+}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:18px;text-align:center;background:#FBFCFE}
+.drop.drag{border-color:var(--brand-600);background:var(--infobg)}
+.preview{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#EDEFF6;aspect-ratio:16/9;max-width:420px}
+.preview img{width:100%;height:100%;object-fit:cover}
+.preview .rm{position:absolute;top:8px;right:8px}
+.two-col{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.9fr);gap:20px;align-items:start}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+.tips{background:var(--infobg);border:1px solid #DDE3FF}
+.tips li{font-size:.86rem;color:var(--ink2);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+    <div class="side-brand">
+      <a class="logo" href="/" aria-label="Prince Alex TicketHub">
+        <span class="logo-mark" aria-hidden="true">PAT</span>
+        <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+      </a>
+    </div>
+    <nav aria-label="Organizer navigation">
+      <h5>Overview</h5>
+      <a href="/organizer-dashboard/">Dashboard</a>
+      <a href="/organizer-events/">My Events</a>
+      <a href="/create-event/" aria-current="page">Create Event</a>
+      <h5>Sales</h5>
+      <a href="/orders/">Orders</a>
+      <a href="/attendees/">Attendees</a>
+      <h5>Entry</h5>
+      <a href="/check-in/">Check In</a>
+      <h5>Account</h5>
+      <a href="/organizer-agreement/">Agreement</a>
+      <a href="/organizer-settings/">Settings</a>
+      <a href="#" id="signOutBtn">Sign out</a>
+    </nav>
+  </aside>
+<div>
+<header class="topbar">
+  <h1>Create Event</h1>
+  <a class="btn btn-ghost btn-sm" href="/organizer-events/">Back to events</a>
+</header>
+<main class="main" id="main">
+  <div id="pageAlert" class="alert hidden" role="alert"></div>
+  <div class="two-col">
+    <section class="panel" style="margin-top:0" aria-labelledby="formTitle">
+      <div class="panel-head"><h2 id="formTitle">Event details</h2><span class="badge neutral">Saved as draft</span></div>
+      <div class="panel-body">
+        <form id="eventForm" novalidate>
+          <div class="field">
+            <label for="poster">Event poster</label>
+            <div class="drop" id="dropZone">
+              <div id="posterPreviewWrap" class="hidden" style="display:flex;justify-content:center;margin-bottom:12px">
+              </div>
+              <p class="small muted" id="posterHelp">JPG, PNG or WEBP &middot; up to 5 MB &middot; landscape images look best (16:9)</p>
+              <input id="poster" name="poster" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+              <button class="btn btn-ghost btn-sm" type="button" id="pickPoster">Choose image</button>
+            </div>
+            <p class="err hidden" data-for="poster"></p>
+          </div>
+          <div class="field">
+            <label for="title">Event title</label>
+            <input id="title" name="title" type="text" maxlength="140" required placeholder="e.g. Nairobi Business Summit" />
+            <p class="err hidden" data-for="title"></p>
+          </div>
+          <div class="field">
+            <label for="category">Category</label>
+            <select id="category" name="category" required><option value="">Select a category</option></select>
+            <p class="err hidden" data-for="category"></p>
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" maxlength="4000" placeholder="What should attendees know about this event? Include what they get, the programme and any entry requirements."></textarea>
+            <p class="hint"><span id="descCount">0</span> / 4000 characters</p>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label for="venue">Venue</label><input id="venue" name="venue" type="text" maxlength="140" required placeholder="e.g. KICC" /><p class="err hidden" data-for="venue"></p></div>
+            <div class="field"><label for="location">Location</label><input id="location" name="location" type="text" maxlength="120" required placeholder="e.g. Nairobi" /><p class="err hidden" data-for="location"></p></div>
+            <div class="field"><label for="event_date">Event date</label><input id="event_date" name="event_date" type="date" required /><p class="err hidden" data-for="event_date"></p></div>
+            <div class="field"><label for="start_time">Start time</label><input id="start_time" name="start_time" type="time" required /><p class="err hidden" data-for="start_time"></p></div>
+            <div class="field"><label for="end_time">End time</label><input id="end_time" name="end_time" type="time" /><p class="err hidden" data-for="end_time"></p></div>
+            <div class="field"><label for="sales_start">Ticket sales start</label><input id="sales_start" name="sales_start" type="datetime-local" /><p class="hint">Leave empty to start selling as soon as the platform team approves the event.</p></div>
+            <div class="field"><label for="sales_end">Ticket sales end</label><input id="sales_end" name="sales_end" type="datetime-local" /><p class="err hidden" data-for="sales_end"></p></div>
+          </div>
+          <div class="field" style="max-width:540px">
+            <label for="payment_mode">Who collects customer payments?</label>
+            <select id="payment_mode" name="payment_mode">
+              <option value="">Default - follow my account setting</option>
+              <option value="own">My own merchant account</option>
+              <option value="owner">Platform owner account (owner payment mode)</option>
+            </select>
+            <p class="hint">With <strong>owner payment mode</strong> buyers pay into the platform owner's merchant account and you receive your share through the platform's payouts. "Default" follows the account-wide choice in Payment settings.</p>
+            <p class="err hidden" data-for="payment_mode"></p>
+          </div>
+
+          <hr class="divider" />
+<!-- ===== Free-ticket defaults (see collect() below) ===== -->
+          <h3 style="font-size:1.05rem">Free tickets</h3>
+          <p class="small muted" style="margin-bottom:10px">Applies to any KSh 0 ticket on this event. You can change all of it in Edit event, and paid tickets are never affected.</p>
+          <div class="field" style="max-width:560px">
+            <label for="free_ticket_limit">Free tickets one email address may claim</label>
+            <select id="free_ticket_limit" name="free_ticket_limit">
+              <option value="1" selected>1 ticket per email address</option>
+              <option value="2">2 tickets per email address</option>
+              <option value="3">3 tickets per email address</option>
+              <option value="4">4 tickets per email address</option>
+              <option value="5">5 tickets per email address</option>
+            </select>
+            <p class="hint">The server refuses any claim beyond this number for the same address.</p>
+          </div>
+          <div class="field">
+            <label for="free_otp_enabled" style="display:flex;align-items:flex-start;gap:10px">
+              <input id="free_otp_enabled" name="free_otp_enabled" type="checkbox" checked style="width:auto;min-height:0;margin-top:3px" />
+              <span>Require email verification for free tickets</span>
+            </label>
+            <p class="hint">Recommended. Each free claim needs a 6-digit code sent to the attendee's own address.</p>
+          </div>
+          <div class="field">
+            <label for="ip_abuse_enabled" style="display:flex;align-items:flex-start;gap:10px">
+              <input id="ip_abuse_enabled" name="ip_abuse_enabled" type="checkbox" checked style="width:auto;min-height:0;margin-top:3px" />
+              <span>Throttle repeated free-ticket requests from one connection</span>
+            </label>
+            <p class="hint">Recommended. Repeated requests from one IP address are limited automatically.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field" id="turnstileHost"></div>
+            <button class="btn btn-primary" type="submit" id="saveBtn">Create Event</button>
+            <a class="btn btn-ghost" href="/organizer-events/">Cancel</a>
+          </div>
+          <p class="hint" style="margin-top:10px">New events are created as drafts. Add your ticket types, then set the event to Active in Edit event - that submits it to the platform team, who approve it before it goes on sale.</p>
+        </form>
+      </div>
+    </section>
+    <aside class="panel tips" style="margin-top:0">
+      <div class="panel-head"><h2>Publishing checklist</h2></div>
+      <div class="panel-body">
+        <ul style="padding-left:18px;margin:0">
+          <li>Use a clear, well-lit poster - it is the first thing customers see.</li>
+          <li>State the venue and location exactly as attendees will search for it.</li>
+          <li>Keep the description practical: programme, gate times, what is included.</li>
+          <li>Sales end should be before or at the event start time.</li>
+          <li>Create at least one ticket type before submitting the event for approval.</li>
+          <li>Active submits the event to the platform team: it goes on sale once they approve it.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</main>
+</div>
+</div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>
+/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "0x4AAAAAAFFfPC7TnnFT83yZ";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (managed widget, verified by the Worker) ----
+   The widget yields a single-use token that is sent only to the TicketHub
+   Worker, which validates it with Cloudflare's Siteverify API (hostname,
+   action, single use, five minute life). It is never stored in the browser,
+   never reused and never treated as an authentication credential.
+   ---------------------------------------------------------------------------- */
+const TURNSTILE_ACTION = "event-create";
+const Turnstile = {
+  token_: "", state: "idle", note: null, action: "",
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  configured(){ return !!(TURNSTILE_SITE_KEY && !/^YOUR_/i.test(TURNSTILE_SITE_KEY)); },
+  status(kind, msg){ if(!this.note) return; this.note.className = kind === "err" ? "err" : "hint"; this.note.textContent = msg; },
+  async mount(host, action){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    /* Loading / success / failure / retry feedback, shown under the widget. */
+    if(!this.note){
+      this.note = document.createElement("p");
+      this.note.className = "hint";
+      this.note.setAttribute("role", "status");
+      this.note.setAttribute("aria-live", "polite");
+      el.parentNode.insertBefore(this.note, el.nextSibling);
+    }
+    if(!this.configured()){ this.note.textContent = "Bot protection is disabled on this environment."; return null; }
+    this.state = "loading";
+    this.status("", "Checking your browser...");
+    try {
+      if(!await this.load()){ this.state = "unavailable"; this.status("err", "Bot protection could not be loaded. Please refresh the page and try again."); el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection could not be loaded.</p>"; return null; }
+      this.action = action || TURNSTILE_ACTION;
+      const self = this;
+      this.id = window.turnstile.render(el, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "light",
+        size: "flexible",
+        action: this.action,
+        callback: function(token){ self.state = "ready"; self.token_ = token || ""; self.status("", "Bot check complete."); },
+        "error-callback": function(){ self.state = "error"; self.token_ = ""; self.status("err", "The bot check failed. Please complete it again."); },
+        "expired-callback": function(){ self.state = "expired"; self.token_ = ""; self.status("err", "The bot check expired. Please complete it again."); },
+        "timeout-callback": function(){ self.state = "timeout"; self.token_ = ""; self.status("err", "The bot check timed out. Please complete it again."); },
+        "unsupported-callback": function(){ self.state = "unsupported"; self.token_ = ""; self.status("err", "Your browser could not run the bot check. Please try another browser."); }
+      });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){
+    if(!this.id) return "";
+    try { const t = window.turnstile.getResponse(this.id) || ""; if(t) this.token_ = t; return t || this.token_; }
+    catch(err){ return this.token_ || ""; }
+  },
+  /* A submitted token is spent: the next attempt waits for a fresh one instead
+     of replaying the old value (the Worker refuses replays by design). */
+  reset(){
+    this.token_ = "";
+    try { if(this.id) window.turnstile.reset(this.id); } catch(err){}
+    if(this.id && this.configured()){ this.state = "loading"; this.status("", "Checking your browser..."); }
+  },
+  /* Wait briefly for a brand new token after a failed or refused attempt.
+     Returns "" when the visitor has not solved the challenge in time. */
+  async fresh(ms){
+    this.reset();
+    const until = Date.now() + (ms || 8000);
+    while(Date.now() < until){
+      const t = this.token();
+      if(t) return t;
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return "";
+  }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Create event logic
+   ============================================================ */
+const CATEGORY_FALLBACK = ["Music","Conferences","Sports","Church","Education","Business","Community","Other"];
+const MAX_POSTER_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg","image/png","image/webp"];
+let posterFile = null;
+
+function setErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+function clearErrors(){ ["poster","title","category","venue","location","event_date","start_time","end_time","sales_end"].forEach(id => setErr(id, "")); }
+async function loadCategories(){
+  try {
+    const payload = await api("/api/categories", { auth: false });
+    const list = normList(payload, "categories");
+    if(list.length) return list.map(c => (typeof c === "string" ? c : (c.name || c.title || ""))).filter(Boolean);
+  } catch (err) { /* keep the standard list */ }
+  return CATEGORY_FALLBACK.slice();
+}
+function renderPosterPreview(){
+  const wrap = $("#posterPreviewWrap");
+  if(!wrap) return;
+  if(!posterFile){ wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
+  const url = URL.createObjectURL(posterFile);
+  wrap.innerHTML = "<div class=\"preview\"><img src=\"" + url + "\" alt=\"Selected poster preview\" /><button class=\"btn btn-ghost btn-sm rm\" type=\"button\" id=\"rmPoster\">Remove</button></div>";
+  wrap.classList.remove("hidden");
+  const rm = $("#rmPoster");
+  if(rm) rm.addEventListener("click", () => { posterFile = null; const f = $("#poster"); if(f) f.value = ""; renderPosterPreview(); });
+}
+function acceptPoster(file){
+  if(!file){ return; }
+  if(ALLOWED_TYPES.indexOf(file.type) === -1){ setErr("poster", "Use a JPG, PNG or WEBP image."); return; }
+  if(file.size > MAX_POSTER_BYTES){ setErr("poster", "That image is larger than 5 MB. Please compress it and try again."); return; }
+  setErr("poster", "");
+  posterFile = file;
+  renderPosterPreview();
+}
+function validate(){
+  clearErrors();
+  let ok = true;
+  const title = $("#title").value.trim();
+  if(title.length < 3){ setErr("title", "Enter the event title."); ok = false; }
+  if(!$("#category").value){ setErr("category", "Choose a category."); ok = false; }
+  if(!$("#venue").value.trim()){ setErr("venue", "Enter the venue."); ok = false; }
+  if(!$("#location").value.trim()){ setErr("location", "Enter the town or city."); ok = false; }
+  const date = $("#event_date").value;
+  if(!date){ setErr("event_date", "Choose the event date."); ok = false; }
+  if(!$("#start_time").value){ setErr("start_time", "Enter the start time."); ok = false; }
+  const start = $("#start_time").value, end = $("#end_time").value;
+  if(start && end && end <= start){ setErr("end_time", "End time must be after the start time."); ok = false; }
+  const salesStart = $("#sales_start").value, salesEnd = $("#sales_end").value;
+  if(salesStart && salesEnd && salesEnd <= salesStart){ setErr("sales_end", "Sales end must be after sales start."); ok = false; }
+  if(date && start && salesEnd && salesEnd.slice(0, 10) > date){ setErr("sales_end", "Sales should end on or before the event date."); ok = false; }
+  return ok;
+}
+function collect(){
+  return {
+    title: $("#title").value.trim(),
+    category: $("#category").value,
+    description: $("#description").value.trim(),
+    venue: $("#venue").value.trim(),
+    location: $("#location").value.trim(),
+    event_date: $("#event_date").value,
+    start_time: $("#start_time").value,
+    end_time: $("#end_time").value || null,
+    sales_start: $("#sales_start").value ? $("#sales_start").value.replace("T", " ") : null,
+    sales_end: $("#sales_end").value ? $("#sales_end").value.replace("T", " ") : null,
+    /* "" = follow the account-wide default; "own" / "owner" pin the event. */
+    payment_mode: $("#payment_mode") ? $("#payment_mode").value : "",
+    /* Free-ticket defaults chosen on the create form. The thresholds keep their
+       platform values, and both protections stay on unless the organizer says
+       otherwise - the Worker clamps everything again on the way in. */
+    free_otp_enabled: $("#free_otp_enabled") ? $("#free_otp_enabled").checked : true,
+    ip_abuse_enabled: $("#ip_abuse_enabled") ? $("#ip_abuse_enabled").checked : true,
+    free_ticket_limit: $("#free_ticket_limit") ? Number($("#free_ticket_limit").value) : 1
+  };
+}
+async function uploadPoster(eventId){
+  if(!posterFile) return null;
+  const form = new FormData();
+  form.append("poster", posterFile);
+  return api("/api/organizer/events/" + encodeURIComponent(eventId) + "/poster", { method: "POST", body: form, form: true });
+}
+async function save(){
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  /* Event creation is protected: the Worker verifies the challenge (action
+     event-create) before the organizer lookup and before anything is stored. */
+  const tToken = Turnstile.token();
+  if(Turnstile.configured() && !tToken){ showAlert("err", "Please complete the bot protection check above, then try again."); Turnstile.reset(); return; }
+  const btn = $("#saveBtn");
+  btn.disabled = true; btn.textContent = "Creating...";
+  hideAlert();
+  try {
+    const created = await api("/api/organizer/events", { method: "POST", body: Object.assign(collect(), { turnstile_token: tToken }) });
+    const ev = created.event || created.data || created;
+    const id = ev.id || ev.event_id;
+    if(!id) throw new ApiError("The event was created but no reference was returned. Please check your events list.", 200, "NO_ID");
+    if(posterFile){
+      try { await uploadPoster(id); }
+      catch (err){ toast("Event saved, but the poster upload failed. You can upload it from Edit event. " + (err.message || ""), "err"); }
+    }
+    toast("Event created as a draft", "ok");
+    location.href = "/ticket-types/?event=" + encodeURIComponent(id) + "&created=1";
+  } catch (err) {
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); }
+    else { showAlert("err", err.message); }
+  } finally {
+    Turnstile.reset();
+    btn.disabled = false; btn.textContent = "Create Event";
+  }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  Turnstile.mount($("#turnstileHost"), TURNSTILE_ACTION);
+  const me = await requireSession(["organizer", "owner"]);
+  if(!me) return;
+  paintUser(me);
+  /* Tell the organizer which default the first option will apply. */
+  const pmSel = $("#payment_mode");
+  if(pmSel && pmSel.options.length){
+    pmSel.options[0].textContent = (me && me.organizer && me.organizer.use_owner_payments === true)
+      ? "Default - owner payment mode (my account setting)"
+      : "Default - my own merchant account (my account setting)";
+  }
+  const cats = await loadCategories();
+  $("#category").innerHTML = "<option value=\"\">Select a category</option>" + cats.map(c => "<option value=\"" + esc(c) + "\">" + esc(c) + "</option>").join("");
+  if(param("created")) toast("Draft created", "ok");
+  const pick = $("#pickPoster"), file = $("#poster"), drop = $("#dropZone");
+  pick.addEventListener("click", () => file.click());
+  file.addEventListener("change", () => acceptPoster(file.files && file.files[0]));
+  ["dragenter","dragover"].forEach(evt => drop.addEventListener(evt, e => { e.preventDefault(); drop.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(evt => drop.addEventListener(evt, e => { e.preventDefault(); drop.classList.remove("drag"); }));
+  drop.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; acceptPoster(f); });
+  $("#description").addEventListener("input", e => { const c = $("#descCount"); if(c) c.textContent = String(e.target.value.length); });
+  $("#eventForm").addEventListener("submit", e => { e.preventDefault(); save(); });
+  const today = new Date(); today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  $("#event_date").setAttribute("min", today.toISOString().slice(0, 10));
+});
+</script>
+</body>
+</html>

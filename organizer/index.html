@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sell Tickets Online in Kenya | For Organizers | Prince Alex TicketHub</title>
+<meta name="description" content="Create your event, sell tickets online with Paystack, manage attendees and check guests in with QR codes. Organizer tools by Prince Alex TicketHub." />
+<link rel="canonical" href="https://tickethub.princealex.digital/organizer/" />
+<meta property="og:title" content="Sell Tickets Online | For Organizers | Prince Alex TicketHub" />
+<meta property="og:description" content="Create your event, sell tickets online and manage attendance from one place." />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{transform:translateY(-1px);text-decoration:none}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:980px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+/* Hero banner: hero1.png sits behind a dark scrim (same treatment as the
+   homepage .hero) so the heading, lead and CTA buttons stay readable. */
+.hero{position:relative;overflow:hidden;padding:48px 0 44px;background:#0B1220;border-bottom:1px solid var(--line)}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 40%}
+.hero-scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,18,32,.95) 0%,rgba(11,18,32,.89) 38%,rgba(11,18,32,.62) 68%,rgba(11,18,32,.5) 100%)}
+.hero>.container{position:relative;z-index:1}
+.hero .eyebrow{color:#C7D2FE}
+.hero h1{color:#fff}
+.hero .lead{color:#DCE2F0}
+@media(max-width:860px){
+  .hero{padding:36px 0 32px}
+  .hero-bg{object-position:62% 40%}
+  .hero-scrim{background:linear-gradient(180deg,rgba(11,18,32,.85) 0%,rgba(11,18,32,.7) 55%,rgba(11,18,32,.9) 100%)}
+}
+.lead{max-width:640px;color:var(--muted)}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.step-n{width:34px;height:34px;border-radius:10px;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;margin-bottom:12px}
+.check{list-style:none;padding:0;margin:0}
+.check li{position:relative;padding-left:26px;margin-bottom:10px;font-size:.92rem;color:var(--ink2)}
+.check li::before{content:"";position:absolute;left:0;top:6px;width:14px;height:8px;border-left:2.5px solid var(--brand-600);border-bottom:2.5px solid var(--brand-600);transform:rotate(-45deg)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+</style>
+</head>
+<body>
+<header class="sh">
+  <div class="container sh-in">
+    <a class="logo" href="/" aria-label="Prince Alex TicketHub, powered by Prince Alex Digital">
+      <span class="logo-mark" aria-hidden="true">PAT</span>
+      <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><span></span></button>
+    <nav class="nav" id="mainNav" aria-label="Main navigation">
+      <a href="/events/">Events</a>
+      <a href="/organizer/">For Organizers</a>
+      <a href="/check-ticket/">Check Ticket</a>
+      <a href="/login/">Login</a>
+      <a class="btn btn-primary btn-sm" href="/sell-your-tickets/">Sell Your Event</a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+  <section class="hero">
+    <img class="hero-bg" src="/hero1.png" alt="Golden digital tickets and a glowing smartphone in front of a concert crowd at night" width="1672" height="941" loading="eager" fetchpriority="high" decoding="async" />
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="container">
+      <p class="eyebrow">For organizers</p>
+      <h1>Have an event? Sell tickets the simple way.</h1>
+      <p class="lead">Prince Alex TicketHub gives you a clean event page, online payments, digital tickets with QR codes and a dashboard for every order and attendee.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/register/?role=organizer">Create Your Event</a>
+        <a class="btn btn-ghost" href="/login/">Sign in</a>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container">
+      <div class="sec-head" style="margin-bottom:20px"><div><p class="eyebrow">What you get</p><h2>Everything you need to run ticketing</h2></div></div>
+      <div class="grid g3">
+        <article class="card pad"><h3>Event pages that sell</h3><p class="muted small" style="margin:0">Upload a poster, describe the event, set venue and times, and publish. Your page is fast, mobile-first and search friendly.</p></article>
+        <article class="card pad"><h3>Flexible ticket types</h3><p class="muted small" style="margin:0">Early Bird, Regular, VIP, VVIP or your own naming. Control price, quantity and sales windows per ticket type.</p></article>
+        <article class="card pad"><h3>Secure online payments</h3><p class="muted small" style="margin:0">Customers pay through Paystack. Card and mobile money options are shown on the Paystack checkout.</p></article>
+        <article class="card pad"><h3>Digital tickets &amp; QR codes</h3><p class="muted small" style="margin:0">Each paid ticket carries a unique code. Staff scan at the gate and the server confirms validity instantly.</p></article>
+        <article class="card pad"><h3>Orders and attendees</h3><p class="muted small" style="margin:0">Filter orders by status, search attendees, and export your attendee list to CSV for your records.</p></article>
+        <article class="card pad"><h3>Gate check-in</h3><p class="muted small" style="margin:0">Give staff access to a single event check-in tool with a manual lookup fallback when a phone is cracked or offline.</p></article>
+      </div>
+    </div>
+  </section>
+  <section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="container">
+      <p class="eyebrow">Getting started</p>
+      <h2>Live in three steps</h2>
+      <div class="grid g3" style="margin-top:18px">
+        <article><div class="step-n">1</div><h3>Create your organizer account</h3><p class="muted small" style="margin:0">Register with your name, email and phone, then add your business details in organizer settings.</p></article>
+        <article><div class="step-n">2</div><h3>Build your event</h3><p class="muted small" style="margin:0">Add the poster, venue, date and description, then create your ticket types with prices and quantities.</p></article>
+        <article><div class="step-n">3</div><h3>Submit for approval</h3><p class="muted small" style="margin:0">Switch the event to active - that submits it to the platform team, who review it and approve it before it goes on sale.</p></article>
+        <article><div class="step-n">4</div><h3>Publish and sell</h3><p class="muted small" style="margin:0">Once approved the event is live. Customers can now find it, buy tickets and receive digital tickets.</p></article>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container grid g2">
+      <div>
+        <p class="eyebrow">Payments</p>
+        <h2>Money handling you can trust</h2>
+        <ul class="check">
+          <li>Ticket prices are calculated and locked on our servers, not in the browser.</li>
+          <li>An order is only marked paid after Paystack confirms the payment to our Worker.</li>
+          <li>Every ticket is generated after payment confirmation, never before.</li>
+          <li>Settlement details and platform fees are agreed with each organizer before going live.</li>
+        </ul>
+      </div>
+      <div>
+        <p class="eyebrow">Day of event</p>
+        <h2>Smooth entry at the gate</h2>
+        <ul class="check">
+          <li>Event staff accounts are limited to the events you assign.</li>
+          <li>Scanning a ticket checks payment status, event status and prior check-in.</li>
+          <li>A used ticket shows the original check-in time, so duplicates are caught.</li>
+          <li>Print or share a manual lookup list for the entrance as a fallback.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section style="padding-top:0">
+    <div class="container">
+      <div class="cta-band">
+        <div><h2>Ready to sell tickets?</h2><p>Create your event, sell tickets online and manage attendance from one place.</p></div>
+        <a class="btn btn-primary" href="/register/?role=organizer">Create Your Event</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="sf">
+  <div class="container">
+    <div class="sf-grid">
+      <div>
+        <div class="logo" style="margin-bottom:12px" aria-label="Prince Alex TicketHub">
+          <span class="logo-mark" aria-hidden="true">PAT</span>
+          <span class="logo-txt" style="color:#fff"><strong>Prince Alex TicketHub</strong><small style="color:#8A93A6">Powered by Prince Alex Digital</small></span>
+        </div>
+        <p class="small" style="color:#8A93A6;max-width:310px">Event ticketing for Kenya. Discover events, sell tickets online and manage attendance from one place.</p>
+      </div>
+      <div><h4>Platform</h4><a href="/events/">Events</a><a href="/sell-your-tickets/">Sell Your Event</a><a href="/organizer/">For Organizers</a><a href="/ticket/">My Ticket</a><a href="/check-ticket/">Check Ticket</a></div>
+      <div><h4>Company</h4><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/login/">Sign in</a></div>
+      <div><h4>Legal</h4><a href="/terms/">Terms of Service</a><a href="/privacy/">Privacy Policy</a></div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; <span id="year">2026</span> Prince Alex TicketHub. All rights reserved.</span>
+      <span>Powered by Prince Alex Digital</span>
+    </div>
+  </div>
+</footer><div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>
+/* ==========================================================
+   CONFIGURATION - replace with your live Worker values.
+   Never place Paystack or Cloudflare secrets in frontend code.
+   ========================================================== */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+
+(function(){
+  "use strict";
+  function $(sel, root){ return (root || document).querySelector(sel); }
+  function ready(fn){ if(document.readyState !== "loading"){ fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }
+  ready(function(){
+    var burger = $("#burger"), nav = $("#mainNav");
+    if(burger && nav){
+      burger.addEventListener("click", function(){ var open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+      nav.addEventListener("click", function(e){ if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+    }
+    var y = $("#year"); if(y){ y.textContent = String(new Date().getFullYear()); }
+  });
+})();
+</script>
+</body>
+</html>

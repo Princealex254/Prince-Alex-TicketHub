@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Event Tickets | Prince Alex TicketHub</title>
+<meta name="description" content="Buy tickets for upcoming events on Prince Alex TicketHub. Secure online payment and digital tickets with QR codes." />
+<link rel="canonical" href="https://tickethub.princealex.digital/event/" />
+<meta property="og:type" content="event" />
+<meta property="og:site_name" content="Prince Alex TicketHub" />
+<meta property="og:title" id="ogTitle" content="Event Tickets | Prince Alex TicketHub" />
+<meta property="og:description" id="ogDesc" content="Buy tickets securely on Prince Alex TicketHub." />
+<meta property="og:image" id="ogImage" content="https://tickethub.princealex.digital/og-default.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+/* ==========================================================
+   Prince Alex TicketHub - inline design system (per page)
+   ========================================================== */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --brand-600:#4F46E5;--brand-700:#3730A3;--brand:#4338CA;--accent:#7C3AED;
+  --ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;
+  --line:#E6E8F0;--bg:#F6F7FB;--card:#FFFFFF;
+  --ok:#0E9F6E;--okbg:#E8F7F1;--okink:#04674A;
+  --warn:#B45309;--warnbg:#FEF4E6;--warnink:#8A4103;
+  --err:#D92D20;--errbg:#FEECEB;--errink:#9B1C1C;--infobg:#EEF2FF;
+  --r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;
+  --sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);
+  --sh3:0 14px 34px rgba(16,24,40,.10);
+  --max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em;color:var(--ink)}
+h1{font-size:clamp(1.65rem,3.2vw,2.3rem)}
+h2{font-size:clamp(1.3rem,2.3vw,1.7rem)}
+h3{font-size:1.06rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.faint{color:var(--faint)}
+.small{font-size:.875rem}.tiny{font-size:.78rem}
+.hidden{display:none!important}.center{text-align:center}
+section{padding:46px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.sec-head p{margin:0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;text-decoration:none;white-space:nowrap;min-height:44px}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid var(--brand-600);outline-offset:2px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:#C9CEE0;box-shadow:var(--sh2)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.btn-block{width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);min-width:0}
+.pad{padding:20px}
+.pad-lg{padding:24px}
+.divider{height:1px;background:var(--line);border:0;margin:18px 0}
+label{display:block;font-weight:600;font-size:.86rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;min-height:44px}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700)}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+.state{padding:46px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em;box-shadow:0 6px 16px rgba(79,70,229,.26)}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem;letter-spacing:-.02em}
+.logo-txt small{font-size:.65rem;color:var(--faint);letter-spacing:.03em}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.nav a.btn-primary:hover{background:var(--brand-700)}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){
+  .burger{display:grid}
+  .nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}
+  .nav.open{display:flex}
+  .nav a{padding:13px 12px;border-radius:12px}
+  .nav a.btn{margin-top:6px;justify-content:center}
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .container{padding:0 16px}
+  section{padding:32px 0}
+}
+.sf{background:#0B1220;color:#C3CADE;margin-top:56px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+.hero{padding:30px 0 26px;background:linear-gradient(180deg,#FFFFFF 0%,var(--bg) 100%);border-bottom:1px solid var(--line)}
+.hero h1{margin-bottom:8px}
+.hero .lead{max-width:620px;color:var(--muted);font-size:1.02rem;margin-bottom:0}
+.searchbar{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:var(--pill);padding:8px;box-shadow:var(--sh2);margin-top:18px;max-width:840px}
+.searchbar .f{flex:1 1 200px;min-width:0}
+.searchbar .f.sel{flex:0 1 215px}
+.searchbar input,.searchbar select{border:0;background:transparent;min-height:44px;padding:8px 14px;border-radius:var(--pill)}
+.searchbar input:focus,.searchbar select:focus{outline:none;background:#F7F8FC}
+.searchbar .sep{width:1px;background:var(--line);margin:8px 0;flex:none}
+@media(max-width:700px){
+  .searchbar{flex-wrap:wrap;border-radius:var(--r-lg);padding:10px}
+  .searchbar .f,.searchbar .f.sel{flex:1 1 100%}
+  .searchbar .sep{display:none}
+  .searchbar .btn{width:100%}
+}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:var(--pill);padding:8px 15px;font-size:.85rem;font-weight:600;cursor:pointer;min-height:38px}
+.chip:hover{border-color:#C9CEE0}
+.chip[aria-pressed="true"]{background:var(--brand-600);border-color:var(--brand-600);color:#fff}
+.ev-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media(max-width:980px){.ev-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ev-grid{grid-template-columns:1fr}}
+.ev-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh1);display:flex;flex-direction:column;transition:transform .18s ease,box-shadow .18s ease}
+.ev-card:hover{box-shadow:var(--sh3);transform:translateY(-2px)}
+.ev-media{position:relative;display:block;aspect-ratio:16/9;background:#EDEFF6;overflow:hidden}
+.ev-media img{width:100%;height:100%;object-fit:cover}
+.ev-cat{position:absolute;left:12px;top:12px;background:rgba(11,18,32,.78);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:var(--pill)}
+.ev-body{display:flex;gap:14px;padding:16px;flex:1}
+.ev-date{flex:none;width:54px;height:56px;border-radius:12px;background:var(--infobg);color:var(--brand-700);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.ev-date strong{font-size:1.12rem}
+.ev-date span{font-size:.64rem;font-weight:700;letter-spacing:.07em}
+.ev-main{min-width:0;flex:1;display:flex;flex-direction:column}
+.ev-main h3{font-size:1rem;margin-bottom:4px}
+.ev-main h3 a{color:var(--ink)}
+.ev-meta{font-size:.84rem;color:var(--muted);margin:0}
+.ev-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px}
+.price{font-weight:700;font-size:.95rem}
+.ph-media{width:100%;height:100%;display:grid;place-items:center;color:#B7BECE;background:linear-gradient(135deg,#EDEFF6,#F7F8FC);font-size:1.5rem;font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh1)}
+.step-n{width:34px;height:34px;border-radius:10px;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;margin-bottom:12px}
+.trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.trust{grid-template-columns:1fr}}
+.trust-item{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.trust-item strong{display:block;margin-bottom:4px;font-size:.94rem}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:34px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}
+.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.crumbs{font-size:.82rem;color:var(--muted);padding:16px 0 0}
+.ev-hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:24px;align-items:start;padding:22px 0 6px}
+@media(max-width:980px){.ev-hero{grid-template-columns:1fr}}
+.ev-poster{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);background:#EDEFF6;aspect-ratio:16/9;box-shadow:var(--sh2)}
+.ev-poster img{width:100%;height:100%;object-fit:cover}
+.ev-head h1{margin-bottom:10px}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 0;min-width:0}
+@media(max-width:560px){.facts{grid-template-columns:1fr}}
+.fact{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0;overflow:hidden}
+.fact span{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;margin-bottom:2px}
+.fact strong{display:block;font-size:.95rem;font-weight:600;line-height:1.5;overflow-wrap:break-word}
+.ticket-row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
+.ticket-row:last-of-type{border-bottom:0}
+.ticket-row h3{margin:0 0 4px;font-size:1rem;line-height:1.45;text-wrap:pretty;overflow-wrap:break-word}
+.ticket-price{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;line-height:1.4;overflow-wrap:break-word}
+.ticket-note{font-size:.78rem;color:var(--muted);line-height:1.55;overflow-wrap:break-word}
+.qty{display:flex;align-items:center;gap:8px;flex:none;padding-top:2px}
+.qty button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:1.15rem;font-weight:700;cursor:pointer;line-height:1}
+.qty button:disabled{opacity:.4;cursor:not-allowed}
+.qty .count{min-width:34px;text-align:center;font-weight:700}
+.summary{position:sticky;top:80px}
+.sum-line{display:flex;justify-content:space-between;font-size:.92rem;padding:6px 0}
+.sum-total{display:flex;justify-content:space-between;font-weight:800;font-size:1.15rem;padding-top:12px;margin-top:8px;border-top:1px solid var(--line)}
+.desc{font-size:.96rem;color:var(--ink2);white-space:pre-line;overflow-wrap:break-word;line-height:1.65;min-width:0}
+@media(max-width:980px){.summary{position:static}}
+/* ---------------------------------------------------------------
+   Word fit: normal words must wrap at word boundaries (never cut
+   mid-word). Only genuinely unbreakable tokens (very long single
+   strings / pasted links) may break, via break-word. `anywhere`
+   is avoided on text because it slices words arbitrarily.
+   Grid/flex children get min-width:0 so they can shrink inside
+   their card instead of pushing text outside it.
+   --------------------------------------------------------------- */
+.card,.ev-card,.fact,.state,.step,.trust-item,.crumbs,.toast,.ev-head,.facts{min-width:0;overflow-wrap:break-word;word-break:normal}
+.card{min-width:0}
+.ev-hero>div{min-width:0}
+.summary{min-width:0}
+.fact{min-width:0;overflow:hidden}
+#evTitle,#crumbTitle,.card h1,.card h2,.card h3{overflow-wrap:break-word;word-break:normal;text-wrap:pretty;line-height:1.35}
+#evWhen,.ev-meta,#organizerLine,.desc{overflow-wrap:break-word;word-break:normal}
+.ticket-row{min-width:0}
+.ticket-row>div:first-child{flex:1 1 auto;min-width:0}
+.ticket-row h3,.ticket-price,.ticket-note{overflow-wrap:break-word;word-break:normal}
+.qty{flex:none}
+/* Only break truly unbreakable tokens: long URLs / codes inside descriptions */
+.desc a,.ticket-note a{overflow-wrap:break-word;word-break:break-word}
+.sum-line{gap:12px}
+.sum-line span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:break-word}
+.sum-line span:last-child,.sum-total span:last-child{flex:none;white-space:nowrap;padding-left:12px}
+#statusBadges{display:flex;flex-wrap:wrap;gap:8px}
+#statusBadges .badge{max-width:100%;white-space:normal;text-align:left;line-height:1.4}
+.ev-cat{max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crumbs{overflow-wrap:break-word}
+.crumbs #crumbTitle{overflow-wrap:break-word}
+/* Small screens: keep each ticket on ONE tidy row — name, price and
+   availability on the left, the quantity stepper vertically centred on the
+   right — instead of stranding the controls on a half-empty row of their own.
+   The info block keeps min-width:0 so a long ticket name wraps inside the card
+   rather than squeezing the stepper. */
+@media(max-width:560px){
+  .ticket-row{flex-wrap:nowrap;align-items:center;gap:12px;padding:14px 0}
+  .ticket-row>div:first-child{flex:1 1 auto;min-width:0}
+  .ticket-row h3{font-size:.98rem;margin-bottom:2px}
+  .ticket-price{font-size:1rem}
+  .qty{width:auto;flex:none;align-self:center;padding-top:0}
+  .qty button{width:38px;height:38px;border-radius:11px}
+  .pad,.card.pad-lg{padding:16px}
+}
+/* Very narrow phones: trim the stepper a little so the ticket text keeps room. */
+@media(max-width:400px){
+  .ticket-row{gap:10px}
+  .qty{gap:6px}
+  .qty button{width:34px;height:34px;border-radius:10px;font-size:1.05rem}
+  .qty .count{min-width:28px}
+}
+/* --- end word-fit rules (words wrap at boundaries, stay inside cards) --- */
+</style></head>
+<body><header class="sh">
+  <div class="container sh-in">
+    <a class="logo" href="/" aria-label="Prince Alex TicketHub, powered by Prince Alex Digital">
+      <span class="logo-mark" aria-hidden="true">PAT</span>
+      <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><span></span></button>
+    <nav class="nav" id="mainNav" aria-label="Main navigation">
+      <a href="/events/">Events</a>
+      <a href="/organizer/">For Organizers</a>
+      <a href="/check-ticket/">Check Ticket</a>
+      <a href="/login/">Login</a>
+      <a class="btn btn-primary btn-sm" href="/sell-your-tickets/">Sell Your Event</a>
+    </nav>
+  </div>
+</header><main id="main">
+  <div class="container crumbs" id="crumbs"><a href="/events/">Events</a> &nbsp;/&nbsp; <span id="crumbTitle">Event</span></div>
+  <div class="container" id="pageState" aria-live="polite"></div>
+  <div class="container hidden" id="eventWrap">
+    <section class="ev-hero">
+      <div>
+        <div class="ev-poster" id="posterBox"></div>
+        <section class="card pad" style="margin-top:20px" aria-labelledby="aboutTitle">
+          <h2 id="aboutTitle" style="font-size:1.15rem">About this event</h2>
+          <div class="desc" id="eventDescription"></div>
+          <hr class="divider" />
+          <h3 style="font-size:1rem">Organizer</h3>
+          <p class="small muted" id="organizerLine" style="margin:0">-</p>
+        </section>
+      </div>
+      <div class="summary">
+        <section class="card pad-lg" aria-labelledby="evTitle">
+          <div id="statusBadges" style="margin-bottom:10px"></div>
+          <h1 id="evTitle" style="font-size:1.5rem">Loading event...</h1>
+          <p class="muted small" id="evWhen"></p>
+          <div class="facts">
+            <div class="fact"><span>Date</span><strong id="factDate">-</strong></div>
+            <div class="fact"><span>Time</span><strong id="factTime">-</strong></div>
+            <div class="fact"><span>Venue</span><strong id="factVenue">-</strong></div>
+            <div class="fact"><span>Location</span><strong id="factLocation">-</strong></div>
+          </div>
+        </section>
+        <section class="card pad-lg" style="margin-top:20px" aria-labelledby="ticketsTitle">
+          <div class="sec-head" style="margin-bottom:8px"><h2 id="ticketsTitle" style="font-size:1.15rem">Choose your tickets</h2></div>
+          <div id="ticketsBox" aria-live="polite"><span class="skel" style="display:block;height:18px;margin-bottom:12px"></span><span class="skel" style="display:block;height:18px;width:70%"></span></div>
+          <div id="ticketsState"></div>
+          <div id="cartBox" class="hidden" style="margin-top:16px">
+            <div id="sumLines"></div>
+            <div class="sum-total"><span>Total</span><span id="sumTotal">KSh 0</span></div>
+            <button class="btn btn-primary btn-block btn-lg" type="button" id="checkoutBtn" style="margin-top:14px">Continue to Checkout</button>
+          </div>
+          <p class="tiny faint" id="payNote" style="margin:12px 0 0">Payments are processed securely by Paystack, Pesapal or PayHero. You will receive a digital ticket with a QR code after payment is confirmed.</p>
+        </section>
+      </div>
+    </section>
+  </div>
+</main><footer class="sf">
+  <div class="container">
+    <div class="sf-grid">
+      <div>
+        <div class="logo" style="margin-bottom:12px" aria-label="Prince Alex TicketHub">
+          <span class="logo-mark" aria-hidden="true">PAT</span>
+          <span class="logo-txt" style="color:#fff"><strong>Prince Alex TicketHub</strong><small style="color:#8A93A6">Powered by Prince Alex Digital</small></span>
+        </div>
+        <p class="small" style="color:#8A93A6;max-width:310px">Event ticketing for Kenya. Discover events, sell tickets online and manage attendance from one place.</p>
+      </div>
+      <div><h4>Platform</h4><a href="/events/">Events</a><a href="/sell-your-tickets/">Sell Your Event</a><a href="/organizer/">For Organizers</a><a href="/ticket/">My Ticket</a><a href="/check-ticket/">Check Ticket</a></div>
+      <div><h4>Company</h4><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/login/">Sign in</a></div>
+      <div><h4>Legal</h4><a href="/terms/">Terms of Service</a><a href="/privacy/">Privacy Policy</a></div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; <span id="year">2026</span> Prince Alex TicketHub. All rights reserved.</span>
+      <span>Powered by Prince Alex Digital</span>
+    </div>
+  </div>
+</footer><div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>
+/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+/* Card text must never stop mid-word. Organizer descriptions arrive from a
+   textarea with newlines, so collapse whitespace first, then cut back to the
+   last space and mark the cut with an ellipsis. When one token is longer than
+   the whole budget there is no space to back off to, so keep the hard cut and
+   let overflow-wrap:break-word break it on screen instead. */
+function clip(text, max){
+  const s = String(text == null ? "" : text).replace(/\s+/g, " ").trim();
+  if(!(max > 0) || s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s.,;:!?-]+$/, "") + "\u2026";
+}
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Event details + ticket selection (public page)
+   The Worker owns prices, availability and sales windows. This
+   page only collects a selection; nothing is charged from here.
+   ============================================================ */
+const SLUG = param("slug") || param("id") || param("event");
+let EVENT = null;
+let TICKETS = [];
+const selection = {};
+function setMeta(event){
+  const title = (event.title || "Event") + " Tickets | Prince Alex TicketHub";
+  document.title = title;
+  const desc = (event.title || "Event") + " - " + [fmtDate(event.event_date), fmtTime(event.start_time), event.venue, event.location].filter(Boolean).join(", ") + ". Buy tickets securely on Prince Alex TicketHub.";
+  const set = (id, attr, value) => { const el = document.getElementById(id); if(el && value) el.setAttribute(attr, value); };
+  const md = document.querySelector("meta[name=\"description\"]"); if(md) md.setAttribute("content", desc.slice(0, 300));
+  set("ogTitle", "content", title);
+  set("ogDesc", "content", desc.slice(0, 300));
+  const img = safeUrl(event.poster_url);
+  set("ogImage", "content", img || "https://tickethub.princealex.digital/og-default.jpg");
+  const canonical = document.querySelector("link[rel=\"canonical\"]");
+  if(canonical){ try { canonical.setAttribute("href", location.origin + location.pathname + "?slug=" + encodeURIComponent(event.slug || event.id || "")); } catch(e){} }
+}
+/* The event date and its start/end times are Kenyan wall clock (exactly what the
+   organizer typed), so "has it ended" is answered on the Kenyan clock - never
+   from UTC and never from the device's own timezone. */
+function eventEnded(){
+  const date = EVENT && EVENT.event_date;
+  if(!date) return false;
+  const m = String((EVENT && EVENT.end_time) || "").match(/(\d{1,2}):(\d{2})/);
+  const hhmm = m ? (m[1].length === 1 ? "0" + m[1] : m[1]) + ":" + m[2] : "23:59";
+  const end = wallDate(String(date).slice(0, 10) + " " + hhmm);
+  return end ? Date.now() > end.getTime() : false;
+}
+function statusOf(t){
+  const now = Date.now();
+  if(eventEnded()) return { state: "ended", label: "Event ended", note: "This event has already taken place." };
+  const status = String((EVENT && EVENT.status) || "").toLowerCase();
+  if(status === "cancelled") return { state: "cancelled", label: "Event cancelled", note: "This event has been cancelled by the organizer." };
+  if(status === "sold_out") return { state: "sold_out", label: "Sold out", note: "All tickets for this event have been sold." };
+  if(status === "paused") return { state: "paused", label: "Sales paused", note: "Ticket sales are temporarily paused." };
+  /* A sale window is Kenyan wall clock, so it is compared as one. */
+  const se = wallDate(t.sales_end);
+  if(se && now > se.getTime()) return { state: "closed", label: "Sales closed", note: "Sales for this ticket type have closed." };
+  const ss = toDate(t.sales_start);
+  if(ss && now < ss.getTime()) return { state: "soon", label: "Not on sale yet", note: "Sales open " + fmtDateTime(t.sales_start) + "." };
+  const available = availableOf(t);
+  if(available !== null && available <= 0) return { state: "sold_out", label: "Sold out", note: "This ticket type is sold out." };
+  return { state: "open", label: "", note: "" };
+}
+function availableOf(t){
+  if(t.available != null) return Number(t.available);
+  if(t.remaining != null) return Number(t.remaining);
+  if(t.quantity != null) return Math.max(0, Number(t.quantity) - Number(t.sold || t.quantity_sold || 0));
+  return null;
+}
+function renderPoster(ev){
+  const box = $("#posterBox");
+  const url = safeUrl(ev.poster_url);
+  if(url) box.innerHTML = "<img src=\"" + esc(url) + "\" alt=\"Poster for " + esc(ev.title || "event") + "\" />";
+  else box.innerHTML = "<span class=\"ph-media\" style=\"display:grid;place-items:center;height:100%\" aria-hidden=\"true\">PAT</span>";
+}
+function renderTicketRows(){
+  const box = $("#ticketsBox");
+  if(!TICKETS.length){
+    box.innerHTML = "";
+    $("#ticketsState").innerHTML = stateBox("Tickets are not on sale yet", "The organizer has not published ticket types for this event. Please check back soon.");
+    return;
+  }
+  $("#ticketsState").innerHTML = "";
+  box.innerHTML = TICKETS.map(t => {
+    const st = statusOf(t);
+    const available = availableOf(t);
+    const price = Number(t.price || 0);
+    const open = st.state === "open";
+    const availLine = available === null ? "" : (available > 0 ? "Available: " + available.toLocaleString("en-KE") : "Sold out");
+    return "<div class=\"ticket-row\" data-id=\"" + esc(t.id) + "\">"
+      + "<div><h3>" + esc(t.name || "Ticket") + "</h3>"
+      + "<div class=\"ticket-price\">" + (price === 0 ? "Free entry" : esc(KES(price))) + "</div>"
+      + "<div class=\"ticket-note\">" + esc(availLine) + (availLine && st.note ? " \u00b7 " : "") + esc(st.note) + "</div>"
+      + (t.description ? "<div class=\"ticket-note\" title=\"" + esc(String(t.description).replace(/\s+/g, " ").trim()) + "\">" + esc(clip(t.description, 120)) + "</div>" : "")
+      + "</div>"
+      + (open
+        ? "<div class=\"qty\"><button type=\"button\" data-step=\"-1\" aria-label=\"Remove one " + esc(t.name) + "\">-</button><span class=\"count\" data-count=\"" + esc(t.id) + "\">0</span><button type=\"button\" data-step=\"1\" aria-label=\"Add one " + esc(t.name) + "\">+</button></div>"
+        : "<div class=\"badge neutral\" style=\"flex:none\">" + esc(st.label || "Unavailable") + "</div>")
+      + "</div>";
+  }).join("");
+}
+function totals(){
+  let total = 0;
+  const lines = [];
+  Object.keys(selection).forEach(id => {
+    const qty = selection[id];
+    if(!qty) return;
+    const t = TICKETS.filter(x => String(x.id) === String(id))[0];
+    if(!t) return;
+    const amount = Number(t.price || 0) * qty;
+    total += amount;
+    lines.push("<div class=\"sum-line\"><span>" + esc(t.name) + " &times; " + qty + "</span><span>" + esc(KES(amount)) + "</span></div>");
+  });
+  return { total: total, lines: lines };
+}
+function paintCart(){
+  const sum = totals();
+  $("#sumLines").innerHTML = sum.lines.join("");
+  $("#sumTotal").textContent = KES(sum.total);
+  $("#cartBox").classList.toggle("hidden", sum.lines.length === 0);
+  $$("#ticketsBox [data-count]").forEach(el => {
+    const id = el.getAttribute("data-count");
+    el.textContent = String(selection[id] || 0);
+    const row = el.closest(".ticket-row");
+    if(!row) return;
+    const t = TICKETS.filter(x => String(x.id) === String(id))[0];
+    const available = t ? availableOf(t) : null;
+    const minus = row.querySelector("[data-step=\"-1\"]"), plus = row.querySelector("[data-step=\"1\"]");
+    if(minus) minus.disabled = !(selection[id] > 0);
+    if(plus) plus.disabled = available !== null && (selection[id] || 0) >= available;
+  });
+}
+/* The small gateway note under the checkout button. The public event payload
+   carries only the event's own payment_provider (null means "the organizer's
+   active provider applies") plus payment_mode, so the exact gateway is named
+   ONLY when the payload actually says which one - never guessed. Owner mode is
+   platform-collected, so the organizer's gateway is irrelevant there. The
+   server still has the final say at POST /api/payments/create. */
+function paintPayNote(ev){
+  const note = $("#payNote");
+  if(!note || !ev) return;
+  const ownerMode = String(ev.payment_mode || "").toLowerCase() === "owner";
+  const key = ownerMode ? "" : String(ev.payment_provider || "").toLowerCase();
+  const labels = { paystack: "Paystack", pesapal: "Pesapal", payhero: "PayHero" };
+  const lead = ownerMode
+    ? "Payments for this event are collected securely by the platform's payment partner. "
+    : "Payments are processed securely by " + (labels[key] || "Paystack, Pesapal or PayHero") + ". ";
+  note.textContent = lead + "You will receive a digital ticket with a QR code after payment is confirmed.";
+}
+function renderEvent(ev){
+  if(!ev || !ev.id) return;
+  $("#crumbTitle").textContent = ev.title || "Event";
+  $("#evTitle").textContent = ev.title || "Untitled event";
+  $("#evWhen").textContent = [fmtDate(ev.event_date), fmtTime(ev.start_time), ev.venue, ev.location].filter(Boolean).join(" \u00b7 ");
+  $("#factDate").textContent = fmtDate(ev.event_date) || "-";
+  $("#factTime").textContent = [fmtTime(ev.start_time), fmtTime(ev.end_time)].filter(Boolean).join(" - ") || "-";
+  $("#factVenue").textContent = ev.venue || "-";
+  $("#factLocation").textContent = ev.location || "-";
+  $("#eventDescription").textContent = ev.description || "The organizer has not added a description for this event yet.";
+  $("#organizerLine").textContent = (ev.organizer_name || ev.business_name || "Organizer") + " is selling tickets through Prince Alex TicketHub.";
+  $("#statusBadges").innerHTML = (ev.category ? "<span class=\"badge\">" + esc(ev.category) + "</span> " : "") + badge(ev.status || "active");
+  paintPayNote(ev);
+  renderPoster(ev);
+  setMeta(ev);
+}
+async function loadTickets(eventId){
+  try {
+    const payload = await api("/api/events/" + encodeURIComponent(eventId) + "/tickets", { auth: false });
+    TICKETS = normList(payload, "tickets");
+    renderTicketRows();
+    paintCart();
+  } catch (err) {
+    $("#ticketsBox").innerHTML = "";
+    $("#ticketsState").innerHTML = stateBox("Tickets are unavailable right now", err.message, "<button class=\"btn btn-primary\" type=\"button\" id=\"retryTickets\">Try again</button>");
+    const r = $("#retryTickets"); if(r) r.addEventListener("click", () => loadTickets(eventId));
+  }
+}
+async function loadEvent(){
+  if(!SLUG){
+    $("#pageState").innerHTML = stateBox("Event not found", "The link you followed does not include an event. Browse events to find what is on sale.", "<a class=\"btn btn-primary\" href=\"/events/\">Browse events</a>");
+    return;
+  }
+  try {
+    const payload = await api("/api/events/" + encodeURIComponent(SLUG), { auth: false });
+    const ev = payload.event || payload.data || payload;
+    EVENT = ev;
+    renderEvent(ev);
+    $("#pageState").innerHTML = "";
+    $("#eventWrap").classList.remove("hidden");
+    await loadTickets(ev.id);
+  } catch (err) {
+    const notFound = err.status === 404;
+    const notConfigured = err.code === "NOT_CONFIGURED";
+    $("#pageState").innerHTML = notFound
+      ? stateBox("We could not find that event", "It may have been removed, paused or the link may be incorrect.", "<a class=\"btn btn-primary\" href=\"/events/\">Browse events</a>")
+      : stateBox(notConfigured ? "Event ticketing is not connected yet" : "We could not load this event", err.message, "<button class=\"btn btn-primary\" type=\"button\" id=\"retryEvent\">Try again</button>");
+    const r = $("#retryEvent"); if(r) r.addEventListener("click", loadEvent);
+  }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  const box = $("#ticketsBox");
+  if(box) box.addEventListener("click", e => {
+    const btn = e.target.closest("[data-step]");
+    if(!btn) return;
+    const row = btn.closest(".ticket-row");
+    const id = row.getAttribute("data-id");
+    const t = TICKETS.filter(x => String(x.id) === String(id))[0];
+    if(!t) return;
+    const available = availableOf(t);
+    const current = selection[id] || 0;
+    const next = Number(btn.getAttribute("data-step")) === 1 ? Math.min(current + 1, available === null ? 99 : available) : Math.max(0, current - 1);
+    selection[id] = next;
+    paintCart();
+  });
+  const checkout = $("#checkoutBtn");
+  if(checkout) checkout.addEventListener("click", () => {
+    const items = Object.keys(selection).filter(id => selection[id] > 0).map(id => {
+      const t = TICKETS.filter(x => String(x.id) === String(id))[0];
+      return { ticket_type_id: id, name: (t && t.name) || "Ticket", quantity: selection[id] };
+    });
+    if(!items.length){ toast("Choose at least one ticket", "err"); return; }
+    try {
+      sessionStorage.setItem("pat_checkout_v1", JSON.stringify({ slug: SLUG, event_id: EVENT && EVENT.id, items: items, saved_at: Date.now() }));
+    } catch (err) { /* storage may be unavailable in private mode */ }
+    location.href = "/checkout/?slug=" + encodeURIComponent(SLUG);
+  });
+  await loadEvent();
+});
+</script>
+</body>
+</html>
+
+

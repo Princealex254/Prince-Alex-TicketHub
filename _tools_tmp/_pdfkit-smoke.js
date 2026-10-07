@@ -1,0 +1,24 @@
+﻿const fs = require("fs");
+const src = fs.readFileSync("pdfkit.js", "utf8");
+const window = {};
+eval(src);
+const K = window.PdfKit;
+console.log("loaded:", !!K, "version", K.version);
+
+const doc = new K.PdfDoc({ title: "Smoke test", author: "Tester" });
+doc.rect(0, 0, 595, 80, "#0B1220");
+doc.caps("Section one", 48, 40, { color: "FFFFFF", bold: true });
+doc.section("Heading", { eyebrow: "PART 1" });
+doc.para("Hello world, this is a paragraph with (parens) and a backslash \\ and a 90% sign.", 48, doc.y, 500, { size: 10 });
+doc.defList([{ label: "Organizer", value: "Acme Events Ltd" }, { label: "Email", value: "a@b.co.ke" }], { x: 48, width: 500 });
+doc.statTiles([{ label: "Commission", value: "5%", sub: "of subtotal" }, { label: "Fixed", value: "KSh 50", sub: "per order" }], { x: 48, width: 500 });
+doc.table({ x: 48, width: 500, columns: [{ width: 1 }, { width: 2 }], head: ["Term", "Detail"], rows: [["Payout", "Within 7 days"], ["Refund", "See policy"]] });
+doc.bullets(["One item that is long enough to wrap across a line boundary for testing", "Second"], { x: 48, width: 500 });
+doc.callout({ x: 48, width: 500, label: "Note", value: "A callout block of explanatory small print." });
+const html = "<h3>Clause 1</h3><p>Some <strong>bold</strong> and <em>italic</em>.</p><ul><li>First</li><li>Second</li></ul><blockquote>Quoted</blockquote>";
+doc.html(K.parseHtmlBlocks(html, { size: 10 }), { x: 48, width: 500 });
+const bytes = doc.build();
+fs.writeFileSync("tools/_pdfkit-smoke.pdf", Buffer.from(bytes));
+console.log("pages:", doc.pages.length, "bytes:", bytes.length);
+console.log("head:", Buffer.from(bytes).slice(0, 9).toString("latin1"));
+console.log("tail:", Buffer.from(bytes).slice(-24).toString("latin1"));

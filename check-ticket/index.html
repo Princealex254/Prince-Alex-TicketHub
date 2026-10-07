@@ -1,0 +1,708 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Check Ticket | Prince Alex TicketHub</title>
+<meta name="description" content="Confirm your Prince Alex TicketHub ticket. Enter the email you booked with and your Order ID to see the order and open the ticket." />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+/* ==========================================================
+   Prince Alex TicketHub - inline design system (per page)
+   ========================================================== */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --brand-600:#4F46E5;--brand-700:#3730A3;--brand:#4338CA;--accent:#7C3AED;
+  --ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;
+  --line:#E6E8F0;--bg:#F6F7FB;--card:#FFFFFF;
+  --ok:#0E9F6E;--okbg:#E8F7F1;--okink:#04674A;
+  --warn:#B45309;--warnbg:#FEF4E6;--warnink:#8A4103;
+  --err:#D92D20;--errbg:#FEECEB;--errink:#9B1C1C;--infobg:#EEF2FF;
+  --r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;
+  --sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);
+  --sh3:0 14px 34px rgba(16,24,40,.10);
+  --max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em;color:var(--ink)}
+h1{font-size:clamp(1.65rem,3.2vw,2.3rem)}
+h2{font-size:clamp(1.3rem,2.3vw,1.7rem)}
+h3{font-size:1.06rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.faint{color:var(--faint)}
+.small{font-size:.875rem}.tiny{font-size:.78rem}
+.hidden{display:none!important}.center{text-align:center}
+section{padding:46px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.sec-head p{margin:0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;text-decoration:none;white-space:nowrap;min-height:44px}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid var(--brand-600);outline-offset:2px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:#C9CEE0;box-shadow:var(--sh2)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.btn-block{width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:20px}
+.divider{height:1px;background:var(--line);border:0;margin:18px 0}
+label{display:block;font-weight:600;font-size:.86rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;min-height:44px}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700)}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+.state{padding:46px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em;box-shadow:0 6px 16px rgba(79,70,229,.26)}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem;letter-spacing:-.02em}
+.logo-txt small{font-size:.65rem;color:var(--faint);letter-spacing:.03em}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.nav a.btn-primary:hover{background:var(--brand-700)}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){
+  .burger{display:grid}
+  .nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}
+  .nav.open{display:flex}
+  .nav a{padding:13px 12px;border-radius:12px}
+  .nav a.btn{margin-top:6px;justify-content:center}
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .container{padding:0 16px}
+  section{padding:32px 0}
+}
+.sf{background:#0B1220;color:#C3CADE;margin-top:56px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+.hero{padding:30px 0 26px;background:linear-gradient(180deg,#FFFFFF 0%,var(--bg) 100%);border-bottom:1px solid var(--line)}
+.hero h1{margin-bottom:8px}
+.hero .lead{max-width:620px;color:var(--muted);font-size:1.02rem;margin-bottom:0}
+.searchbar{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:var(--pill);padding:8px;box-shadow:var(--sh2);margin-top:18px;max-width:840px}
+.searchbar .f{flex:1 1 200px;min-width:0}
+.searchbar .f.sel{flex:0 1 215px}
+.searchbar input,.searchbar select{border:0;background:transparent;min-height:44px;padding:8px 14px;border-radius:var(--pill)}
+.searchbar input:focus,.searchbar select:focus{outline:none;background:#F7F8FC}
+.searchbar .sep{width:1px;background:var(--line);margin:8px 0;flex:none}
+@media(max-width:700px){
+  .searchbar{flex-wrap:wrap;border-radius:var(--r-lg);padding:10px}
+  .searchbar .f,.searchbar .f.sel{flex:1 1 100%}
+  .searchbar .sep{display:none}
+  .searchbar .btn{width:100%}
+}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:var(--pill);padding:8px 15px;font-size:.85rem;font-weight:600;cursor:pointer;min-height:38px}
+.chip:hover{border-color:#C9CEE0}
+.chip[aria-pressed="true"]{background:var(--brand-600);border-color:var(--brand-600);color:#fff}
+.ev-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media(max-width:980px){.ev-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ev-grid{grid-template-columns:1fr}}
+.ev-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh1);display:flex;flex-direction:column;transition:transform .18s ease,box-shadow .18s ease}
+.ev-card:hover{box-shadow:var(--sh3);transform:translateY(-2px)}
+.ev-media{position:relative;display:block;aspect-ratio:16/9;background:#EDEFF6;overflow:hidden}
+.ev-media img{width:100%;height:100%;object-fit:cover}
+.ev-cat{position:absolute;left:12px;top:12px;background:rgba(11,18,32,.78);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:var(--pill)}
+.ev-body{display:flex;gap:14px;padding:16px;flex:1}
+.ev-date{flex:none;width:54px;height:56px;border-radius:12px;background:var(--infobg);color:var(--brand-700);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.ev-date strong{font-size:1.12rem}
+.ev-date span{font-size:.64rem;font-weight:700;letter-spacing:.07em}
+.ev-main{min-width:0;flex:1;display:flex;flex-direction:column}
+.ev-main h3{font-size:1rem;margin-bottom:4px}
+.ev-main h3 a{color:var(--ink)}
+.ev-meta{font-size:.84rem;color:var(--muted);margin:0}
+.ev-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px}
+.price{font-weight:700;font-size:.95rem}
+.ph-media{width:100%;height:100%;display:grid;place-items:center;color:#B7BECE;background:linear-gradient(135deg,#EDEFF6,#F7F8FC);font-size:1.5rem;font-weight:700}
+.trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.trust{grid-template-columns:1fr}}
+.trust-item{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.trust-item strong{display:block;margin-bottom:4px;font-size:.94rem}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:34px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}
+.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.alert{padding:13px 15px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.status-wrap{max-width:720px;margin:0 auto;padding:34px 0 10px}
+.status-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);padding:28px;text-align:center}
+.tick{width:60px;height:60px;border-radius:50%;background:var(--okbg);color:var(--okink);display:grid;place-items:center;margin:0 auto 14px;font-size:1.6rem;font-weight:800}
+.details{text-align:left;margin-top:22px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.details div{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:.93rem}
+.details div:last-child{border-bottom:0}
+.details span:first-child{color:var(--muted)}
+.details span:last-child{font-weight:600;text-align:right}
+.cta-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+.poll{font-size:.82rem;color:var(--faint);margin-top:14px}
+/* ===== check-ticket page =====
+   A hero form (email + Order ID) and the result card that opens underneath it. */
+.check-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);padding:24px;margin:18px auto 0;max-width:640px}
+/* Big screens: the hero reads as one centred column, so the search form sits in
+   the middle of the page instead of hugging the left edge. The card keeps its
+   own width - only the whitespace around it changes. Small screens are
+   untouched, so the form stays full width there. */
+@media(min-width:961px){
+  .hero .container{max-width:760px}
+  .hero .eyebrow,.hero h1,.hero .lead{text-align:center}
+  .hero .lead{margin-left:auto;margin-right:auto}
+}
+.f2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+@media(max-width:560px){.f2{grid-template-columns:1fr}}
+.result-wrap{max-width:760px;margin:0 auto;padding:8px 0 4px}
+.ticket-list{list-style:none;padding:0;margin:18px 0 0;text-align:left}
+.ticket-list li{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.ticket-list li:last-child{margin-bottom:0}
+.ticket-list .t-main{min-width:0}
+.ticket-list .t-main strong{display:block;font-size:.95rem}
+.ticket-list .t-main span{font-size:.8rem;color:var(--muted)}
+.ticket-list .t-side{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ticket-list .t-side a{font-size:.85rem;font-weight:600}
+</style>
+</head>
+<body>
+<header class="sh">
+  <div class="container sh-in">
+    <a class="logo" href="/" aria-label="Prince Alex TicketHub, powered by Prince Alex Digital">
+      <span class="logo-mark" aria-hidden="true">PAT</span>
+      <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><span></span></button>
+    <nav class="nav" id="mainNav" aria-label="Main navigation">
+      <a href="/events/">Events</a>
+      <a href="/organizer/">For Organizers</a>
+      <a href="/check-ticket/">Check Ticket</a>
+      <a href="/login/">Login</a>
+      <a class="btn btn-primary btn-sm" href="/sell-your-tickets/">Sell Your Event</a>
+    </nav>
+  </div>
+</header><main id="main">
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">Ticket confirmation</p>
+      <h1>Check your ticket</h1>
+      <p class="lead">Enter the email address you booked with and your Order ID. Our servers check both together before anything is shown.</p>
+      <form id="checkForm" class="check-card" novalidate>
+        <div id="pageAlert" class="alert hidden" role="alert"></div>
+        <div class="f2">
+          <div class="field">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" aria-describedby="emailErr" />
+            <p class="err hidden" id="emailErr"></p>
+          </div>
+          <div class="field">
+            <label for="order">Order ID</label>
+            <input id="order" name="order" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PAT-XXXXXXXXXX" aria-describedby="orderErr" />
+            <p class="err hidden" id="orderErr"></p>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="submitBtn" type="submit">Confirm my ticket</button>
+        <p class="tiny faint center" style="margin:12px 0 0">The Order ID and email are checked together. We only show the order when both match.</p>
+      </form>
+      <div class="cta-row">
+        <a class="btn btn-ghost" href="/ticket/">Have a ticket number? Open it directly</a>
+        <a class="btn btn-ghost" href="/contact/">I need help with my ticket</a>
+      </div>
+    </div>
+  </section>
+  <div class="container result-wrap">
+    <div id="result" class="hidden" aria-live="polite"></div>
+  </div>
+  </main><footer class="sf">
+  <div class="container">
+    <div class="sf-grid">
+      <div>
+        <div class="logo" style="margin-bottom:12px" aria-label="Prince Alex TicketHub">
+          <span class="logo-mark" aria-hidden="true">PAT</span>
+          <span class="logo-txt" style="color:#fff"><strong>Prince Alex TicketHub</strong><small style="color:#8A93A6">Powered by Prince Alex Digital</small></span>
+        </div>
+        <p class="small" style="color:#8A93A6;max-width:310px">Event ticketing for Kenya. Discover events, sell tickets online and manage attendance from one place.</p>
+      </div>
+      <div><h4>Platform</h4><a href="/events/">Events</a><a href="/sell-your-tickets/">Sell Your Event</a><a href="/organizer/">For Organizers</a><a href="/ticket/">My Ticket</a><a href="/check-ticket/">Check Ticket</a></div>
+      <div><h4>Company</h4><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/login/">Sign in</a></div>
+      <div><h4>Legal</h4><a href="/terms/">Terms of Service</a><a href="/privacy/">Privacy Policy</a></div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; <span id="year">2026</span> Prince Alex TicketHub. All rights reserved.</span>
+      <span>Powered by Prince Alex Digital</span>
+    </div>
+  </div>
+</footer><div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Check Ticket page
+   The email address and the Order ID are verified TOGETHER by
+   the Worker (POST /api/orders/lookup). This page never decides
+   that a pair matches: it asks, and renders what comes back -
+   confirmed, waiting for payment, or nothing found.
+   ============================================================ */
+const LAST = { order_number: "", email: "" };
+function fieldError(sel, msg){
+  const el = $(sel);
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+function clearErrors(){
+  ["#emailErr", "#orderErr"].forEach(s => { const el = $(s); if(el){ el.textContent = ""; el.classList.add("hidden"); } });
+  hideAlert();
+}
+function looksEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); }
+function detailRows(rows){
+  return rows.map(r => "<div><span>" + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span></div>").join("");
+}
+function resultCard(inner){
+  const box = $("#result");
+  box.innerHTML = inner;
+  box.classList.remove("hidden");
+}
+function ticketItems(tickets){
+  return "<ul class=\"ticket-list\">" + tickets.map(t => {
+    const view = t.ticket_number
+      ? "<a href=\"/ticket/?ticket=" + encodeURIComponent(t.ticket_number) + "\">View ticket</a>"
+      : "";
+    return "<li>"
+      + "<span class=\"t-main\"><strong>" + esc(t.attendee_name || "Ticket") + "</strong>"
+      + "<span>" + esc(t.ticket_type_name || "Ticket") + " &middot; " + esc(t.ticket_number || "") + "</span></span>"
+      + "<span class=\"t-side\">" + badge(t.status || "valid") + view + "</span>"
+      + "</li>";
+  }).join("") + "</ul>";
+}
+function ctaButtons(html){ return "<div class=\"cta-row\">" + html + "</div>"; }
+function scrollResult(){
+  const el = $("#result");
+  if(el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderConfirmed(d){
+  const tickets = normList(d, "tickets");
+  const orderNo = d.order_number || LAST.order_number || "";
+  const ev = d.event || {};
+  const when = [fmtWallDate(ev.event_date), fmtTime(ev.start_time)].filter(Boolean).join(", ");
+  const place = [ev.venue, ev.location].filter(Boolean).join(", ");
+  const rows = [
+    ["Order ID", orderNo],
+    ["Event", d.event_title || ev.title || "-"],
+    ["Date", when || "-"],
+    ["Venue", place || "-"],
+    ["Booked by", d.customer_name || "-"],
+    ["Amount", KES(d.amount || 0)],
+    ["Payment status", String(d.status || "paid")]
+  ];
+  resultCard(
+    "<div class=\"status-card\">"
+    + "<div class=\"tick\" aria-hidden=\"true\">&#10003;</div>"
+    + "<h1 style=\"font-size:1.5rem\">Ticket confirmed</h1>"
+    + "<p class=\"muted small\" style=\"margin:0 auto;max-width:480px\">Your email address and Order ID match. This order is paid and its "
+    + (tickets.length === 1 ? "ticket is" : tickets.length + " tickets are") + " ready.</p>"
+    + "<div class=\"details\">" + detailRows(rows) + "</div>"
+    + (tickets.length ? ticketItems(tickets) : "")
+    + ctaButtons(
+        "<a class=\"btn btn-primary\" href=\"/ticket/?order=" + encodeURIComponent(orderNo) + "\">View my ticket</a>"
+        + "<button class=\"btn btn-ghost\" type=\"button\" id=\"emailBtn\">Email me the tickets</button>"
+        + "<button class=\"btn btn-ghost\" type=\"button\" id=\"againBtn\">Check another order</button>")
+    + "</div>");
+  const again = $("#againBtn");
+  if(again) again.addEventListener("click", resetForm);
+  const mail = $("#emailBtn");
+  if(mail) mail.addEventListener("click", async () => {
+    mail.disabled = true; mail.textContent = "Sending...";
+    try {
+      await api("/api/tickets/send-email", { auth: false, method: "POST",
+        body: { order_number: orderNo, email: LAST.email || null } });
+      toast("Tickets sent to " + (LAST.email || "your email address"), "ok");
+    } catch (err) { toast(err.message, "err"); }
+    finally { mail.disabled = false; mail.textContent = "Email me the tickets"; }
+  });
+  scrollResult();
+}
+function renderWaiting(d){
+  const status = String(d.status || "pending").toLowerCase();
+  const orderNo = d.order_number || LAST.order_number || "";
+  const paid = status === "paid";
+  const title = paid ? "Payment confirmed - tickets being issued" : "Order found - payment not confirmed yet";
+  const note = paid
+    ? "Your payment is confirmed. Our servers are issuing the tickets now - check again in a moment."
+    : "We found your order, but the payment has not been confirmed yet, so no ticket has been issued. You do not need to pay again.";
+  const rows = [
+    ["Order ID", orderNo],
+    ["Event", d.event_title || (d.event && d.event.title) || "-"],
+    ["Payment status", status]
+  ];
+  resultCard(
+    "<div class=\"status-card\">"
+    + "<div class=\"tick\" aria-hidden=\"true\" style=\"background:var(--warnbg);color:var(--warnink)\">!</div>"
+    + "<h1 style=\"font-size:1.5rem\">" + esc(title) + "</h1>"
+    + "<p class=\"muted small\" style=\"margin:0 auto;max-width:480px\">" + esc(note) + "</p>"
+    + "<div class=\"details\">" + detailRows(rows) + "</div>"
+    + ctaButtons(
+        (paid ? "" : "<a class=\"btn btn-primary\" href=\"/payment-success/?reference=" + encodeURIComponent(orderNo) + "\">Check payment status</a>")
+        + "<button class=\"btn " + (paid ? "btn-primary" : "btn-ghost") + "\" type=\"button\" id=\"retryBtn\">Check again</button>"
+        + "<button class=\"btn btn-ghost\" type=\"button\" id=\"againBtn\">Check another order</button>")
+    + "</div>");
+  wireCommon();
+  scrollResult();
+}
+function renderNotIssued(d){
+  const status = String(d.status || "").toLowerCase();
+  const orderNo = d.order_number || LAST.order_number || "";
+  const titles = {
+    failed: "This payment did not complete",
+    cancelled: "This order was cancelled",
+    refunded: "This order was refunded"
+  };
+  const title = titles[status] || "No ticket was issued for this order";
+  const note = "We never issue a ticket until the payment is confirmed, so this order has no ticket. If you were charged, contact support with your Order ID and we will sort it out.";
+  const rows = [
+    ["Order ID", orderNo],
+    ["Event", d.event_title || (d.event && d.event.title) || "-"],
+    ["Payment status", status || "unknown"]
+  ];
+  resultCard(
+    "<div class=\"status-card\">"
+    + "<div class=\"tick\" aria-hidden=\"true\" style=\"background:var(--errbg);color:var(--errink)\">!</div>"
+    + "<h1 style=\"font-size:1.5rem\">" + esc(title) + "</h1>"
+    + "<p class=\"muted small\" style=\"margin:0 auto;max-width:480px\">" + esc(note) + "</p>"
+    + "<div class=\"details\">" + detailRows(rows) + "</div>"
+    + ctaButtons(
+        "<a class=\"btn btn-primary\" href=\"/contact/\">Contact support</a>"
+        + "<button class=\"btn btn-ghost\" type=\"button\" id=\"retryBtn\">Check again</button>"
+        + "<button class=\"btn btn-ghost\" type=\"button\" id=\"againBtn\">Check another order</button>")
+    + "</div>");
+  wireCommon();
+  scrollResult();
+}
+function renderResult(d){
+  const tickets = normList(d, "tickets");
+  const status = String(d.status || "").toLowerCase();
+  if(status === "paid" && tickets.length){ renderConfirmed(d); return; }
+  if(status === "paid" || status === "pending"){ renderWaiting(d); return; }
+  renderNotIssued(d);
+}
+function wireCommon(){
+  const retry = $("#retryBtn");
+  if(retry) retry.addEventListener("click", submitLookup);
+  const again = $("#againBtn");
+  if(again) again.addEventListener("click", resetForm);
+}
+function resetForm(){
+  const box = $("#result");
+  box.classList.add("hidden");
+  box.innerHTML = "";
+  hideAlert();
+  $("#order").value = "";
+  const order = $("#order");
+  order.focus();
+  if(order.scrollIntoView) order.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+async function submitLookup(){
+  clearErrors();
+  const email = $("#email").value.trim();
+  const order = $("#order").value.trim();
+  let bad = false;
+  if(!email){ fieldError("#emailErr", "Enter the email address you booked with."); bad = true; }
+  else if(!looksEmail(email)){ fieldError("#emailErr", "That email address does not look valid."); bad = true; }
+  if(!order){ fieldError("#orderErr", "Enter your Order ID."); bad = true; }
+  if(bad) return;
+  const box = $("#result");
+  box.classList.add("hidden");
+  box.innerHTML = "";
+  const btn = $("#submitBtn");
+  btn.disabled = true; btn.textContent = "Checking your ticket...";
+  try {
+    const data = await api("/api/orders/lookup", { auth: false, method: "POST",
+      body: { order_number: order, email: email } });
+    LAST.order_number = order;
+    LAST.email = email;
+    renderResult(data.order || data);
+  } catch (err) {
+    if(err.status === 404){
+      showAlert("err", err.message || "We could not find a ticket for that email address and Order ID. Check both and try again.");
+    } else if(err.status === 429){
+      /* The Worker says how long the wait is (a per-minute or a per-hour tier),
+         so its message is shown instead of a fixed one. */
+      showAlert("err", err.message || "Too many attempts from this device. Please wait a minute and try again.");
+    } else {
+      showAlert("err", err.message);
+    }
+  } finally {
+    btn.disabled = false; btn.textContent = "Confirm my ticket";
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  initShell();
+  /* Links from a confirmation email can pre-fill the form, but the lookup
+     itself only runs when the customer presses the button. */
+  const preOrder = param("order") || param("reference");
+  const preEmail = param("email");
+  if(preOrder) $("#order").value = preOrder;
+  if(preEmail) $("#email").value = preEmail;
+  $("#checkForm").addEventListener("submit", e => { e.preventDefault(); submitLookup(); });
+});
+</script>
+</body>
+</html>

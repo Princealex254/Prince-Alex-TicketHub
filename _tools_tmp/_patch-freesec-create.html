@@ -1,0 +1,28 @@
+<!-- ===== Free-ticket defaults (see collect() below) ===== -->
+          <h3 style="font-size:1.05rem">Free tickets</h3>
+          <p class="small muted" style="margin-bottom:10px">Applies to any KSh 0 ticket on this event. You can change all of it in Edit event, and paid tickets are never affected.</p>
+          <div class="field" style="max-width:560px">
+            <label for="free_ticket_limit">Free tickets one email address may claim</label>
+            <select id="free_ticket_limit" name="free_ticket_limit">
+              <option value="1" selected>1 ticket per email address</option>
+              <option value="2">2 tickets per email address</option>
+              <option value="3">3 tickets per email address</option>
+              <option value="4">4 tickets per email address</option>
+              <option value="5">5 tickets per email address</option>
+            </select>
+            <p class="hint">The server refuses any claim beyond this number for the same address.</p>
+          </div>
+          <div class="field">
+            <label for="free_otp_enabled" style="display:flex;align-items:flex-start;gap:10px">
+              <input id="free_otp_enabled" name="free_otp_enabled" type="checkbox" checked style="width:auto;min-height:0;margin-top:3px" />
+              <span>Require email verification for free tickets</span>
+            </label>
+            <p class="hint">Recommended. Each free claim needs a 6-digit code sent to the attendee's own address.</p>
+          </div>
+          <div class="field">
+            <label for="ip_abuse_enabled" style="display:flex;align-items:flex-start;gap:10px">
+              <input id="ip_abuse_enabled" name="ip_abuse_enabled" type="checkbox" checked style="width:auto;min-height:0;margin-top:3px" />
+              <span>Throttle repeated free-ticket requests from one connection</span>
+            </label>
+            <p class="hint">Recommended. Repeated requests from one IP address are limited automatically.</p>
+          </div>

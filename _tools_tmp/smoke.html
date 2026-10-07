@@ -1,0 +1,25 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>smoke</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+const KEEP = setInterval(function(){}, 50);
+(async function(){
+  const R = { tests: [] };
+  function ck(n, p, d){ R.tests.push({ name: n, pass: !!p, detail: String(d === undefined ? "" : d) }); }
+  try {
+    const src = await (await fetch("../worker/worker.js")).text();
+    ck("fetch worker/worker.js over http", src.length > 1000, "bytes " + src.length);
+    const W = await import(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    ck("blob module import + default.fetch", typeof W.default.fetch === "function", "");
+    const env = { DB: null };
+    const res = await W.default.fetch(new Request("https://x.dev/api/health", { method: "GET" }), env, { waitUntil(){} });
+    const body = await res.json();
+    ck("worker /api/health answers", res.status === 200 && body.status === "ok", JSON.stringify(body).slice(0, 120));
+  } catch(e){ ck("pipeline", false, (e && e.stack) || String(e)); }
+  R.summary = { total: R.tests.length, passed: R.tests.filter(t => t.pass).length, failed: R.tests.filter(t => !t.pass).length };
+  clearInterval(KEEP);
+  document.getElementById("out").textContent = "RESULTS_JSON:" + JSON.stringify(R);
+})();
+</script>
+</body></html>

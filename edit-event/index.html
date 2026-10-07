@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Edit Event | Prince Alex TicketHub</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}.center{text-align:center}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+.page-head{background:#fff;border-bottom:1px solid var(--line);padding:34px 0 30px}
+.lead{max-width:660px;color:var(--muted)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+/* ===== shared app/dashboard CSS (#DASHCSS#) ===== */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;align-items:start}
+.side{background:#0B1220;color:#C3CADE;padding:16px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo-txt strong{color:#fff}
+.side .logo-txt small{color:#8A93A6}
+.side-brand{padding:6px 6px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side h5{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7C8AA5;margin:18px 8px 8px}
+.side a{display:flex;align-items:center;gap:10px;color:#C3CADE;font-size:.9rem;font-weight:600;padding:10px 12px;border-radius:11px;margin-bottom:2px;text-decoration:none}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a[aria-current="page"]{background:var(--brand-600);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.15rem;margin:0}
+.main{padding:22px;min-width:0}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat span{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat strong{display:block;font-size:1.5rem;margin-top:6px;letter-spacing:-.02em}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-top:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-head h2{font-size:1.02rem;margin:0}
+.panel-body{padding:18px}
+.tablewrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .t-right{text-align:right}
+.tbl-thumb{width:46px;height:32px;border-radius:8px;object-fit:cover;background:#EDEFF6;flex:none}
+.row-flex{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.alert{padding:12px 14px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+.state{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.94rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .field{margin:0;min-width:170px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+.qty input{width:64px;text-align:center;min-height:38px}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:block;border-radius:0}
+  .side nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .side nav a{flex:none}
+  .side h5{display:none}
+  .topbar{padding:12px 14px;position:static}
+  .main{padding:14px}
+}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:18px;text-align:center;background:#FBFCFE}
+.preview{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#EDEFF6;aspect-ratio:16/9;max-width:420px}
+.preview img{width:100%;height:100%;object-fit:cover}
+.preview .rm{position:absolute;top:8px;right:8px}
+.two-col{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.9fr);gap:20px;align-items:start}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+.danger{border-color:#F3C5C1}
+.sticky-footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line);background:#FBFCFE;border-radius:0 0 var(--r-lg) var(--r-lg)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+    <div class="side-brand">
+      <a class="logo" href="/" aria-label="Prince Alex TicketHub">
+        <span class="logo-mark" aria-hidden="true">PAT</span>
+        <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+      </a>
+    </div>
+    <nav aria-label="Organizer navigation">
+      <h5>Overview</h5>
+      <a href="/organizer-dashboard/">Dashboard</a>
+      <a href="/organizer-events/" aria-current="page">My Events</a>
+      <a href="/create-event/">Create Event</a>
+      <h5>Sales</h5>
+      <a href="/orders/">Orders</a>
+      <a href="/attendees/">Attendees</a>
+      <h5>Entry</h5>
+      <a href="/check-in/">Check In</a>
+      <h5>Account</h5>
+      <a href="/organizer-agreement/">Agreement</a>
+      <a href="/organizer-settings/">Settings</a>
+      <a href="#" id="signOutBtn">Sign out</a>
+    </nav>
+  </aside>
+<div>
+<header class="topbar">
+  <h1>Edit Event</h1>
+  <div class="who">
+    <a class="btn btn-ghost btn-sm" href="/organizer-events/">All events</a>
+    <a class="btn btn-ghost btn-sm" id="viewPublic" href="#" target="_blank" rel="noopener">View public page</a>
+  </div>
+</header>
+<main class="main" id="main">
+  <div id="pageAlert" class="alert hidden" role="alert"></div>
+  <div id="loadingBlock" class="panel" style="margin-top:0"><div class="panel-body"><span class="skel" style="display:block;height:18px;margin-bottom:12px"></span><span class="skel" style="display:block;height:18px;width:70%;margin-bottom:12px"></span><span class="skel" style="display:block;height:18px;width:45%"></span></div></div>
+  <div id="formBlock" class="hidden">
+    <div class="two-col">
+      <section class="panel" style="margin-top:0" aria-labelledby="formTitle">
+        <div class="panel-head"><h2 id="formTitle">Event details</h2><span id="statusBadge"></span></div>
+        <div class="panel-body">
+          <form id="eventForm" novalidate>
+            <div class="field">
+              <label for="poster">Event poster</label>
+              <div id="currentPoster" class="hidden" style="margin-bottom:14px"></div>
+              <div id="posterPreviewWrap" class="hidden" style="margin-bottom:14px"></div>
+              <input id="poster" name="poster" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+              <button class="btn btn-ghost btn-sm" type="button" id="pickPoster">Replace poster</button>
+              <p class="hint">JPG, PNG or WEBP &middot; up to 5 MB. Replacing the poster updates the public event page.</p>
+              <p class="err hidden" data-for="poster"></p>
+            </div>
+            <div class="field"><label for="title">Event title</label><input id="title" type="text" maxlength="140" required /><p class="err hidden" data-for="title"></p></div>
+            <div class="field"><label for="category">Category</label><select id="category" required><option value="">Select a category</option></select><p class="err hidden" data-for="category"></p></div>
+            <div class="field"><label for="description">Description</label><textarea id="description" maxlength="4000"></textarea></div>
+            <div class="form-grid">
+              <div class="field"><label for="venue">Venue</label><input id="venue" type="text" required /><p class="err hidden" data-for="venue"></p></div>
+              <div class="field"><label for="location">Location</label><input id="location" type="text" required /><p class="err hidden" data-for="location"></p></div>
+              <div class="field"><label for="event_date">Event date</label><input id="event_date" type="date" required /><p class="err hidden" data-for="event_date"></p></div>
+              <div class="field"><label for="start_time">Start time</label><input id="start_time" type="time" required /></div>
+              <div class="field"><label for="end_time">End time</label><input id="end_time" type="time" /></div>
+              <div class="field"><label for="sales_start">Sales start</label><input id="sales_start" type="datetime-local" /></div>
+              <div class="field"><label for="sales_end">Sales end</label><input id="sales_end" type="datetime-local" /><p class="err hidden" data-for="sales_end"></p></div>
+              <div class="field"><label for="status">Event status</label>
+                <select id="status">
+                  <option value="pending">Pending approval (submitted, waiting for the platform team)</option>
+                  <option value="draft">Draft (not visible to customers)</option>
+                  <option value="active">Active (on sale)</option>
+                  <option value="paused">Paused (hidden, sales stopped)</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="ended">Ended</option>
+                </select>
+                <p class="hint">Active submits the event for platform approval: it goes on sale as soon as the platform team approves it. Draft, paused and cancelled hide it immediately.</p>
+                <p class="hint hidden" id="agreementGate" style="color:var(--warnink)"></p>
+              </div>
+            </div>
+            <div class="field" style="max-width:540px;margin-top:16px">
+              <label for="payment_mode">Who collects customer payments?</label>
+              <select id="payment_mode">
+                <option value="">Default - follow my account setting</option>
+                <option value="own">My own merchant account</option>
+                <option value="owner">Platform owner account (owner payment mode)</option>
+              </select>
+              <p class="hint">With <strong>owner payment mode</strong> buyers pay into the platform owner's merchant account and you receive your share through the platform's payouts. "Default" follows the account-wide choice in Payment settings.</p>
+              <p class="err hidden" data-for="payment_mode"></p>
+            </div>
+
+<!-- ===== Free tickets & email verification (see collect() below) ===== -->
+            <hr class="divider" />
+            <h3 style="font-size:1.05rem">Free tickets &amp; email verification</h3>
+            <p class="small muted">These settings cover every KSh 0 ticket on this event. Paid tickets are never affected.</p>
+            <div class="field" style="max-width:560px">
+              <label for="free_ticket_limit">Free tickets one email address may claim</label>
+              <select id="free_ticket_limit">
+                <option value="1">1 ticket per email address</option>
+                <option value="2">2 tickets per email address</option>
+                <option value="3">3 tickets per email address</option>
+                <option value="4">4 tickets per email address</option>
+                <option value="5">5 tickets per email address</option>
+              </select>
+              <p class="hint">The server refuses any claim beyond this number for the same address, so one person cannot take the whole free allocation.</p>
+              <p class="err hidden" data-for="free_ticket_limit"></p>
+            </div>
+            <div class="field">
+              <label for="free_otp_enabled" style="display:flex;align-items:flex-start;gap:10px">
+                <input id="free_otp_enabled" type="checkbox" style="width:auto;min-height:0;margin-top:3px" />
+                <span>Require email verification for free tickets</span>
+              </label>
+              <p class="hint">On by default. Each free claim needs a 6-digit code sent to the attendee's own address, which stops bots and mistyped addresses from taking tickets.</p>
+            </div>
+            <div class="field">
+              <label for="ip_abuse_enabled" style="display:flex;align-items:flex-start;gap:10px">
+                <input id="ip_abuse_enabled" type="checkbox" style="width:auto;min-height:0;margin-top:3px" />
+                <span>Throttle repeated free-ticket requests from one connection</span>
+              </label>
+              <p class="hint">On by default. Code requests, wrong codes and registrations are counted per IP address by the platform's rate limiter.</p>
+            </div>
+            <details style="margin:6px 0 2px">
+              <summary class="small" style="cursor:pointer;font-weight:600">Advanced abuse thresholds (optional)</summary>
+              <div class="form-grid" style="margin-top:12px">
+                <div class="field"><label for="free_otp_ip_limit">Code requests per IP</label><input id="free_otp_ip_limit" type="number" min="3" max="20" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_otp_ip_window">Code request window (seconds)</label><input id="free_otp_ip_window" type="number" min="300" max="3600" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_register_ip_limit">Registrations per IP</label><input id="free_register_ip_limit" type="number" min="5" max="50" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_register_ip_window">Registration window (seconds)</label><input id="free_register_ip_window" type="number" min="300" max="3600" placeholder="Platform default" /></div>
+              </div>
+              <p class="hint">Leave a box blank to use the platform default. A value outside the allowed range is clamped by the server, so protection can never be switched off here.</p>
+            </details>
+            <div class="sticky-footer" style="margin:0 -18px -18px">
+              <div style="display:flex;gap:10px"><button class="btn btn-primary" type="submit" id="saveBtn">Save changes</button><a class="btn btn-ghost" href="/organizer-events/">Cancel</a></div>
+              <span class="tiny faint" id="metaLine"></span>
+            </div>
+          </form>
+        </div>
+      </section>
+      <aside>
+        <div class="panel" style="margin-top:0">
+          <div class="panel-head"><h2>Manage</h2></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:10px">
+            <a class="btn btn-ghost btn-block" id="linkTickets" href="/ticket-types/">Ticket types</a>
+            <a class="btn btn-ghost btn-block" id="linkOrders" href="/orders/">Orders</a>
+            <a class="btn btn-ghost btn-block" id="linkAttendees" href="/attendees/">Attendees</a>
+            <a class="btn btn-ghost btn-block" id="linkCheckin" href="/check-in/">Check in</a>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Sales snapshot</h2></div>
+          <div class="panel-body" id="snapshot"><span class="skel" style="display:block;height:16px;margin-bottom:10px"></span><span class="skel" style="display:block;height:16px;width:60%"></span></div>
+        </div>
+<div class="panel">
+          <div class="panel-head"><h2>Free tickets</h2></div>
+          <div class="panel-body" id="freeStats"><p class="small muted" style="margin:0">Loading...</p></div>
+        </div>
+        <div class="panel danger">
+          <div class="panel-head"><h2>Cancellation</h2></div>
+          <div class="panel-body">
+            <p class="small muted">Cancelling hides the event from customers and stops ticket sales. Ticket holders keep their records so you can process refunds.</p>
+            <button class="btn btn-ghost btn-block" type="button" id="cancelEvent">Cancel this event</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>
+/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Edit event logic
+   ============================================================ */
+const CATEGORY_FALLBACK = ["Music","Conferences","Sports","Church","Education","Business","Community","Other"];
+const MAX_POSTER_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg","image/png","image/webp"];
+const EVENT_ID = param("event") || param("id");
+let posterFile = null;
+let current = null;
+
+function setErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+/* A date input is filled from the stored Kenyan date, never from a UTC instant. */
+function toDateInput(v){ return wallInput(v).slice(0, 10); }
+function toTimeInput(v){ if(!v) return ""; const m = String(v).match(/(\d{1,2}):(\d{2})/); if(!m) return ""; return String(m[1]).padStart(2, "0") + ":" + m[2]; }
+/* A sale window is Kenyan wall clock: show the organizer what they typed. */
+function toLocalInput(v){ return wallInput(v); }
+async function loadCategories(){
+  try {
+    const payload = await api("/api/categories", { auth: false });
+    const list = normList(payload, "categories");
+    if(list.length) return list.map(c => (typeof c === "string" ? c : (c.name || c.title || ""))).filter(Boolean);
+  } catch (err) { /* keep the standard list */ }
+  return CATEGORY_FALLBACK.slice();
+}
+function renderPosterPreview(){
+  const wrap = $("#posterPreviewWrap");
+  if(!wrap) return;
+  if(!posterFile){ wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
+  wrap.innerHTML = "<div class=\"preview\"><img src=\"" + URL.createObjectURL(posterFile) + "\" alt=\"New poster preview\" /><button class=\"btn btn-ghost btn-sm rm\" type=\"button\" id=\"rmPoster\">Remove</button></div>";
+  wrap.classList.remove("hidden");
+  $("#rmPoster").addEventListener("click", () => { posterFile = null; const f = $("#poster"); if(f) f.value = ""; renderPosterPreview(); });
+}
+function acceptPoster(file){
+  if(!file) return;
+  if(ALLOWED_TYPES.indexOf(file.type) === -1){ setErr("poster", "Use a JPG, PNG or WEBP image."); return; }
+  if(file.size > MAX_POSTER_BYTES){ setErr("poster", "That image is larger than 5 MB. Please compress it and try again."); return; }
+  setErr("poster", "");
+  posterFile = file;
+  renderPosterPreview();
+}
+/* Reads a numeric field, or null when it is blank. Blank means "use the platform
+   default", so the key is left out of the payload entirely. */
+function intOrNull(id){
+  const el = $("#" + id);
+  if(!el) return null;
+  const raw = String(el.value == null ? "" : el.value).trim();
+  if(!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+/* Only the four documented threshold keys are ever sent, each one only when the
+   organizer typed a value - and an empty object when none is set, which tells the
+   Worker to clear an earlier override. The Worker clamps every number again. */
+function freeConfigPayload(){
+  const out = {};
+  ["free_otp_ip_limit","free_otp_ip_window","free_register_ip_limit","free_register_ip_window"].forEach(function(id){
+    const n = intOrNull(id);
+    if(n !== null) out[id] = n;
+  });
+  return out;
+}
+
+function fill(ev){
+  current = ev;
+  $("#loadingBlock").classList.add("hidden");
+  $("#formBlock").classList.remove("hidden");
+  $("#title").value = ev.title || "";
+  $("#category").value = ev.category || "";
+  $("#description").value = ev.description || "";
+  $("#venue").value = ev.venue || "";
+  $("#location").value = ev.location || "";
+  $("#event_date").value = toDateInput(ev.event_date);
+  $("#start_time").value = toTimeInput(ev.start_time);
+  $("#end_time").value = toTimeInput(ev.end_time);
+  $("#sales_start").value = toLocalInput(ev.sales_start);
+  $("#sales_end").value = toLocalInput(ev.sales_end);
+  $("#status").value = ev.status || "draft";
+  $("#payment_mode").value = ev.payment_mode === "owner" ? "owner" : (ev.payment_mode === "own" ? "own" : "");
+
+  /* Free-ticket verification settings, exactly as the Worker reports them. */
+  const freeCfg = (ev.free_ticket_config && typeof ev.free_ticket_config === "object") ? ev.free_ticket_config : {};
+  if($("#free_otp_enabled")) $("#free_otp_enabled").checked = ev.free_otp_enabled !== false;
+  if($("#ip_abuse_enabled")) $("#ip_abuse_enabled").checked = ev.ip_abuse_enabled !== false;
+  if($("#free_ticket_limit")) $("#free_ticket_limit").value = String(Math.min(5, Math.max(1, Number(ev.free_ticket_limit) || 1)));
+  ["free_otp_ip_limit","free_otp_ip_window","free_register_ip_limit","free_register_ip_window"].forEach(function(id){
+    const el = $("#" + id);
+    if(el) el.value = (freeCfg[id] == null ? "" : String(freeCfg[id]));
+  });
+  $("#statusBadge").innerHTML = badge(ev.status || "draft");
+  $("#viewPublic").href = "/event/?slug=" + encodeURIComponent(ev.slug || ev.id || "");
+  $("#linkTickets").href = "/ticket-types/?event=" + encodeURIComponent(ev.id || "");
+  $("#linkOrders").href = "/orders/?event=" + encodeURIComponent(ev.id || "");
+  $("#linkAttendees").href = "/attendees/?event=" + encodeURIComponent(ev.id || "");
+  $("#linkCheckin").href = "/check-in/?event=" + encodeURIComponent(ev.id || "");
+  $("#metaLine").textContent = "Event ID " + (ev.id || "-") + " | slug " + (ev.slug || "-") + " | updated " + fmtDateTime(ev.updated_at);
+  const poster = safeUrl(ev.poster_url);
+  const host = $("#currentPoster");
+  if(poster){
+    host.innerHTML = "<div class=\"preview\"><img src=\"" + esc(poster) + "\" alt=\"Current event poster\" /></div>";
+    host.classList.remove("hidden");
+  } else { host.classList.add("hidden"); }
+
+  /* Free-ticket figures for this event: counts only, never an address, an IP or a
+     code, so this panel is safe on any dashboard. */
+  const fs = ev.free_ticket_stats || null;
+  const fh = $("#freeStats");
+  if(fh){
+    fh.innerHTML = fs
+      ? ("<div class=\"row-flex\" style=\"justify-content:space-between;margin-bottom:8px\"><span class=\"small muted\">Free tickets issued</span><strong>" + Number(fs.free_tickets_issued || 0).toLocaleString("en-KE") + "</strong></div>"
+        + "<div class=\"row-flex\" style=\"justify-content:space-between;margin-bottom:8px\"><span class=\"small muted\">Verified email addresses</span><strong>" + Number(fs.unique_verified_emails || 0).toLocaleString("en-KE") + "</strong></div>"
+        + "<div class=\"row-flex\" style=\"justify-content:space-between;margin-bottom:8px\"><span class=\"small muted\">Codes sent</span><strong>" + Number(fs.otp_requests || 0).toLocaleString("en-KE") + "</strong></div>"
+        + "<div class=\"row-flex\" style=\"justify-content:space-between\"><span class=\"small muted\">Throttled just now</span><strong>" + Number(fs.recent_ip_throttles || 0).toLocaleString("en-KE") + "</strong></div>"
+        + "<p class=\"tiny faint\" style=\"margin:10px 0 0\">Counts only - never an address, an IP or a code. \"Throttled just now\" covers live rate-limit windows.</p>")
+      : "<p class=\"small muted\" style=\"margin:0\">Free-ticket figures appear once the server has run migration 0006.</p>";
+  }
+  const st = ev.stats || {};
+  $("#snapshot").innerHTML = "<div class=\"row-flex\" style=\"justify-content:space-between;margin-bottom:8px\"><span class=\"small muted\">Tickets sold</span><strong>" + Number(st.tickets_sold || 0).toLocaleString("en-KE") + "</strong></div>"
+    + "<div class=\"row-flex\" style=\"justify-content:space-between;margin-bottom:8px\"><span class=\"small muted\">Gross revenue</span><strong>" + esc(KES(st.revenue || 0)) + "</strong></div>"
+    + "<div class=\"row-flex\" style=\"justify-content:space-between\"><span class=\"small muted\">Checked in</span><strong>" + Number(st.checked_in || 0).toLocaleString("en-KE") + "</strong></div>"
+    + "<p class=\"tiny faint\" style=\"margin:10px 0 0\">Figures come from the Worker and update as orders are confirmed.</p>";
+}
+async function load(){  
+  if(!EVENT_ID){ showAlert("err", "No event was selected. Open an event from your events list."); return; }
+  try {
+    const payload = await api("/api/organizer/events/" + encodeURIComponent(EVENT_ID));
+    fill(payload.event || payload.data || payload);
+  } catch (err) {
+    $("#loadingBlock").classList.add("hidden");
+    if(err.code === "NOT_CONFIGURED") showAlert("info", err.message);
+    else if(err.status === 404) showAlert("err", "We could not find that event. It may have been removed.");
+    else showAlert("err", err.message);
+  }
+}
+function collect(){
+  return {
+    title: $("#title").value.trim(), category: $("#category").value, description: $("#description").value.trim(),
+    venue: $("#venue").value.trim(), location: $("#location").value.trim(), event_date: $("#event_date").value,
+    start_time: $("#start_time").value, end_time: $("#end_time").value || null,
+    sales_start: $("#sales_start").value ? $("#sales_start").value.replace("T", " ") : null,
+    sales_end: $("#sales_end").value ? $("#sales_end").value.replace("T", " ") : null,
+    /* "" = follow the account-wide default; "own" / "owner" pin the event. */
+    payment_mode: $("#payment_mode") ? $("#payment_mode").value : "",
+    /* Free-ticket protection. Both toggles default to ON, the per-email limit is
+       clamped by the Worker, and blank thresholds are simply not sent. */
+    free_otp_enabled: $("#free_otp_enabled") ? $("#free_otp_enabled").checked : true,
+    ip_abuse_enabled: $("#ip_abuse_enabled") ? $("#ip_abuse_enabled").checked : true,
+    free_ticket_limit: $("#free_ticket_limit") ? Number($("#free_ticket_limit").value) : 1,
+    free_ticket_config: freeConfigPayload(),
+    status: $("#status").value
+  };
+}
+function validate(){
+  let ok = true;
+  ["title","venue","location","event_date","sales_end","poster"].forEach(id => setErr(id, ""));
+  if($("#title").value.trim().length < 3){ setErr("title", "Enter the event title."); ok = false; }
+  if(!$("#venue").value.trim()){ setErr("venue", "Enter the venue."); ok = false; }
+  if(!$("#location").value.trim()){ setErr("location", "Enter the town or city."); ok = false; }
+  if(!$("#event_date").value){ setErr("event_date", "Choose the event date."); ok = false; }
+  const ss = $("#sales_start").value, se = $("#sales_end").value;
+  if(ss && se && se <= ss){ setErr("sales_end", "Sales end must be after sales start."); ok = false; }
+  return ok;
+}
+async function uploadPoster(){
+  if(!posterFile) return;
+  const form = new FormData();
+  form.append("poster", posterFile);
+  const res = await api("/api/organizer/events/" + encodeURIComponent(EVENT_ID) + "/poster", { method: "POST", body: form, form: true });
+  const ev = res.event || res.data || res;
+  if(ev && ev.poster_url){ posterFile = null; fill(Object.assign({}, current, ev)); }
+}
+async function save(){
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); return; }
+  const btn = $("#saveBtn"); btn.disabled = true; btn.textContent = "Saving..."; hideAlert();
+  try {
+    const res = await api("/api/organizer/events/" + encodeURIComponent(EVENT_ID), { method: "PUT", body: collect() });
+    const ev = res.event || res.data || res;
+    /* The API answers submitted_for_approval when it queued the event for the
+       platform owner instead of publishing it. */
+    const submitted = res.submitted_for_approval === true;
+    if(posterFile){ try { await uploadPoster(); } catch (err){ toast("Event saved, but the poster upload failed.", "err"); } }
+    if(ev && ev.id){ fill(Object.assign({}, current, ev, { stats: current && current.stats })); }
+    else if(current){ $("#statusBadge").innerHTML = badge($("#status").value); }
+    if(submitted){
+      showAlert("ok", "Your event was submitted for approval. It goes on sale as soon as the platform team approves it - you will be emailed.");
+    } else {
+      showAlert("ok", "Your changes have been saved.");
+    }
+    if(submitted) toast("Sent for approval", "ok"); else toast("Event updated", "ok");
+  } catch (err) {
+    /* A refusal from the agreement gate carries its own wording; the one thing
+       added here is the link to the page where the signature can be given. */
+    if(err.code === "AGREEMENT_REQUIRED"){
+      showAlert("err", err.message);
+      const box = $("#pageAlert");
+      if(box) box.innerHTML = esc(err.message) + ' <a href="/organizer-agreement/">Review and sign the agreement</a>';
+      return;
+    }
+    showAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  } finally { btn.disabled = false; btn.textContent = "Save changes"; }
+}
+async function setStatus(status, confirmMsg){
+  if(confirmMsg && !window.confirm(confirmMsg)) return;
+  try {
+    await api("/api/organizer/events/" + encodeURIComponent(EVENT_ID), { method: "PUT", body: { status: status } });
+    $("#status").value = status;
+    $("#statusBadge").innerHTML = badge(status);
+    toast("Event status updated", "ok");
+  } catch (err) { showAlert("err", err.message); }
+}
+/* Agreement gate, mirrored from the Worker. The API refuses to publish without a
+   signed agreement whatever this page shows, so when the Worker reports that a
+   signature is required the two publication options are locked here too. */
+async function applyAgreementGate(){
+  const sel = $("#status"), note = $("#agreementGate");
+  if(!sel) return;
+  try { const data = await api("/api/organizer/agreement/status"); }
+  catch(e){ return; }
+  const st = data.state || {};
+  if(!st.required) return;
+  Array.prototype.forEach.call(sel.options, function(o){
+    if(o.value !== "pending" && o.value !== "active") return;
+    o.disabled = true;
+    o.textContent = String(o.textContent || "").replace(/\s*\(locked[^)]*\)\s*$/, "") + " (locked until you sign)";
+  });
+  if(sel.value === "pending" || sel.value === "active") sel.value = "draft";
+  if(note){
+    note.classList.remove("hidden");
+    note.innerHTML = esc(st.status_message || "Publishing is locked until you sign the organizer agreement.") +
+      ' <a href="/organizer-agreement/">Review and sign</a>. Drafts, ticket types and payment settings are unaffected.';
+  }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  const me = await requireSession(["organizer", "owner"]);
+  if(!me) return;
+  paintUser(me);
+  /* Tell the organizer which default the first option will apply. */
+  const pmSel = $("#payment_mode");
+  if(pmSel && pmSel.options.length){
+    pmSel.options[0].textContent = (me && me.organizer && me.organizer.use_owner_payments === true)
+      ? "Default - owner payment mode (my account setting)"
+      : "Default - my own merchant account (my account setting)";
+  }
+  const cats = await loadCategories();
+  $("#category").innerHTML = "<option value=\"\">Select a category</option>" + cats.map(c => "<option value=\"" + esc(c) + "\">" + esc(c) + "</option>").join("");
+  await load();
+  /* After load(), so the status select already holds the event's real value and
+     a locked option can be pulled off it cleanly. */
+  await applyAgreementGate();
+  const pick = $("#pickPoster"), file = $("#poster");
+  pick.addEventListener("click", () => file.click());
+  file.addEventListener("change", () => acceptPoster(file.files && file.files[0]));
+  $("#eventForm").addEventListener("submit", e => { e.preventDefault(); save(); });
+  $("#cancelEvent").addEventListener("click", () => setStatus("cancelled", "Cancel this event? It will be hidden from customers and ticket sales will stop."));
+});
+</script>
+</body>
+</html>

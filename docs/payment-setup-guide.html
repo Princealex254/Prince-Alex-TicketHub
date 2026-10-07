@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Payment setup guide for organizers - Prince Alex TicketHub</title>
+<!--
+  ============================================================================
+  Payment setup guide (organizers)
+  ----------------------------------------------------------------------------
+  Printable source for /payment-setup-guide.pdf, linked from the Payment
+  settings panel in organizer-settings/index.html.
+
+  After editing this file, regenerate the PDF at the repository root
+  (close any running headless Chrome first so the PDF is not locked):
+
+    taskkill /F /IM chrome.exe 2>$null
+    $chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"   # or Edge
+    & $chrome --headless=new --disable-gpu --no-sandbox --no-pdf-header-footer `
+      --print-to-pdf="<repo>\payment-setup-guide.pdf" `
+      "file:///<repo>/docs/payment-setup-guide.html"
+
+  (tools\run-check.ps1 shows the browser paths this machine uses.) Keep the
+  document to two A4 pages: it is meant to be a SMALL download.
+  ============================================================================
+-->
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--brand:#4F46E5;--brand-d:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;
+        --muted:#5A6478;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--ok:#04674A;
+        --warnbg:#FEF4E6;--warnink:#8A4103;--font:"Segoe UI",system-ui,-apple-system,
+        BlinkMacSystemFont,Roboto,Arial,sans-serif}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font-family:var(--font);color:var(--ink);line-height:1.5;
+       -webkit-font-smoothing:antialiased;background:#fff}
+  a{color:var(--brand);text-decoration:underline;text-underline-offset:2px}
+
+  /* ---- screen: one centred sheet; print: exact A4 -------------------------- */
+  .sheet{max-width:820px;margin:0 auto;background:#fff}
+  @media screen{body{background:var(--bg);padding:24px 12px}.sheet{border-radius:20px;
+    box-shadow:0 14px 34px rgba(16,24,40,.10);overflow:hidden}}
+  /* NOTE: header stays INSIDE the printable area (no negative margins) so
+     Chrome headless --print-to-pdf can never clip it. */
+  @page{size:A4;margin:12mm 13mm}
+  @media print{
+    body{background:#fff}
+    .sheet{max-width:none;box-shadow:none;border-radius:0;padding-bottom:0}
+    *,*::before,*::after{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+
+  /* ---- header band (inset card: never in the @page margin zone) --------------- */
+  .band{background:var(--ink);color:#fff;padding:7mm 7mm 6mm;margin:0 0 6mm;position:relative;
+    border-radius:12px;overflow:hidden;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:linear-gradient(90deg,var(--brand),var(--accent))}
+  .band .who{font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:#A9B1C6;margin:0 0 3mm}
+  .band h1{font-size:21pt;line-height:1.15;margin:0 0 3mm;letter-spacing:-.01em}
+  .band .sub{font-size:10.5pt;color:#CDD3E1;margin:0;max-width:150mm}
+
+  /* ---- sections ----------------------------------------------------------- */
+  h2{font-size:12.5pt;margin:6mm 0 2.5mm;letter-spacing:-.01em}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:6.5mm;height:6.5mm;
+    border-radius:50%;background:var(--brand);color:#fff;font-size:8.5pt;font-weight:700;
+    margin-right:2.5mm;vertical-align:.5mm}
+  h3{font-size:10.5pt;margin:0 0 1.5mm}
+  p{margin:0 0 2.5mm;font-size:10pt}
+  ol,ul{margin:0 0 3mm;padding-left:5.5mm;font-size:10pt}
+  li{margin-bottom:1.2mm}
+  .lead{color:var(--ink2)}
+  .muted{color:var(--muted)}
+
+  .card{border:1px solid var(--line);border-radius:12px;padding:3.5mm 4mm;margin-bottom:3mm;
+        background:#fff;page-break-inside:avoid}
+  .card .head{display:flex;align-items:center;gap:3mm;margin-bottom:2mm}
+  .mark{display:inline-flex;align-items:center;justify-content:center;width:8mm;height:8mm;
+        border-radius:9px;color:#fff;font-size:8pt;font-weight:700;flex:none}
+  .mark.ps{background:#00C3F7}.mark.pe{background:#0B4DA2}.mark.ph{background:#0AA679}
+  .links{font-size:8.8pt;color:var(--muted);margin:0 0 2mm}
+  .links a{color:var(--brand)}
+  .fields{list-style:none;margin:0 0 2mm;padding:0;font-size:9.6pt}
+  .fields li{margin:0 0 1.4mm;padding-left:5mm;position:relative}
+  .fields li::before{content:"\2192";position:absolute;left:0;color:var(--accent);font-weight:700}
+  .fields b{font-weight:700}
+  .tip{background:var(--infobg);border-radius:9px;padding:2.5mm 3.5mm;font-size:9.3pt;
+       margin:2mm 0 0;color:var(--ink2)}
+  .warn{background:var(--warnbg);border-radius:9px;padding:2.5mm 3.5mm;font-size:9.3pt;
+        margin:2mm 0 0;color:var(--warnink)}
+
+  .cols{display:flex;gap:5mm}
+  .cols>div{flex:1;min-width:0}
+  .box{border:1px solid var(--line);border-radius:12px;padding:3.5mm 4mm;background:var(--bg)}
+  .box h3{margin-bottom:1.5mm}
+
+  .foot{margin-top:5mm;padding-top:3mm;border-top:1px solid var(--line);
+        font-size:8.5pt;color:var(--muted);display:flex;justify-content:space-between;gap:6mm}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="band">
+    <p class="who">Prince Alex TicketHub &middot; Organizer guide</p>
+    <h1>Payment setup guide</h1>
+    <p class="sub">Two ways to get paid for tickets: connect your own merchant account
+      (Paystack, Pesapal or PayHero), or let buyers pay the platform and take your share.
+      This guide lists exactly what to copy from each provider and where to paste it.</p>
+  </div>
+  <h2><span class="n">1</span>What you do in TicketHub (same for every provider)</h2>
+  <ol>
+    <li>Open <b>Settings &rarr; Payment settings</b>
+      (<a href="https://tickethub.princealex.digital/organizer-settings/#payment">tickethub.princealex.digital/organizer-settings/#payment</a>).
+      Save your organizer profile first if you have not &ndash; payment credentials attach to it.</li>
+    <li>On the provider card (Paystack, Pesapal or PayHero) paste the values listed below, then press
+      <b>Save details</b>.</li>
+    <li>Press <b>Test connection</b>. It must pass before the provider can be used.</li>
+    <li>Press <b>Make active</b>. That is all &ndash; <b>one connected provider is enough to go live</b>.
+      Buyers never choose a gateway; every event without its own setting is sold through your
+      Active Payment Provider.</li>
+  </ol>
+
+  <h2><span class="n">2</span>Option A &ndash; use your own merchant account</h2>
+  <p class="lead">Pick whichever provider you already bank with. Card fees, payment methods and
+    settlement timelines follow that provider's merchant terms.</p>
+
+  <div class="card">
+    <div class="head"><span class="mark ps">PS</span><h3>Paystack &ndash; cards, M-Pesa and more</h3></div>
+    <p class="links">Website: <a href="https://paystack.com">paystack.com</a> &middot;
+      Dashboard: <a href="https://dashboard.paystack.com">dashboard.paystack.com</a></p>
+    <ul class="fields">
+      <li><b>Paystack public key</b> (<span class="muted">pk_live_...</span>) &ndash; Paystack dashboard
+        &rarr; Settings &rarr; API Keys &amp; Webhooks.</li>
+      <li><b>Paystack secret key</b> (<span class="muted">sk_live_...</span>) &ndash; the same page.
+        It is entered once and encrypted; TicketHub never shows it again.</li>
+    </ul>
+    <p class="tip">Use the <b>Live</b> keys (toggle at the top of the Paystack dashboard) when you are
+      ready to sell for real; Test keys are only for Paystack's test mode.</p>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="mark pe">PE</span><h3>Pesapal &ndash; M-Pesa, cards and mobile money</h3></div>
+    <p class="links">Website: <a href="https://www.pesapal.com">pesapal.com</a> &middot;
+      Developer docs: <a href="https://developer.pesapal.com">developer.pesapal.com</a></p>
+    <ul class="fields">
+      <li><b>Pesapal consumer key</b> and <b>consumer secret</b> &ndash; sent to the email address on your
+        Pesapal merchant account when the account is opened. Lost them? Log in to your Pesapal merchant
+        dashboard and scroll to the bottom to have the details re-sent to that same email.</li>
+    </ul>
+    <p class="tip">You do <b>not</b> need to create an IPN: TicketHub registers its payment callback with
+      Pesapal for you.</p>
+    <p class="warn">Pesapal keys are environment-specific (sandbox or live). If Pesapal rejects your
+      keys, ask platform support which environment this deployment uses.</p>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="mark ph">PH</span><h3>PayHero &ndash; M-Pesa STK push</h3></div>
+    <p class="links">Website: <a href="https://payhero.co.ke">payhero.co.ke</a> &middot;
+      Sign up / dashboard: <a href="https://app.payhero.co.ke">app.payhero.co.ke</a> &middot;
+      Docs: <a href="https://docs.payhero.co.ke">docs.payhero.co.ke</a></p>
+    <ul class="fields">
+      <li><b>PayHero API username</b> and <b>API password</b> &ndash; PayHero account &rarr; Settings &rarr; API
+        (the password is hidden; reveal or copy it from that page).</li>
+      <li><b>PayHero channel id</b> &ndash; Payment Channels &rarr; My Payment Channels: the numeric id of the
+        M-Pesa paybill or till that receives the money (e.g. <span class="muted">133</span>).</li>
+    </ul>
+    <p class="tip">New to PayHero? Sign up, then create a channel (M-PESA STK Push, your paybill or till).
+      PayHero approves accounts after KYC &ndash; usually within one business day &ndash; and your channel must be
+      Live to receive real payments.</p>
+  </div>
+
+  <h2><span class="n">3</span>Option B &ndash; platform payment (owner payment mode)</h2>
+  <p>No merchant account of your own? In Payment settings, set
+    <b>Default: collect through the platform owner account</b> to <b>On</b>. Buyers then pay into the
+    platform's merchant account at checkout and <b>your share is paid out to you</b> by the platform.
+    You can override this per event while creating or editing it (payment mode: owner account or your
+    own). Nothing to paste, nothing to test.</p>
+
+  <div class="cols">
+    <div class="box">
+      <h3>If something is not working</h3>
+      <ul style="margin-bottom:0">
+        <li><b>Make active</b> is greyed out &ndash; the provider is not connected yet, or its test has not passed.</li>
+        <li><b>Test connection fails</b> &ndash; re-copy the values from the provider (check for stray spaces)
+          and confirm the environment (Paystack Test/Live, Pesapal sandbox/live).</li>
+        <li><b>Card shows "not connected"</b> &ndash; press <b>Save details</b> first, then test.</li>
+        <li><b>Checkout is closed</b> &ndash; no provider is connected/active. Connect one, or switch the
+          event to platform payment.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>How your keys are protected</h3>
+      <ul style="margin-bottom:0">
+        <li>Credentials are encrypted (AES-GCM) by the Worker before they reach the database and are
+          never sent back to the page &ndash; secret fields are write-only.</li>
+        <li>Buyers pay on the provider's own checkout; card and M-Pesa details are never stored on
+          TicketHub.</li>
+        <li>Payment status is confirmed server-to-server with the provider before a ticket is issued.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Prince Alex TicketHub &middot; Powered by Prince Alex Digital</span>
+    <span>Settings: <a href="https://tickethub.princealex.digital/organizer-settings/#payment">Payment settings</a></span>
+  </div>
+
+</div>
+</body>
+</html>
+
