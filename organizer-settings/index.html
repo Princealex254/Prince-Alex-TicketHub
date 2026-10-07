@@ -1,0 +1,1020 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Organizer Settings | Prince Alex TicketHub</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--warn:#B45309;--warnbg:#FEF4E6;--warnink:#8A4103;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}.center{text-align:center}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+.page-head{background:#fff;border-bottom:1px solid var(--line);padding:34px 0 30px}
+.lead{max-width:660px;color:var(--muted)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+/* ===== shared app/dashboard CSS (#DASHCSS#) ===== */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;align-items:start}
+.side{background:#0B1220;color:#C3CADE;padding:16px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo-txt strong{color:#fff}
+.side .logo-txt small{color:#8A93A6}
+.side-brand{padding:6px 6px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side h5{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7C8AA5;margin:18px 8px 8px}
+.side a{display:flex;align-items:center;gap:10px;color:#C3CADE;font-size:.9rem;font-weight:600;padding:10px 12px;border-radius:11px;margin-bottom:2px;text-decoration:none}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a[aria-current="page"]{background:var(--brand-600);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.15rem;margin:0}
+.main{padding:22px;min-width:0}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat span{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat strong{display:block;font-size:1.5rem;margin-top:6px;letter-spacing:-.02em}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-top:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-head h2{font-size:1.02rem;margin:0}
+.panel-body{padding:18px}
+.tablewrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .t-right{text-align:right}
+.tbl-thumb{width:46px;height:32px;border-radius:8px;object-fit:cover;background:#EDEFF6;flex:none}
+.row-flex{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.alert{padding:12px 14px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+.state{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.94rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .field{margin:0;min-width:170px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+.qty input{width:64px;text-align:center;min-height:38px}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:block;border-radius:0}
+  .side nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .side nav a{flex:none}
+  .side h5{display:none}
+  .topbar{padding:12px 14px;position:static}
+  .main{padding:14px}
+}
+.two-col{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:start}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+.logo-preview{width:88px;height:88px;border-radius:16px;object-fit:cover;border:1px solid var(--line);background:#EDEFF6;display:grid;place-items:center;font-weight:800;color:#B7BECE}
+.avatar-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+/* ---- payment provider cards (one per provider, rendered by the API) ---- */
+.pay-cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.pay-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--surface,#fff);min-width:0}
+.pay-card.is-active{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.pay-card-head{display:flex;align-items:center;gap:10px;margin:0}
+.pay-card-title{display:flex;flex-direction:column;flex:1;min-width:0}
+.pay-mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:9px;color:#fff;font-weight:700;font-size:12px;letter-spacing:.5px;flex:none}
+.pay-card-config{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+.pay-card-config summary{cursor:pointer;color:var(--brand-700);font-size:.82rem;font-weight:700;list-style-position:inside}
+.pay-card-config[open] summary{margin-bottom:10px}
+.pay-card .form-grid{margin-top:6px}
+.pay-card .toolbar{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+.pay-card .toolbar .btn{flex:1 1 auto}
+.pay-card .field{margin-bottom:10px}
+.pay-card .field .hint{line-height:1.4}
+</style></head>
+<body>
+<div class="app"><aside class="side">
+    <div class="side-brand">
+      <a class="logo" href="/" aria-label="Prince Alex TicketHub">
+        <span class="logo-mark" aria-hidden="true">PAT</span>
+        <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Powered by Prince Alex Digital</small></span>
+      </a>
+    </div>
+    <nav aria-label="Organizer navigation">
+      <h5>Overview</h5>
+      <a href="/organizer-dashboard/">Dashboard</a>
+      <a href="/organizer-events/">My Events</a>
+      <a href="/create-event/">Create Event</a>
+      <h5>Sales</h5>
+      <a href="/orders/">Orders</a>
+      <a href="/attendees/">Attendees</a>
+      <h5>Entry</h5>
+      <a href="/check-in/">Check In</a>
+      <h5>Account</h5>
+      <a href="/organizer-agreement/">Agreement</a>
+      <a href="/organizer-settings/" aria-current="page">Settings</a>
+      <a href="#payment">Payment Settings</a>
+      <a href="#" id="signOutBtn">Sign out</a>
+    </nav>
+  </aside><div><header class="topbar">
+  <h1>Settings</h1>
+  <div class="who"><span class="small muted" id="roleLine"></span><span class="avatar" id="whoAvatar" aria-hidden="true">PA</span></div>
+</header>
+<main class="main" id="main">
+  <div id="pageAlert" class="alert hidden" role="alert"></div>
+  <div class="two-col">
+    <section class="panel" style="margin-top:0" aria-labelledby="orgTitle">
+      <div class="panel-head"><h2 id="orgTitle">Organizer profile</h2><span class="small muted" id="orgStatus"></span></div>
+      <div class="panel-body">
+        <div id="orgNotice" class="alert info hidden" role="status"></div>
+        <form id="orgForm" novalidate>
+          <div class="field">
+            <label for="logo">Business logo</label>
+            <div class="avatar-row">
+              <div class="logo-preview" id="logoPreview">LOGO</div>
+              <div>
+                <input id="logo" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+                <button class="btn btn-ghost btn-sm" type="button" id="pickLogo">Upload logo</button>
+                <p class="hint" style="margin:6px 0 0">JPG, PNG or WEBP &middot; up to 5 MB</p>
+              </div>
+            </div>
+            <p class="err hidden" data-for="logo"></p>
+          </div>
+          <div class="field"><label for="business_name">Business name</label><input id="business_name" type="text" maxlength="140" required /><p class="err hidden" data-for="business_name"></p></div>
+          <div class="form-grid">
+            <div class="field"><label for="business_email">Business email</label><input id="business_email" type="email" maxlength="160" required /><p class="err hidden" data-for="business_email"></p></div>
+            <div class="field"><label for="business_phone">Business phone</label><input id="business_phone" type="tel" maxlength="20" required placeholder="07XX XXX XXX" /><p class="err hidden" data-for="business_phone"></p></div>
+          </div>
+          <hr class="divider" />
+          <h3 style="font-size:.98rem">Account holder</h3>
+          <div class="form-grid">
+            <div class="field"><label for="full_name">Full name</label><input id="full_name" type="text" maxlength="120" /></div>
+            <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" maxlength="20" /></div>
+          </div>
+          <div class="field"><label for="email">Login email</label><input id="email" type="email" readonly /><p class="hint">Your login email is managed by Firebase Authentication and cannot be changed here.</p></div>
+          <button class="btn btn-primary" type="submit" id="saveOrg">Save settings</button>
+        </form>
+      </div>
+    </section>
+    <aside>
+      <div class="panel" style="margin-top:0">
+        <div class="panel-head"><h2>Security</h2></div>
+        <div class="panel-body">
+          <p class="small muted">Passwords are handled by Firebase Authentication. We never store passwords on our servers.</p>
+          <p class="err hidden" id="pwMsg" style="color:var(--errink);font-weight:600"></p>
+          <p class="small" id="pwOk" style="display:none;color:var(--okink);font-weight:600"></p>
+          <button class="btn btn-ghost btn-block" type="button" id="resetPw">Send password reset email</button>
+          <hr class="divider" />
+          <button class="btn btn-ghost btn-block" type="button" id="signOutPanelBtn">Sign out</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Account status</h2></div>
+        <div class="panel-body" id="accountBody">
+          <div class="row-flex" style="justify-content:space-between"><span class="small muted">Role</span><strong id="roleValue">-</strong></div>
+          <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Status</span><span id="statusValue">-</span></div>
+          <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Profile created</span><strong id="createdValue">-</strong></div>
+          <p class="tiny faint" style="margin:12px 0 0">Roles and permissions are issued by the platform owner and enforced by the Worker.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Payment provider</h2></div>
+        <div class="panel-body">
+          <div class="row-flex" style="justify-content:space-between"><span class="small muted">Status</span><span id="payStatusBadgeSide">-</span></div>
+          <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Provider</span><strong id="payProviderSide">-</strong></div>
+          <p class="small muted" style="margin:12px 0 10px" id="paySideHint">Connect your merchant account to start selling tickets.</p>
+          <a class="btn btn-ghost btn-block" href="#payment">Open payment settings</a>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Event staff</h2></div>
+        <div class="panel-body">
+          <p class="small muted">Gate staff sign in with their own accounts and can only check in tickets for the events you assign to them.</p>
+          <a class="btn btn-ghost btn-block" href="/check-in/">Open check-in tool</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <section class="panel" id="payment" aria-labelledby="payTitle">
+    <div class="panel-head">
+      <h2 id="payTitle">Payment settings</h2>
+      <span class="row-flex"><span class="small muted">Active provider</span><span id="payStatusValue">-</span></span>
+    </div>
+    <div class="panel-body">
+      <div id="payNotice" class="alert info hidden" role="status"></div>
+      <p class="small muted" style="margin-top:0">Connect one or more providers against the same set of events. Only your <strong>Active Payment Provider</strong> is used, and buyers never choose a gateway at checkout.</p>
+      <p class="small" style="margin-top:0">
+        <a class="btn btn-ghost btn-sm" href="/payment-setup-guide.pdf" download>Download the payment setup guide (PDF)</a>
+        <span class="muted"> Where to find each provider&rsquo;s API keys, and how to use platform payment instead.</span>
+      </p>
+
+      <!-- Account-wide default. Each event can still override it in create/edit. -->
+      <div class="field" style="max-width:540px;margin-bottom:18px">
+        <label for="useOwnerPayments">Default: collect through the platform owner account</label>
+        <select id="useOwnerPayments" aria-describedby="useOwnerPaymentsHint">
+          <option value="false">Off - events use my own merchant account</option>
+          <option value="true">On - new events default to owner payment mode</option>
+        </select>
+        <p class="hint" id="useOwnerPaymentsHint">When this is on, buyers pay into the platform owner's merchant account at checkout and you receive your share through the platform's payouts. You can still override it per event while creating or editing an event.</p>
+        <p class="err hidden" data-for="useOwnerPayments"></p>
+      </div>
+
+      <!-- One card per provider, rendered from GET /api/organizer/payment-providers. -->
+      <div id="payCards" class="pay-cards" role="group" aria-label="Payment providers"></div>
+
+      <div class="field" style="margin-top:18px">
+        <label for="payActive">Active Payment Provider</label>
+        <select id="payActive" aria-describedby="payActiveHint"></select>
+        <p class="hint" id="payActiveHint">Every event you publish that does not name a provider of its own is sold through this one. You need to configure only one provider to go live.</p>
+      </div>
+
+      <div id="payAlert" class="alert hidden" role="alert"></div>
+      <hr class="divider" />
+      <div class="row-flex" style="justify-content:space-between"><span class="small muted">Active provider</span><strong id="payProviderValue">-</strong></div>
+      <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Connected accounts</span><strong id="paySecretValue">-</strong></div>
+      <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Last connection test</span><strong id="payTestedValue">-</strong></div>
+      <p class="tiny faint" style="margin:12px 0 0">Credentials are encrypted (AES-GCM) by the Worker before they reach the database and are never sent back to this page. Fees, payment methods and settlement timelines follow the merchant terms of each provider account you connect.</p>
+    </div>
+  </section>
+</main></div>
+</div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && me.user && (me.user.full_name || me.user.fullName)) || (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Organizer settings logic
+   ============================================================ */
+let LOGO_FILE = null;
+/* false while the signed-in account has no organizer row in D1, in which case
+   saving this form creates the profile instead of updating it. */
+let HAS_ORG = true;
+const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED = ["image/jpeg","image/png","image/webp"];
+function setErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+/* GET /api/me and PUT /api/organizer/profile both answer with a NESTED shape:
+   { success, role, user: {...}, organizer: {...} } - there is no flat
+   full_name / email / created_at at the top level. Read the nested records off
+   that envelope, falling back to a flat object so an unwrapped payload (or an
+   older Worker build) still renders something instead of blank fields. */
+function sessionParts(me){
+  const m = me || {};
+  const user = (m.user && typeof m.user === "object") ? m.user : m;
+  const org = (m.organizer && typeof m.organizer === "object") ? m.organizer : {};
+  return { user: user, org: org };
+}
+
+function paint(me){
+  const parts = sessionParts(me), user = parts.user, org = parts.org;
+  const role = (me && me.role) || user.role || "";
+  $("#full_name").value = user.full_name || user.fullName || "";
+  $("#phone").value = user.phone || "";
+  $("#email").value = user.email || "";
+  $("#business_name").value = org.business_name || "";
+  $("#business_email").value = org.business_email || user.email || "";
+  $("#business_phone").value = org.business_phone || user.phone || "";
+  $("#roleValue").textContent = role || "-";
+  $("#roleLine").textContent = (role || "organizer") + " account";
+  $("#statusValue").innerHTML = badge(user.status || org.status || "active");
+  $("#orgStatus").innerHTML = org.status ? badge(org.status) : "";
+  $("#createdValue").textContent = fmtDate(user.created_at || org.created_at);
+  const logo = safeUrl(org.logo_url);
+  if(logo) $("#logoPreview").outerHTML = "<img class=\"logo-preview\" id=\"logoPreview\" src=\"" + esc(logo) + "\" alt=\"Business logo\" />";
+  HAS_ORG = !!org.id;
+  /* Account-wide owner payment default, mirrored from the profile row. */
+  const ownerToggle = $("#useOwnerPayments");
+  if(ownerToggle) ownerToggle.value = org.use_owner_payments === true ? "true" : "false";
+  const notice = $("#orgNotice");
+  if(notice){
+    if(HAS_ORG){ notice.classList.add("hidden"); }
+    else {
+      notice.textContent = "No organizer profile is linked to this account yet. Fill in the business details below and choose \"" + saveLabel() + "\" - the profile is created once, and then your dashboard, events and check-in tools open up.";
+      notice.classList.remove("hidden");
+    }
+  }
+  const saveBtn = $("#saveOrg");
+  if(saveBtn) saveBtn.textContent = saveLabel();
+  paintUser(me);
+}
+/* The button label tells the truth about what saving does for this account. */
+function saveLabel(){ return HAS_ORG ? "Save settings" : "Create organizer profile"; }
+async function load(){
+  try {
+    const me = await api("/api/me");
+    paint(me);
+  } catch (err) {
+    showAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  }
+}
+function validate(){
+  let ok = true;
+  ["business_name","business_email","business_phone","logo"].forEach(id => setErr(id, ""));
+  if($("#business_name").value.trim().length < 2){ setErr("business_name", "Enter your business name."); ok = false; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($("#business_email").value.trim())){ setErr("business_email", "Enter a valid business email."); ok = false; }
+  if($("#business_phone").value.trim().length < 9){ setErr("business_phone", "Enter a reachable phone number."); ok = false; }
+  return ok;
+}
+async function uploadLogo(){
+  if(!LOGO_FILE) return;
+  const form = new FormData();
+  form.append("logo", LOGO_FILE);
+  const res = await api("/api/organizer/logo", { method: "POST", body: form, form: true });
+  const org = res.organizer || res.data || res;
+  if(org && org.logo_url){
+    const host = $("#logoPreview");
+    if(host) host.outerHTML = "<img class=\"logo-preview\" id=\"logoPreview\" src=\"" + esc(safeUrl(org.logo_url)) + "\" alt=\"Business logo\" />";
+    LOGO_FILE = null;
+  }
+}
+/* POST /api/auth/register needs the account holder full name and a reachable
+   phone number, so they are checked before the profile-creation attempt. */
+function newProfileReady(){
+  const name = $("#full_name").value.trim();
+  const digits = $("#phone").value.trim().replace(/[^0-9]/g, "");
+  if(name.length < 3 || digits.length < 9){
+    showAlert("err", "Creating your organizer profile needs the account holder full name and a reachable phone number. Add them below and save again.");
+    return false;
+  }
+  return true;
+}
+async function save(){
+  if(!HAS_ORG && !newProfileReady()) return;
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); return; }
+  const btn = $("#saveOrg"); btn.disabled = true; btn.textContent = "Saving..."; hideAlert();
+  try {
+    const hadProfile = HAS_ORG;
+    /* Account-wide owner payment default. It lives on the organizer row, so it
+       rides along with a profile update; a brand-new profile gets it in a
+       follow-up PUT below, because register does not accept it. */
+    const ownerDefault = $("#useOwnerPayments") ? $("#useOwnerPayments").value === "true" : false;
+    const fields = {
+      business_name: $("#business_name").value.trim(),
+      business_email: $("#business_email").value.trim(),
+      business_phone: $("#business_phone").value.trim(),
+      full_name: $("#full_name").value.trim(),
+      phone: $("#phone").value.trim()
+    };
+    if(HAS_ORG) fields.use_owner_payments = ownerDefault;
+    /* PUT /api/organizer/profile updates an existing profile, while
+       POST /api/auth/register is the endpoint that creates the organizer row
+       for a signed-in account. An account with no profile used to be stuck on
+       this page, so saving now creates the profile instead of failing. */
+    let res;
+    if(HAS_ORG){
+      try {
+        res = await api("/api/organizer/profile", { method: "PUT", body: fields });
+      } catch (err) {
+        if(err.code !== "NO_ORGANIZER" && !(err.status === 403 && /organizer/i.test(err.message || ""))) throw err;
+        HAS_ORG = false;
+        res = await api("/api/auth/register", { method: "POST", body: fields });
+      }
+    } else {
+      res = await api("/api/auth/register", { method: "POST", body: fields });
+    }
+    if(LOGO_FILE){ try { await uploadLogo(); } catch (err){ toast("Settings saved, but the logo upload failed.", "err"); } }
+    const payload = (res && res.data) ? res.data : res;
+    if(payload && (payload.user || payload.organizer)) paint(payload); else await load();
+    if(!hadProfile && ownerDefault){
+      try { await api("/api/organizer/profile", { method: "PUT", body: { use_owner_payments: ownerDefault } }); }
+      catch (err){ toast("Profile saved, but the owner payment default could not be stored yet.", "err"); }
+    }
+    showAlert("ok", HAS_ORG ? "Your settings have been saved." : "Your organizer profile is ready.");
+    toast("Settings saved", "ok");
+    /* Creating the profile is what unlocks the payment section. */
+    const payCardsEl = $("#payCards");
+    if(payCardsEl && payCardsEl.classList.contains("hidden")){ payCardsEl.classList.remove("hidden"); await loadPayment(); }
+  } catch (err) {
+    showAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  } finally { btn.disabled = false; btn.textContent = "Save settings"; }
+}
+/* ============================================================
+   Payment settings - three providers, one Active Payment Provider
+   ------------------------------------------------------------
+   GET    /api/organizer/payment-providers            all three + state
+   POST   /api/organizer/payment-providers/:key       save that one
+   DELETE /api/organizer/payment-providers/:key       disconnect that one
+   POST   /api/organizer/payment-providers/:key/test  test that one
+   POST   /api/organizer/payment-provider/select      set the active one
+   The old /api/organizer/payment-settings routes still work on the server, so
+   a cached page keeps functioning.
+   Credentials are encrypted by the Worker before they are stored and are never
+   returned: only "has_..." indicators come back to this page.
+   ============================================================ */
+const PAY_PROVIDERS = { paystack: "Paystack", pesapal: "Pesapal", payhero: "PayHero" };
+/* The input each provider needs. Secret inputs are write-only. */
+const PAY_INPUTS = {
+  paystack: [
+    { id: "public_key", label: "Paystack public key", type: "text", max: 200, placeholder: "pk_live_...", hint: "Paystack dashboard -> Settings -> API Keys & Webhooks.", secret: false },
+    { id: "secret_key", label: "Paystack secret key", type: "password", max: 400, placeholder: "sk_live_...", hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true }
+  ],
+  pesapal: [
+    { id: "consumer_key", label: "Pesapal consumer key", type: "text", max: 200, secret: false },
+    { id: "consumer_secret", label: "Pesapal consumer secret", type: "password", max: 400, hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true }
+  ],
+  payhero: [
+    { id: "api_username", label: "PayHero API username", type: "text", max: 120, hint: "PayHero account -> Settings -> API.", secret: false },
+    { id: "password", label: "PayHero API password", type: "password", max: 400, hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true },
+    { id: "channel_id", label: "PayHero channel id", type: "text", max: 40, placeholder: "133", hint: "The M-Pesa paybill or till that receives the money. Copy the id from Payment Channels -> My Payment Channels.", secret: false }
+  ]
+};
+/* Last payload the Worker reported, used for field-level checks. */
+let PAY_STATE = { providers: [], active: null };
+function payLabel(key){ return PAY_PROVIDERS[String(key || "").toLowerCase()] || String(key || ""); }
+/* The shared badge() map has no entry for connection states, so payment
+   status is painted with this local helper instead of editing the app kit. */
+function payBadge(status){
+  const s = String(status || "not_connected").toLowerCase();
+  const cls = s === "connected" ? "ok" : (s === "error" ? "err" : "neutral");
+  return "<span class=\"badge " + cls + "\">" + esc(s.replace(/_/g, " ")) + "</span>";
+}
+function showPayAlert(kind, msg){
+  const box = $("#payAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hidePayAlert(){
+  const box = $("#payAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+/* An organizer profile must exist first: the provider rows hang off that
+   profile, so credentials cannot be stored before it. */
+function paymentNeedsProfile(){
+  const cards = $("#payCards");
+  if(cards) cards.classList.add("hidden");
+  const sel = $("#payActive");
+  if(sel){ sel.disabled = true; }
+  const ownerToggle = $("#useOwnerPayments");
+  if(ownerToggle){ ownerToggle.disabled = true; }
+  hidePayAlert();
+  const notice = $("#payNotice");
+  if(notice){
+    notice.textContent = "Save your organizer profile above first. A payment provider is attached to that profile, so credentials cannot be stored until it exists.";
+    notice.classList.remove("hidden");
+  }
+}
+function payCard(key){ return PAY_STATE.providers.filter(c => c.key === key)[0] || null; }
+function payActiveKey(){ return (PAY_STATE.active && PAY_STATE.active.provider) || ""; }
+function inputId(key, field){ return "pay-" + key + "-" + field; }
+/* One card per provider. Everything the card needs comes from the API, so a
+   fourth provider would appear here without touching this file again. */
+function payCardHtml(card){
+  const key = card.key;
+  const fields = card.fields || {};
+  const inputs = PAY_INPUTS[key] || [];
+  const isActive = payActiveKey() === key;
+  const rows = inputs.map(function(f){
+    const id = inputId(key, f.id);
+    const saved = f.secret ? fields["has_" + f.id] : false;
+    const hint = (f.secret && saved)
+      ? "A value is already saved (hidden). Leave this blank to keep it, or type a new one to replace it."
+      : (f.hint || "");
+    return "      <div class=\"field\">\n" +
+      "        <label for=\"" + esc(id) + "\">" + esc(f.label) + "</label>\n" +
+      "        <input id=\"" + esc(id) + "\" type=\"" + esc(f.type) + "\" maxlength=\"" + f.max + "\" " +
+      "autocomplete=\"" + (f.secret ? "new-password" : "off") + "\" " +
+      (f.placeholder ? "placeholder=\"" + esc(f.placeholder) + "\" " : "") +
+      "value=\"" + esc(f.secret ? "" : (fields[f.id] || "")) + "\" />\n" +
+      (hint ? "        <p class=\"hint\">" + esc(hint) + "</p>\n" : "") +
+      "        <p class=\"err hidden\" data-for=\"" + esc(id) + "\"></p>\n" +
+      "      </div>";
+  }).join("\n");
+  const mode = card.checkout_mode === "stk_push"
+    ? "Buyers get an M-Pesa prompt on their phone and confirm it during checkout."
+    : "Buyers are redirected to " + esc(payLabel(key)) + " to complete payment.";
+  const platform = (card.credentials_source === "platform" || (!card.has_own_credentials && (card.platform_available || card.platform_credentials)))
+    ? "<p class=\"tiny faint\">Owner payment mode is available for " + esc(payLabel(key)) +
+      " on this platform. Normal checkout stays closed until you save your own details below, so sales settle directly to you.</p>"
+    : "";
+  const tested = card.last_tested_at ? "Last tested " + esc(fmtDateTime(card.last_tested_at)) : "Not tested yet";
+  const err = (card.status === "error" && card.last_error) ? "<p class=\"err\">" + esc(card.last_error) + "</p>" : "";
+  return "" +
+  "    <article class=\"pay-card" + (isActive ? " is-active" : "") + "\" data-key=\"" + esc(key) + "\">\n" +
+  "      <header class=\"pay-card-head\">\n" +
+  "        <span class=\"pay-mark\" style=\"background:" + esc(card.logo_color || "#444") + "\">" + esc(card.logo_mark || "") + "</span>\n" +
+  "        <div class=\"pay-card-title\"><strong>" + esc(card.label) + "</strong>" +
+  "          <span class=\"tiny faint\">" + esc(card.methods || "") + "</span></div>\n" +
+  "        " + (isActive ? "<span class=\"badge ok\">Active</span>" : payBadge(card.status)) + "\n" +
+  "      </header>\n" +
+  "      <p class=\"tiny faint\" style=\"margin:6px 0 0\">" + tested + "</p>\n" +
+  "      <details class=\"pay-card-config\">\n" +
+  "        <summary>Configure account</summary>\n" +
+  "        <p class=\"tiny muted\" style=\"margin:0 0 10px\">" + mode + "</p>\n" + err + platform +
+  "        <div class=\"form-grid\">\n" + rows + "\n        </div>\n" +
+  "        <div class=\"toolbar\">\n" +
+  "        <button class=\"btn btn-primary\" type=\"button\" data-act=\"save\" data-key=\"" + esc(key) + "\">Save details</button>\n" +
+  "        <button class=\"btn btn-ghost\" type=\"button\" data-act=\"test\" data-key=\"" + esc(key) + "\">Test connection</button>\n" +
+  (isActive ? "" : "        <button class=\"btn btn-ghost\" type=\"button\" data-act=\"activate\" data-key=\"" + esc(key) + "\"" +
+    (card.available ? "" : " disabled title=\"Connect this provider and pass its connection test first\"") + ">Make active</button>\n") +
+  (card.has_own_credentials ? "        <button class=\"btn btn-ghost\" type=\"button\" data-act=\"disconnect\" data-key=\"" + esc(key) + "\">Disconnect</button>\n" : "") +
+  "        </div>\n" +
+  "      </details>\n" +
+  "    </article>";
+}
+function paintCards(){
+  const host = $("#payCards");
+  if(host) host.innerHTML = PAY_STATE.providers.map(payCardHtml).join("");
+}
+function paintActiveSelect(){
+  const sel = $("#payActive");
+  if(!sel) return;
+  const active = payActiveKey();
+  const connected = PAY_STATE.providers.filter(c => c.available);
+  const options = connected.length ? connected : PAY_STATE.providers;
+  sel.innerHTML = options.map(function(c){
+    return "<option value=\"" + esc(c.key) + "\"" + (c.key === active ? " selected" : "") + ">" +
+      esc(c.label) + (c.available ? "" : " (needs configuration)") + "</option>";
+  }).join("");
+  sel.disabled = !connected.length;
+}
+/* The single state line under the buttons. */
+function payStateText(){
+  const a = PAY_STATE.active || {};
+  const any = PAY_STATE.providers.some(c => c.available);
+  if(!any){
+    return { kind: "info", msg: "No payment provider is connected yet, so checkout is closed for every event you publish. Connect one below, run its connection test, then make it active to go live." };
+  }
+  if(a.provider){
+    const card = payCard(a.provider);
+    if(card && card.status === "error"){
+      return { kind: "err", msg: (card.last_error || ("The last " + payLabel(a.provider) + " connection test failed.")) + " Fix it, or make another connected provider active." };
+    }
+    if(a.credentials_source === "platform"){
+      return { kind: "info", msg: "This account is using the platform's shared " + payLabel(a.provider) + " account (legacy). New checkout stays closed until you save credentials of your own. Add your own " + payLabel(a.provider) + " details to settle sales directly to you, or use owner payment mode explicitly." };
+    }
+    return { kind: "ok", msg: payLabel(a.provider) + " is your Active Payment Provider. Buyers of every event that does not name a provider of its own pay through it." };
+  }
+  return { kind: "info", msg: "You have a connected provider but none of them is active yet, so checkout is closed. Choose your Active Payment Provider below." };
+}
+function paintPayment(view){
+  const v = view || {};
+  PAY_STATE = { providers: v.providers || v.payment_providers || [], active: v.active_provider || null };
+  paintCards();
+  paintActiveSelect();
+  const key = payActiveKey();
+  const activeCard = payCard(key);
+  const state = key ? (activeCard ? activeCard.status : "not_connected") : "";
+  setText("#payProviderValue", key ? payLabel(key) : "None");
+  setText("#payProviderSide", key ? payLabel(key) : "None");
+  if($("#payStatusValue")) $("#payStatusValue").innerHTML = key ? payBadge(state) : "None";
+  if($("#payStatusBadgeSide")) $("#payStatusBadgeSide").innerHTML = key ? payBadge(state) : "None";
+  const connected = PAY_STATE.providers.filter(c => c.available);
+  setText("#paySecretValue", connected.length ? connected.map(c => c.label).join(", ") : "None");
+  const latest = PAY_STATE.providers.filter(c => c.last_tested_at).sort((a, b) => String(b.last_tested_at).localeCompare(String(a.last_tested_at)))[0];
+  setText("#payTestedValue", latest ? payLabel(latest.key) + " - " + fmtDateTime(latest.last_tested_at) : "Not tested yet");
+  const sideHint = $("#paySideHint");
+  if(sideHint) sideHint.textContent = connected.length
+    ? "Connected. Buyers pay into your merchant account at checkout."
+    : "Connect a merchant account to start selling tickets.";
+  const st = payStateText();
+  showPayAlert(st.kind, st.msg);
+}
+/* The typed values for one card. Blank secrets are omitted, so a saved key is
+   never overwritten by an empty field. */
+function payDraft(key){
+  const out = {};
+  (PAY_INPUTS[key] || []).forEach(function(f){
+    const el = $("#" + inputId(key, f.id));
+    const v = el ? String(el.value || "").trim() : "";
+    if(v) out[f.id] = v;
+  });
+  return out;
+}
+/* A provider can only be saved once every secret it needs is present, either
+   typed now or already stored. */
+function payValidate(key, draft){
+  const fields = (payCard(key) || {}).fields || {};
+  let ok = true;
+  (PAY_INPUTS[key] || []).forEach(function(f){ setErr(inputId(key, f.id), ""); });
+  (PAY_INPUTS[key] || []).forEach(function(f){
+    if(!f.secret || draft[f.id] || fields["has_" + f.id]) return;
+    setErr(inputId(key, f.id), "Enter your " + f.label.toLowerCase() + ".");
+    ok = false;
+  });
+  return ok;
+}
+async function loadPayment(){
+  if(!HAS_ORG){ paymentNeedsProfile(); return; }
+  try {
+    const res = await api("/api/organizer/payment-providers");
+    paintPayment((res && res.data) ? res.data : res);
+    const ownerToggle = $("#useOwnerPayments");
+    if(ownerToggle) ownerToggle.disabled = false;
+  } catch (err) {
+    if(err.code === "NO_ORGANIZER" || (err.status === 403 && /organizer/i.test(err.message || ""))){ paymentNeedsProfile(); return; }
+    showPayAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  }
+}
+/* Save / test / disconnect / make active, all against one provider card. */
+async function payAction(act, key, btn){
+  if(!HAS_ORG){ paymentNeedsProfile(); return; }
+  if(act === "disconnect"){
+    if(!window.confirm("Disconnect " + payLabel(key) + "? Past orders and tickets stay untouched, but new checkout through this account closes immediately.")) return;
+  }
+  const label = btn ? btn.textContent : "";
+  if(btn){ btn.disabled = true; btn.textContent = "Working..."; }
+  try {
+    if(act === "save"){
+      const draft = payDraft(key);
+      if(!payValidate(key, draft)){ showPayAlert("err", "Please check the highlighted fields in the " + payLabel(key) + " card."); return; }
+      const res = await api("/api/organizer/payment-providers/" + key, { method: "POST", body: draft });
+      paintPayment(res);
+      toast(payLabel(key) + " details saved", "ok");
+      showPayAlert("ok", res.message || (payLabel(key) + " details saved. Run the connection test to confirm they work."));
+      return;
+    }
+    if(act === "test"){
+      /* A draft is tested without being saved: the Worker never stores it. */
+      const res = await api("/api/organizer/payment-providers/" + key + "/test", { method: "POST", body: payDraft(key) });
+      paintPayment(res);
+      if(res && res.ok){
+        toast(payLabel(key) + " connection test passed", "ok");
+        showPayAlert("ok", (res.message || (payLabel(key) + " accepted these credentials.")) + (res.saved === false ? " Save the details to start selling." : ""));
+      } else {
+        toast(payLabel(key) + " connection test failed", "err");
+        showPayAlert("err", (res && res.message) || (payLabel(key) + " rejected these credentials. Check the values and try again."));
+      }
+      return;
+    }
+    if(act === "activate"){
+      const res = await api("/api/organizer/payment-provider/select", { method: "POST", body: { provider: key } });
+      paintPayment(res);
+      toast(payLabel(key) + " is now active", "ok");
+      showPayAlert("ok", res.message || (payLabel(key) + " is now your Active Payment Provider."));
+      return;
+    }
+    if(act === "disconnect"){
+      const res = await api("/api/organizer/payment-providers/" + key, { method: "DELETE" });
+      paintPayment(res);
+      toast(payLabel(key) + " disconnected", "ok");
+      showPayAlert("info", res.message || (payLabel(key) + " has been disconnected. Past orders and tickets are unchanged."));
+    }
+  } catch (err) {
+    if(err.code === "PROVIDER_NOT_CONFIGURED" || err.code === "MISSING_SECRET"){
+      const match = (PAY_INPUTS[key] || []).filter(f => (err.message || "").toLowerCase().indexOf(f.label.toLowerCase().split(" ").pop()) > -1)[0];
+      if(match) setErr(inputId(key, match.id), err.message);
+    }
+    showPayAlert("err", err.message);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+  }
+}
+async function savePayment(){ await payAction("save", payActiveKey() || "paystack", null); }
+
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  const me = await requireSession(["organizer", "owner"]);
+  if(!me) return;
+  paint(me);
+  $("#pickLogo").addEventListener("click", () => $("#logo").click());
+  $("#logo").addEventListener("change", e => {
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(ALLOWED.indexOf(file.type) === -1){ setErr("logo", "Use a JPG, PNG or WEBP image."); return; }
+    if(file.size > MAX_BYTES){ setErr("logo", "That image is larger than 5 MB."); return; }
+    setErr("logo", "");
+    LOGO_FILE = file;
+    const host = $("#logoPreview");
+    if(host) host.outerHTML = "<img class=\"logo-preview\" id=\"logoPreview\" src=\"" + URL.createObjectURL(file) + "\" alt=\"Selected logo preview\" />";
+    toast("Logo ready to upload - save settings to apply", "ok");
+  });
+  $("#orgForm").addEventListener("submit", e => { e.preventDefault(); save(); });
+  $("#resetPw").addEventListener("click", async () => {
+    const email = $("#email").value.trim();
+    $("#pwMsg").classList.add("hidden");
+    try {
+      await Auth.sendReset(email);
+      $("#pwOk").style.display = "block";
+      $("#pwOk").textContent = "Password reset email sent to " + email + ".";
+    } catch (err) {
+      $("#pwMsg").textContent = authMessage(err);
+      $("#pwMsg").classList.remove("hidden");
+    }
+  });
+  const signOut = async () => { try { await Auth.signOut(); } catch(err){} location.href = "/login/"; };
+  const sideSignOut = $("#signOutBtn"); if(sideSignOut) sideSignOut.addEventListener("click", signOut);
+  const panelSignOut = $("#signOutPanelBtn"); if(panelSignOut) panelSignOut.addEventListener("click", signOut);
+  /* ---------- payment settings wiring ---------- */
+  /* One delegated listener for the whole card list: cards are re-rendered after
+     every call, so per-button listeners would be lost each time. */
+  const payCards = $("#payCards");
+  if(payCards){
+    payCards.addEventListener("click", e => {
+      const btn = e.target.closest("button[data-act]");
+      if(!btn || btn.disabled) return;
+      payAction(btn.getAttribute("data-act"), btn.getAttribute("data-key"), btn);
+    });
+  }
+  const activeSel = $("#payActive");
+  if(activeSel) activeSel.addEventListener("change", () => { hidePayAlert(); payAction("activate", activeSel.value, null); });
+  /* The account-wide owner payment default saves on its own, so it does not
+     depend on the profile form being re-submitted. */
+  const ownerToggle = $("#useOwnerPayments");
+  if(ownerToggle){
+    ownerToggle.addEventListener("change", async () => {
+      if(!HAS_ORG){ paymentNeedsProfile(); return; }
+      setErr("useOwnerPayments", "");
+      try {
+        await api("/api/organizer/profile", { method: "PUT", body: { use_owner_payments: ownerToggle.value === "true" } });
+        toast(ownerToggle.value === "true"
+          ? "Owner payment mode is on for new events"
+          : "Events will use your own merchant account", "ok");
+      } catch (err) {
+        ownerToggle.value = ownerToggle.value === "true" ? "false" : "true";
+        setErr("useOwnerPayments", err.message);
+        showAlert("err", err.message);
+      }
+    });
+  }
+  await loadPayment();
+});
+</script>
+</body>
+</html>

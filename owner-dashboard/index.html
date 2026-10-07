@@ -1,0 +1,772 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Platform Overview | Prince Alex TicketHub Owner</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}.center{text-align:center}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+.page-head{background:#fff;border-bottom:1px solid var(--line);padding:34px 0 30px}
+.lead{max-width:660px;color:var(--muted)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+/* ===== shared app/dashboard CSS (#DASHCSS#) ===== */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;align-items:start}
+.side{background:#0B1220;color:#C3CADE;padding:16px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo-txt strong{color:#fff}
+.side .logo-txt small{color:#8A93A6}
+.side-brand{padding:6px 6px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side h5{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7C8AA5;margin:18px 8px 8px}
+.side a{display:flex;align-items:center;gap:10px;color:#C3CADE;font-size:.9rem;font-weight:600;padding:10px 12px;border-radius:11px;margin-bottom:2px;text-decoration:none}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a[aria-current="page"]{background:var(--brand-600);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.15rem;margin:0}
+.main{padding:22px;min-width:0}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat span{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat strong{display:block;font-size:1.5rem;margin-top:6px;letter-spacing:-.02em}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-top:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-head h2{font-size:1.02rem;margin:0}
+.panel-body{padding:18px}
+.tablewrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .t-right{text-align:right}
+.tbl-thumb{width:46px;height:32px;border-radius:8px;object-fit:cover;background:#EDEFF6;flex:none}
+.row-flex{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.alert{padding:12px 14px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+.state{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.94rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .field{margin:0;min-width:170px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+.qty input{width:64px;text-align:center;min-height:38px}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:block;border-radius:0}
+  .side nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .side nav a{flex:none}
+  .side h5{display:none}
+  .topbar{padding:12px 14px;position:static}
+  .main{padding:14px}
+}
+.split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:20px;align-items:start}
+@media(max-width:1020px){.split{grid-template-columns:1fr}}
+.mini-list{list-style:none;padding:0;margin:0}
+.mini-list li{padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.mini-list li:last-child{border-bottom:0}
+/* ---- agreement text editor -----------------------------------------------
+   A small formatting bar over a contenteditable area. It writes the same tags
+   the Worker keeps (p, strong, em, u, h3, ul/ol/li, blockquote, a), so what the
+   owner composes is exactly what the organizer reads and what is printed. */
+.rte{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:#F7F8FC}
+.rte-btn{font:inherit;font-size:.82rem;font-weight:600;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:8px;min-height:32px;padding:4px 9px;cursor:pointer}
+.rte-btn:hover{border-color:var(--brand-600);color:var(--brand-600)}
+.rte-btn.on{background:var(--brand-600);border-color:var(--brand-600);color:#fff}
+.rte-body{min-height:230px;max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:0 0 10px 10px;padding:14px 16px;background:#fff;line-height:1.7;font-size:.94rem}
+.rte-body:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.rte-body:empty:before{content:attr(data-placeholder);color:var(--faint)}
+.rte-body h3{font-size:1.06rem;margin:16px 0 6px}
+.rte-body h4{font-size:1rem;margin:14px 0 6px}
+.rte-body h5{font-size:.84rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.rte-body ul,.rte-body ol{margin:0 0 12px;padding-left:22px}
+.rte-body blockquote{margin:0 0 12px;padding:8px 14px;border-left:3px solid var(--brand-600);background:var(--infobg)}
+.mini-list li:last-child{border-bottom:0}
+</style></head>
+<body>
+<div class="app">  <aside class="side">
+    <div class="side-brand">
+      <a class="logo" href="/" aria-label="Prince Alex TicketHub">
+        <span class="logo-mark" aria-hidden="true">PAT</span>
+        <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Platform owner</small></span>
+      </a>
+    </div>
+    <nav aria-label="Owner navigation">
+      <h5>Platform</h5>
+      <a href="/owner-dashboard/" aria-current="page">Dashboard</a>
+      <a href="/owner-organizers/">Organizers</a>
+      <a href="/owner-events/">Events</a>
+      <a href="/owner-orders/">Orders</a>
+      <h5>System</h5>
+      <a href="/owner-settings/">Settings</a>
+      <a href="#" id="signOutBtn">Sign out</a>
+    </nav>
+  </aside><div>
+  <header class="topbar">
+    <h1>Platform overview</h1>
+    <div class="who"><span class="small muted" id="whoName">&nbsp;</span><span class="avatar" id="whoAvatar" aria-hidden="true">PA</span></div>
+  </header>
+  <main class="main" id="main">
+    <div id="pageAlert" class="alert hidden" role="alert"></div>
+    <section class="stats" aria-label="Platform numbers">
+      <div class="stat"><span>Total organizers</span><strong id="sOrganizers">-</strong></div>
+      <div class="stat"><span>Total events</span><strong id="sEvents">-</strong></div>
+      <div class="stat"><span>Active events</span><strong id="sActive">-</strong></div>
+      <div class="stat"><span>Tickets sold</span><strong id="sTickets">-</strong></div>
+      <div class="stat"><span>Gross ticket sales</span><strong id="sGross">-</strong></div>
+      <div class="stat"><span>Platform revenue</span><strong id="sRevenue">-</strong></div>
+      <div class="stat"><span>In owner account</span><strong id="sOwnerMoney">-</strong></div>
+      <div class="stat"><span>In organizer accounts</span><strong id="sOrganizerMoney">-</strong></div>
+      <div class="stat"><span>Pending payments</span><strong id="sPending">-</strong></div>
+      <div class="stat"><span>Checked in</span><strong id="sChecked">-</strong></div>
+    </section>
+    <div class="split" style="margin-top:20px">
+      <section class="panel" style="margin-top:0" aria-labelledby="recentOrders">
+        <div class="panel-head"><h2 id="recentOrders">Recent orders</h2><a class="btn btn-ghost btn-sm" href="/owner-orders/">View all</a></div>
+        <div class="tablewrap">
+          <table class="tbl">
+            <thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Event</th><th scope="col" class="t-right">Amount</th><th scope="col">Payment</th><th scope="col">Collected via</th><th scope="col">Date</th></tr></thead>
+            <tbody id="ordersBody"><tr><td colspan="7"><span class="skel" style="display:block;height:18px"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div id="ordersState"></div>
+      </section>
+      <div>
+        <section class="panel" style="margin-top:0" aria-labelledby="recentOrgs">
+          <div class="panel-head"><h2 id="recentOrgs">Recent organizers</h2><a class="btn btn-ghost btn-sm" href="/owner-organizers/">Manage</a></div>
+          <div class="panel-body"><ul class="mini-list" id="orgsList"><li><span class="skel" style="display:block;height:16px;width:100%"></span></li></ul></div>
+        </section>
+        <section class="panel" aria-labelledby="recentEvents">
+          <div class="panel-head"><h2 id="recentEvents">Recent events</h2><a class="btn btn-ghost btn-sm" href="/owner-events/">Manage</a></div>
+          <div class="panel-body"><ul class="mini-list" id="eventsList"><li><span class="skel" style="display:block;height:16px;width:100%"></span></li></ul></div>
+        </section>
+      </div>
+    </div>
+<section class="panel" style="margin-top:20px" aria-labelledby="agPanel">
+      <div class="panel-head">
+        <h2 id="agPanel">Organizer agreement</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" type="button" id="agRemind">Send reminders</button>
+          <button class="btn btn-primary btn-sm" type="button" id="agNew">New version</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="agAlert" class="alert hidden" role="alert"></div>
+        <div id="agSummary" class="small muted">Loading the agreement currently in force...</div>
+        <div class="tablewrap" style="margin-top:12px">
+          <table class="tbl">
+            <thead><tr><th scope="col">Version</th><th scope="col">Title</th><th scope="col">Status</th><th scope="col" class="t-right">Signatures</th><th scope="col">Effective</th><th scope="col"></th></tr></thead>
+            <tbody id="agBody"><tr><td colspan="6"><span class="skel" style="display:block;height:16px"></span></td></tr></tbody>
+          </table>
+        </div>
+        <form id="agForm" class="hidden" style="margin-top:16px">
+          <div class="form-grid">
+            <div class="field"><label for="agVersion">Version</label><input id="agVersion" type="text" maxlength="24" placeholder="1.1" required /><p class="hint">Must be unique, e.g. 1.1 or 2.0</p></div>
+            <div class="field"><label for="agTitle">Title</label><input id="agTitle" type="text" maxlength="160" placeholder="TicketHub Organizer Agreement" required /></div>
+            <div class="field"><label for="agEffective">Effective date</label><input id="agEffective" type="date" /><p class="hint">Optional. Leave blank for effective on acceptance.</p></div>
+            <div class="field"><label for="agPct">Platform commission (%)</label><input id="agPct" type="number" min="0" max="100" step="0.1" placeholder="5" /><p class="hint">Optional. Stored with this version and shown to organizers.</p></div>
+          </div>
+<div class="field">
+            <label for="agContent">Agreement text</label>
+            <div class="rte" role="group" aria-label="Agreement formatting">
+              <button class="rte-btn" type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+              <button class="rte-btn" type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+              <button class="rte-btn" type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+              <button class="rte-btn" type="button" data-block="h3" title="Heading">H</button>
+              <button class="rte-btn" type="button" data-block="p" title="Paragraph">¶</button>
+              <button class="rte-btn" type="button" data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+              <button class="rte-btn" type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+              <button class="rte-btn" type="button" data-block="blockquote" title="Quote">&ldquo;</button>
+              <button class="rte-btn" type="button" data-cmd="removeFormat" title="Clear formatting">&#10005; fmt</button>
+              <button class="rte-btn" type="button" data-link="1" title="Insert a link">Link</button>
+            </div>
+            <div id="agContent" class="rte-body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Agreement text" data-placeholder="Write the agreement here..."></div>
+            <p class="hint">Bold, italic, underline, headings, lists and quotes are kept exactly as you write them: the organizer reads and signs the formatted text, and the same formatting is printed on the downloadable copy. Pasting keeps plain text only.</p>
+          </div>
+          <div class="field"><label for="agChange">Change summary</label><input id="agChange" type="text" maxlength="600" placeholder="What changed in this version" /></div>
+          <div class="field"><label for="agPayout">Payout terms</label><textarea id="agPayout" rows="3"></textarea></div>
+          <div class="field"><label for="agRefunds">Refund policy</label><textarea id="agRefunds" rows="3"></textarea></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn btn-primary" type="submit">Create draft version</button>
+            <button class="btn btn-ghost" type="button" id="agCancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</div></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Owner dashboard logic (platform wide numbers from the Worker)
+   ============================================================ */
+function setNum(sel, value){ setText(sel, Number(value || 0).toLocaleString("en-KE")); }
+async function loadOwnerDashboard(){
+  try {
+    const data = await api("/api/owner/dashboard");
+    const s = data.stats || data.summary || {};
+    setNum("#sOrganizers", s.total_organizers);
+    setNum("#sEvents", s.total_events);
+    setNum("#sActive", s.active_events);
+    setNum("#sTickets", s.tickets_sold);
+    setText("#sGross", KES(s.gross_sales || s.gross_revenue || 0));
+    setText("#sRevenue", KES(s.platform_revenue || 0));
+    setText("#sOwnerMoney", KES(s.owner_collected_amount || 0));
+    setText("#sOrganizerMoney", KES(s.organizer_collected_amount || 0));
+    setText("#sPending", KES(s.pending_payments || 0));
+    setNum("#sChecked", s.checked_in);
+    renderOrders(normList(data, "recent_orders"));
+    renderOrgs(normList(data, "recent_organizers"));
+    renderEvents(normList(data, "recent_events"));
+  } catch (err) {
+    const kind = err.code === "NOT_CONFIGURED" ? "info" : "err";
+    showAlert(kind, err.message);
+    ["#sOrganizers","#sEvents","#sActive","#sTickets","#sGross","#sRevenue","#sPending","#sChecked","#sOwnerMoney","#sOrganizerMoney"].forEach(sel => setText(sel, "-"));
+    $("#ordersBody").innerHTML = "";
+    $("#ordersState").innerHTML = stateBox("Owner analytics unavailable", err.message, "<button class=\"btn btn-primary\" type=\"button\" id=\"retry\">Try again</button>");
+    const r = $("#retry"); if(r) r.addEventListener("click", loadOwnerDashboard);
+    $("#orgsList").innerHTML = "<li class=\"muted small\">No data yet.</li>";
+    $("#eventsList").innerHTML = "<li class=\"muted small\">No data yet.</li>";
+  }
+}
+/* Collected-via badge: the frozen checkout-time snapshot. "unknown" = order
+   predates money-trail tracking (migration 0007), not an error. */
+function moneyBadge(o){
+  const via = o.collected_via || "";
+  if(via === "owner") return "<span class=\"badge ok\">owner account</span>";
+  if(via === "organizer") return "<span class=\"badge\">organizer</span>";
+  return "<span class=\"badge neutral\">unknown</span>";
+}
+function renderOrders(orders){
+  const body = $("#ordersBody");
+  if(!orders.length){
+    body.innerHTML = "";
+    $("#ordersState").innerHTML = stateBox("No orders yet", "Paid and pending orders across all organizers will appear here.");
+    return;
+  }
+  $("#ordersState").innerHTML = "";
+  body.innerHTML = orders.map(o => "<tr>"
+    + "<td><strong>" + esc(o.order_number || o.reference || o.id || "-") + "</strong></td>"
+    + "<td class=\"small\">" + esc(o.customer_name || o.customer_email || "-") + "</td>"
+    + "<td class=\"small\">" + esc(o.event_title || "-") + "</td>"
+    + "<td class=\"t-right\">" + esc(KES(o.amount || o.total_amount || 0)) + "</td>"
+    + "<td>" + badge(o.payment_status || o.status) + "</td>"
+    + "<td>" + moneyBadge(o) + "</td>"
+    + "<td class=\"small\">" + esc(fmtDateTime(o.created_at)) + "</td></tr>").join("");
+}
+function renderOrgs(orgs){
+  const list = $("#orgsList");
+  if(!orgs.length){ list.innerHTML = "<li class=\"muted small\">No organizers yet.</li>"; return; }
+  list.innerHTML = orgs.map(o => "<li><span><strong>" + esc(o.business_name || o.full_name || "Organizer") + "</strong><div class=\"tiny muted\">" + esc(o.business_email || o.email || "") + "</div></span>" + badge(o.status || "active") + "</li>").join("");
+}
+function renderEvents(events){
+  const list = $("#eventsList");
+  if(!events.length){ list.innerHTML = "<li class=\"muted small\">No events yet.</li>"; return; }
+  list.innerHTML = events.map(e => "<li><span><strong>" + esc(e.title || "Untitled") + "</strong><div class=\"tiny muted\">" + esc((e.organizer_name || "") + " " + fmtDate(e.event_date)) + "</div></span>" + badge(e.status) + "</li>").join("");
+}
+/* ============================================================
+   Organizer agreement administration.
+   Versions, activation and reminders are owner-only actions in
+   the Worker; this panel only calls those routes and shows what
+   came back.
+   ============================================================ */
+const AG_ADMIN = "/api/admin/agreements";
+let AG_ACTIVE_ID = null;
+function agAlert(kind, msg){
+  const box = $("#agAlert"); if(!box) return;
+  if(!msg){ box.classList.add("hidden"); box.textContent = ""; return; }
+  box.className = "alert " + kind; box.textContent = msg; box.classList.remove("hidden");
+}
+function agFeeText(fee){
+  const rows = (fee && fee.rows) || [];
+  if(!rows.length) return "No separate fee terms configured";
+  return rows.slice(0, 3).map(r => r.label + ": " + r.value).join(" - ");
+}
+function renderAgreements(data){
+  const list = (data && data.agreements) || [];
+  AG_ROWS = list;
+  const active = data && data.active;
+  const stats = (data && data.stats) || {};
+  AG_ACTIVE_ID = active ? active.id : null;
+  const sum = $("#agSummary");
+  if(sum){
+    sum.innerHTML = active
+      ? "<strong>In force: version " + esc(active.version) + "</strong> - " + esc(active.title) +
+        (active.effective_date ? " (effective " + esc(active.effective_date) + ")" : "") +
+        "<br><span class=\"tiny muted\">" + esc(agFeeText(active.fee)) + "</span>"
+      : "<strong>No agreement version is active.</strong> Organizers cannot publish anything until a version is activated.";
+    sum.innerHTML += "<br><span class=\"tiny muted\">" + Number(stats.unsigned_for_active || 0) +
+      " of " + Number(stats.total_organizers || 0) + " organizer account(s) still need to sign this version.</span>";
+  }
+  const body = $("#agBody");
+  if(!body) return;
+  if(!list.length){ body.innerHTML = "<tr><td colspan=\"6\" class=\"muted\">No versions yet.</td></tr>"; return; }
+  body.innerHTML = list.map(a => "<tr>"
+    + "<td><strong>v" + esc(a.version) + "</strong></td>"
+    + "<td class=\"small\">" + esc(a.title) + (a.summary ? "<div class=\"tiny muted\">" + esc(a.summary) + "</div>" : "") + "</td>"
+    + "<td>" + badge(a.status) + "</td>"
+    + "<td class=\"t-right\">" + Number(a.signatures || 0).toLocaleString("en-KE") + "</td>"
+    + "<td class=\"small\">" + esc(a.effective_date || "-") + "</td>"
+    + "<td class=\"t-right\"><span style=\"display:inline-flex;gap:6px;justify-content:flex-end\">" + (a.status === "draft"
+        ? "<button class=\"btn btn-ghost btn-sm\" type=\"button\" data-ag-edit=\"" + esc(a.id) + "\">Edit</button>" +
+          "<button class=\"btn btn-primary btn-sm\" type=\"button\" data-ag-activate=\"" + esc(a.id) + "\" data-ag-version=\"" + esc(a.version) + "\">Activate</button>"
+        : "<span class=\"tiny muted\">activated " + esc(fmtDate(a.activated_at)) + "</span>") + "</span></td>"
+    + "</tr>").join("");
+  Array.prototype.forEach.call(body.querySelectorAll("[data-ag-activate]"), function(btn){
+    btn.addEventListener("click", () => activateAgreement(btn.getAttribute("data-ag-activate"), btn.getAttribute("data-ag-version"), btn));
+  });
+  Array.prototype.forEach.call(body.querySelectorAll("[data-ag-edit]"), function(btn){
+    btn.addEventListener("click", () => openAgreementDraft(btn.getAttribute("data-ag-edit")));
+  });
+}
+async function loadAgreements(){
+  try { renderAgreements(await api(AG_ADMIN)); }
+  catch(err){ agAlert("err", (err && err.message) || "We could not load the agreement versions."); }
+}
+async function activateAgreement(id, version, btn){
+  if(!window.confirm("Activate version " + version + " as the required organizer agreement?" +
+    " Organizers who have not accepted it will not be able to publish anything.")) return;
+  agAlert("info", "Activating version " + version + "...");
+  if(btn){ btn.disabled = true; btn.textContent = "Activating..."; }
+  try {
+    const res = await api(AG_ADMIN + "/" + encodeURIComponent(id) + "/activate", { method: "POST", body: {} });
+    const n = res.notifications || {};
+    toast("Version " + version + " is now the required agreement.", "ok");
+    agAlert("ok", "Version " + version + " is active. " + Number(n.invited || 0) + " invitation(s) and " +
+      Number(n.updated || 0) + " re-acceptance notice(s) were queued.");
+    await loadAgreements();
+  } catch(err){
+    agAlert("err", (err && err.message) || "The version could not be activated.");
+    if(btn){ btn.disabled = false; btn.textContent = "Activate"; }
+  }
+}
+async function sendAgreementReminders(){
+  if(!AG_ACTIVE_ID){ agAlert("warn", "There is no active agreement version to send reminders about."); return; }
+  const btn = $("#agRemind");
+  if(btn){ btn.disabled = true; btn.textContent = "Sending..."; }
+  try {
+    const res = await api(AG_ADMIN + "/" + encodeURIComponent(AG_ACTIVE_ID) + "/remind", { method: "POST", body: {} });
+    agAlert("ok", Number((res.notifications || {}).reminded || 0) + " reminder(s) queued for organizers who have not signed this version.");
+    toast("Reminders queued", "ok");
+  } catch(err){ agAlert("err", (err && err.message) || "The reminders could not be sent."); }
+  finally { if(btn){ btn.disabled = false; btn.textContent = "Send reminders"; } }
+}
+/* The formatting bar for the agreement text. Commands act on the editor
+   selection only, and whatever they produce is reduced to the allow-list again
+   by the Worker on save, so the editor can never introduce markup the organizer
+   page would refuse to render. */
+function wireAgreementEditor(){
+  const editor = $("#agContent");
+  if(!editor) return;
+  const run = (fn) => { editor.focus(); fn(); };
+  const bar = document.querySelector(".rte");
+  if(bar){
+    bar.addEventListener("mousedown", e => { if(e.target.closest(".rte-btn")) e.preventDefault(); });
+    bar.addEventListener("click", function(e){
+      const btn = e.target.closest(".rte-btn");
+      if(!btn) return;
+      if(btn.getAttribute("data-cmd")) run(() => document.execCommand(btn.getAttribute("data-cmd"), false, null));
+      else if(btn.getAttribute("data-block")) run(() => document.execCommand("formatBlock", false, btn.getAttribute("data-block")));
+      else if(btn.getAttribute("data-link")){
+        const url = window.prompt("Link address (https://...)", "https://");
+        if(!/^https?:\/\//i.test(String(url || ""))) return;
+        run(() => document.execCommand("createLink", false, url));
+      }
+    });
+  }
+  /* Pasting never smuggles styling or scripts in: only the words are taken. */
+  editor.addEventListener("paste", function(e){
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, text);
+  });
+  editor.addEventListener("keydown", function(e){
+    if(!(e.ctrlKey || e.metaKey)) return;
+    const key = String(e.key || "").toLowerCase();
+    if(["b", "i", "u"].indexOf(key) === -1) return;
+    e.preventDefault();
+    run(() => document.execCommand(key === "b" ? "bold" : (key === "i" ? "italic" : "underline"), false, null));
+  });
+}
+/* What the editor holds, trimmed of the empty wrappers a contenteditable leaves
+   behind so an untouched editor still reads as empty. */
+function agreementEditorHtml(){
+  const editor = $("#agContent");
+  if(!editor) return "";
+  let html = editor.innerHTML || "";
+  html = html.replace(/<(p|div|br)(\s[^>]*)?>\s*<\/\1>/gi, "").replace(/^\s+|\s+$/g, "");
+  return html.replace(/<div(\s[^>]*)?>/gi, "<p>").replace(/<\/div>/gi, "</p>");
+}
+/* Draft editing reuses the same form and editor: the draft row already carries its
+   stored (sanitised) HTML, so what is re-opened is exactly what was saved. */
+let AG_EDITING = null, AG_ROWS = [];
+function openAgreementDraft(id){
+  const row = (AG_ROWS || []).filter(a => String(a.id) === String(id))[0];
+  if(!row){ agAlert("warn", "That draft could not be found. Reload the list."); return; }
+  AG_EDITING = String(row.id);
+  $("#agVersion").value = row.version || "";
+  $("#agTitle").value = row.title || "";
+  $("#agChange").value = row.summary || "";
+  $("#agEffective").value = row.effective_date || "";
+  const cfg = (row.fee && row.fee.config) || {};
+  $("#agPct").value = (cfg.commission_percent === undefined || cfg.commission_percent === null) ? "" : cfg.commission_percent;
+  $("#agPayout").value = cfg.payout_terms || "";
+  $("#agRefunds").value = cfg.refund_policy || "";
+  const editor = $("#agContent");
+  if(editor) editor.innerHTML = row.content_format === "html" ? (row.content || "") : (row.content || "").replace(/\r?\n/g, "<br>");
+  const submit = $("#agForm button[type=submit]");
+  if(submit) submit.textContent = "Save draft " + (row.version || "");
+  $("#agForm").classList.remove("hidden");
+  $("#agForm").scrollIntoView({ block: "start" });
+}
+function resetAgreementEditor(){
+  AG_EDITING = null;
+  const submit = $("#agForm button[type=submit]");
+  if(submit) submit.textContent = "Create draft version";
+}
+async function createAgreementVersion(ev){
+  const version = $("#agVersion").value.trim(), title = $("#agTitle").value.trim(), content = agreementEditorHtml();
+  if(!version || !title || content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().length < 20){
+    agAlert("warn", "Version, title and the agreement text are all required (the text must be at least 20 characters).");
+    return;
+  }
+  const fee = {};
+  const pct = $("#agPct").value.trim();
+  if(pct !== "" && Number.isFinite(Number(pct))) fee.commission_percent = Number(pct);
+  const payout = $("#agPayout").value.trim(), refunds = $("#agRefunds").value.trim();
+  if(payout) fee.payout_terms = payout;
+  if(refunds) fee.refund_policy = refunds;
+  const btn = $("#agForm button[type=submit]");
+  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  try {
+    /* A draft opened with Edit is saved back with PATCH; a new version is a POST.
+       Both go through the same sanitising Worker route. */
+    const body = {
+      version: version, title: title, content: content,
+      summary: $("#agChange").value.trim(), effective_date: $("#agEffective").value || null, fee_config: fee
+    };
+    const res = AG_EDITING
+      ? await api(AG_ADMIN + "/" + encodeURIComponent(AG_EDITING), { method: "PATCH", body: body })
+      : await api(AG_ADMIN, { method: "POST", body: body });
+    agAlert("ok", (res && res.message) || (AG_EDITING ? "Draft saved." : "Draft version created."));
+    $("#agForm").reset();
+    const editor = $("#agContent"); if(editor) editor.innerHTML = "";
+    resetAgreementEditor();
+    $("#agForm").classList.add("hidden");
+    await loadAgreements();
+  } catch(err){ agAlert("err", (err && err.message) || "The version could not be saved."); }
+  finally { if(btn){ btn.disabled = false; btn.textContent = "Create draft version"; } }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  const me = await requireSession(["owner"]);
+  if(!me) return;
+  paintUser(me);
+  const newer = $("#agNew"); if(newer) newer.addEventListener("click", () => $("#agForm").classList.toggle("hidden"));
+  const cancel = $("#agCancel"); if(cancel) cancel.addEventListener("click", () => {
+    resetAgreementEditor();
+    $("#agForm").classList.add("hidden");
+  });
+  const form = $("#agForm"); if(form) form.addEventListener("submit", createAgreementVersion);
+  const remind = $("#agRemind"); if(remind) remind.addEventListener("click", sendAgreementReminders);
+  wireAgreementEditor();
+  await loadAgreements();
+  await loadOwnerDashboard();
+});
+</script>
+</body>
+</html>

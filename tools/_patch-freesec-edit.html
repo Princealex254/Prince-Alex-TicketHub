@@ -1,0 +1,40 @@
+<!-- ===== Free tickets & email verification (see collect() below) ===== -->
+            <hr class="divider" />
+            <h3 style="font-size:1.05rem">Free tickets &amp; email verification</h3>
+            <p class="small muted">These settings cover every KSh 0 ticket on this event. Paid tickets are never affected.</p>
+            <div class="field" style="max-width:560px">
+              <label for="free_ticket_limit">Free tickets one email address may claim</label>
+              <select id="free_ticket_limit">
+                <option value="1">1 ticket per email address</option>
+                <option value="2">2 tickets per email address</option>
+                <option value="3">3 tickets per email address</option>
+                <option value="4">4 tickets per email address</option>
+                <option value="5">5 tickets per email address</option>
+              </select>
+              <p class="hint">The server refuses any claim beyond this number for the same address, so one person cannot take the whole free allocation.</p>
+              <p class="err hidden" data-for="free_ticket_limit"></p>
+            </div>
+            <div class="field">
+              <label for="free_otp_enabled" style="display:flex;align-items:flex-start;gap:10px">
+                <input id="free_otp_enabled" type="checkbox" style="width:auto;min-height:0;margin-top:3px" />
+                <span>Require email verification for free tickets</span>
+              </label>
+              <p class="hint">On by default. Each free claim needs a 6-digit code sent to the attendee's own address, which stops bots and mistyped addresses from taking tickets.</p>
+            </div>
+            <div class="field">
+              <label for="ip_abuse_enabled" style="display:flex;align-items:flex-start;gap:10px">
+                <input id="ip_abuse_enabled" type="checkbox" style="width:auto;min-height:0;margin-top:3px" />
+                <span>Throttle repeated free-ticket requests from one connection</span>
+              </label>
+              <p class="hint">On by default. Code requests, wrong codes and registrations are counted per IP address by the platform's rate limiter.</p>
+            </div>
+            <details style="margin:6px 0 2px">
+              <summary class="small" style="cursor:pointer;font-weight:600">Advanced abuse thresholds (optional)</summary>
+              <div class="form-grid" style="margin-top:12px">
+                <div class="field"><label for="free_otp_ip_limit">Code requests per IP</label><input id="free_otp_ip_limit" type="number" min="3" max="20" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_otp_ip_window">Code request window (seconds)</label><input id="free_otp_ip_window" type="number" min="300" max="3600" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_register_ip_limit">Registrations per IP</label><input id="free_register_ip_limit" type="number" min="5" max="50" placeholder="Platform default" /></div>
+                <div class="field"><label for="free_register_ip_window">Registration window (seconds)</label><input id="free_register_ip_window" type="number" min="300" max="3600" placeholder="Platform default" /></div>
+              </div>
+              <p class="hint">Leave a box blank to use the platform default. A value outside the allowed range is clamped by the server, so protection can never be switched off here.</p>
+            </details>

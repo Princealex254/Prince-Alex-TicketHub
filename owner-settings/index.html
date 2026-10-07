@@ -1,0 +1,1011 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Platform Settings | Prince Alex TicketHub Owner</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4F46E5" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" /><style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--brand-600:#4F46E5;--brand-700:#3730A3;--accent:#7C3AED;--ink:#0B1220;--ink2:#1F2937;--muted:#5A6478;--faint:#8A93A6;--line:#E6E8F0;--bg:#F6F7FB;--infobg:#EEF2FF;--okink:#04674A;--errink:#9B1C1C;--r:14px;--r-lg:20px;--r-sm:10px;--pill:999px;--sh1:0 1px 2px rgba(16,24,40,.05);--sh2:0 4px 16px rgba(16,24,40,.07);--sh3:0 14px 34px rgba(16,24,40,.10);--max:1180px;--font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:var(--brand-600);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.22;letter-spacing:-.02em}
+h1{font-size:clamp(1.6rem,3.1vw,2.2rem)}h2{font-size:clamp(1.25rem,2.2vw,1.6rem)}h3{font-size:1.05rem}
+p{margin:0 0 1rem}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+.muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}.hidden{display:none!important}.center{text-align:center}
+section{padding:44px 0}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:.94rem;padding:11px 18px;border-radius:var(--pill);border:1px solid transparent;background:#fff;color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--brand-600);color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.24)}
+.btn-primary:hover{background:var(--brand-700)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-sm{padding:8px 14px;min-height:38px;font-size:.85rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1)}
+.pad{padding:22px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}.container{padding:0 16px}section{padding:30px 0}}
+.sh{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo:hover{text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-600),var(--accent));color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.logo-txt{display:flex;flex-direction:column;line-height:1.15}
+.logo-txt strong{font-size:.96rem}.logo-txt small{font-size:.65rem;color:var(--faint)}
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:var(--ink2);font-weight:600;font-size:.91rem;padding:9px 12px;border-radius:var(--pill)}
+.nav a:hover{background:#F1F3F9;text-decoration:none;color:var(--ink)}
+.nav a.btn-primary{color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;place-items:center;padding:0}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+@media(max-width:960px){.burger{display:grid}.nav{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh2);display:none;flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px}.nav.open{display:flex}.nav a{padding:13px 12px;border-radius:12px}}
+.page-head{background:#fff;border-bottom:1px solid var(--line);padding:34px 0 30px}
+.lead{max-width:660px;color:var(--muted)}
+.cta-band{background:#0B1220;color:#fff;border-radius:var(--r-lg);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
+.cta-band h2{color:#fff;margin-bottom:6px}.cta-band p{color:#C3CADE;margin:0;max-width:520px}
+.sf{background:#0B1220;color:#C3CADE;margin-top:52px;padding:44px 0 20px}
+.sf h4{color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sf a{color:#C3CADE;font-size:.9rem;display:block;padding:5px 0}
+.sf a:hover{color:#fff;text-decoration:none}
+.sf-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:26px}
+.sf-bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;color:#8A93A6}
+@media(max-width:820px){.sf-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.sf-grid{grid-template-columns:1fr}}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh3);font-size:.9rem}
+.toast.ok{background:var(--okink)}.toast.err{background:var(--errink)}
+/* ===== shared app/dashboard CSS (#DASHCSS#) ===== */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;align-items:start}
+.side{background:#0B1220;color:#C3CADE;padding:16px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo-txt strong{color:#fff}
+.side .logo-txt small{color:#8A93A6}
+.side-brand{padding:6px 6px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side h5{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7C8AA5;margin:18px 8px 8px}
+.side a{display:flex;align-items:center;gap:10px;color:#C3CADE;font-size:.9rem;font-weight:600;padding:10px 12px;border-radius:11px;margin-bottom:2px;text-decoration:none}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a[aria-current="page"]{background:var(--brand-600);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.15rem;margin:0}
+.main{padding:22px;min-width:0}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--infobg);color:var(--brand-700);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat span{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat strong{display:block;font-size:1.5rem;margin-top:6px;letter-spacing:-.02em}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh1);margin-top:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-head h2{font-size:1.02rem;margin:0}
+.panel-body{padding:18px}
+.tablewrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .t-right{text-align:right}
+.tbl-thumb{width:46px;height:32px;border-radius:8px;object-fit:cover;background:#EDEFF6;flex:none}
+.row-flex{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:var(--pill);background:var(--infobg);color:var(--brand-700);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--okink)}
+.badge.warn{background:var(--warnbg);color:var(--warnink)}
+.badge.err{background:var(--errbg);color:var(--errink)}
+.badge.neutral{background:#F1F3F9;color:var(--muted)}
+.alert{padding:12px 14px;border-radius:var(--r);font-size:.9rem;margin-bottom:16px}
+.alert.ok{background:var(--okbg);color:var(--okink)}
+.alert.err{background:var(--errbg);color:var(--errink)}
+.alert.info{background:var(--infobg);color:var(--brand-700)}
+.skel{background:linear-gradient(90deg,#EEF0F6 25%,#F7F8FC 50%,#EEF0F6 75%);background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+.state{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-lg);background:#fff}
+.state h3{margin-bottom:6px}
+.state p{color:var(--muted);max-width:440px;margin:0 auto 14px}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink2)}
+input,select,textarea{width:100%;font:inherit;font-size:.94rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(79,70,229,.35);outline-offset:1px;border-color:var(--brand-600)}
+.field{margin-bottom:14px}
+.field .hint{font-size:.78rem;color:var(--faint);margin-top:5px}
+.field .err{font-size:.8rem;color:var(--errink);margin-top:5px;font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.toolbar .field{margin:0;min-width:170px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+.qty input{width:64px;text-align:center;min-height:38px}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;display:block;border-radius:0}
+  .side nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .side nav a{flex:none}
+  .side h5{display:none}
+  .topbar{padding:12px 14px;position:static}
+  .main{padding:14px}
+}
+.split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:20px;align-items:start}
+@media(max-width:1020px){.split{grid-template-columns:1fr}}
+.owner-pay-cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.owner-pay-card{padding:14px;min-width:0}
+.owner-pay-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.owner-pay-config{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+.owner-pay-config summary{cursor:pointer;color:var(--brand-700);font-size:.82rem;font-weight:700;list-style-position:inside}
+.owner-pay-config[open] summary{margin-bottom:10px}
+.owner-pay-card .field{margin-bottom:10px}
+.owner-pay-card .field .hint{line-height:1.4}
+.owner-pay-card .toolbar{margin-top:10px;gap:7px}
+.owner-pay-card .toolbar .btn{flex:1 1 auto}
+.mini-list{list-style:none;padding:0;margin:0}
+.mini-list li{padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.mini-list li:last-child{border-bottom:0}
+.two-col{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:20px;align-items:start}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+.readonly{background:#F7F8FC;color:var(--muted)}
+</style></head>
+<body>
+<div class="app"><aside class="side">
+    <div class="side-brand">
+      <a class="logo" href="/" aria-label="Prince Alex TicketHub">
+        <span class="logo-mark" aria-hidden="true">PAT</span>
+        <span class="logo-txt"><strong>Prince Alex TicketHub</strong><small>Platform owner</small></span>
+      </a>
+    </div>
+    <nav aria-label="Owner navigation">
+      <h5>Platform</h5>
+      <a href="/owner-dashboard/">Dashboard</a>
+      <a href="/owner-organizers/">Organizers</a>
+      <a href="/owner-events/">Events</a>
+      <a href="/owner-orders/">Orders</a>
+      <h5>System</h5>
+      <a href="/owner-settings/" aria-current="page">Settings</a>
+      <a href="#" id="signOutBtn">Sign out</a>
+    </nav>
+  </aside><div>
+  <header class="topbar">
+    <h1>Platform settings</h1>
+    <div class="who"><span class="small muted" id="whoName">&nbsp;</span><span class="avatar" id="whoAvatar" aria-hidden="true">PA</span></div>
+  </header>
+  <main class="main" id="main">
+    <div id="pageAlert" class="alert hidden" role="alert"></div>
+    <div class="two-col">
+      <section class="panel" style="margin-top:0" aria-labelledby="settingsTitle">
+        <div class="panel-head"><h2 id="settingsTitle">Platform configuration</h2><span class="small muted">Stored in Cloudflare D1</span></div>
+        <div class="panel-body">
+          <form id="settingsForm" novalidate>
+            <div class="form-grid">
+              <div class="field"><label for="platform_name">Platform name</label><input id="platform_name" type="text" maxlength="120" /><p class="hint">Shown in emails and on tickets.</p></div>
+              <div class="field"><label for="brand_line">Brand line</label><input id="brand_line" type="text" maxlength="120" /><p class="hint">For example: Powered by Prince Alex Digital</p></div>
+              <div class="field"><label for="support_email">Support email</label><input id="support_email" type="email" maxlength="160" /><p class="err hidden" data-for="support_email"></p></div>
+              <div class="field"><label for="support_phone">Support phone</label><input id="support_phone" type="tel" maxlength="24" /></div>
+              <div class="field"><label for="platform_fee_percent">Platform fee (%)</label><input id="platform_fee_percent" type="number" min="0" max="50" step="0.01" /><p class="hint">Commission retained on each paid ticket.</p><p class="err hidden" data-for="platform_fee_percent"></p></div>
+              <div class="field"><label for="payment_fee_percent">Payment processing fee (%)</label><input id="payment_fee_percent" type="number" min="0" max="50" step="0.01" /><p class="hint">For display and reporting only. Paystack remains the source of truth for what it charges.</p></div>
+              <div class="field"><label for="ticket_prefix">Ticket number prefix</label><input id="ticket_prefix" type="text" maxlength="10" /><p class="hint">Used for ticket numbers, for example PAT-8H2K4M9Q.</p></div>
+              <div class="field"><label for="featured_limit">Featured events on the homepage</label><input id="featured_limit" type="number" min="0" max="12" step="1" /></div>
+              <div class="field"><label for="turnstile_enabled">Turnstile protection</label><select id="turnstile_enabled"><option value="true">Enabled on public forms</option><option value="false">Disabled</option></select></div>
+              <div class="field"><label for="maintenance_mode">Maintenance mode</label><select id="maintenance_mode"><option value="false">Off - platform live</option><option value="true">On - public sales paused</option></select><p class="hint">Maintenance mode blocks new checkouts while keeping existing tickets viewable.</p></div>
+            </div>
+            <p class="eyebrow" style="margin:22px 0 8px">Transactional email sender (Brevo)</p>
+            <div class="form-grid">
+              <div class="field"><label for="email_from_name">Sender name</label><input id="email_from_name" type="text" maxlength="120" /><p class="hint">The from name customers see, for example Prince Alex TicketHub.</p></div>
+              <div class="field"><label for="email_from_email">Sender email</label><input id="email_from_email" type="email" maxlength="160" /><p class="hint">Must be a verified sender or domain in Brevo, or every send is rejected.</p><p class="err hidden" data-for="email_from_email"></p></div>
+              <div class="field"><label for="email_reply_to">Reply-to address</label><input id="email_reply_to" type="email" maxlength="160" /><p class="hint">Where customer replies land. Leave blank to use the support email.</p><p class="err hidden" data-for="email_reply_to"></p></div>
+              <div class="field"><label for="email_enabled">Outbound email</label><select id="email_enabled"><option value="true">Sending enabled</option><option value="false">Paused - mail waits in the queue</option></select><p class="hint">Pausing never loses a message; it stays queued until sending resumes.</p></div>
+            </div>
+            <button class="btn btn-primary" type="submit" id="saveSettings">Save settings</button>
+          </form>
+        </div>
+      </section>
+      <aside>
+        <div class="panel" style="margin-top:0">
+          <div class="panel-head"><h2>Secrets and keys</h2></div>
+          <div class="panel-body">
+            <p class="small muted">Sensitive credentials are never handled by this page. They live only as Cloudflare Worker secrets.</p>
+            <div class="field"><label for="paystack_mode">Paystack mode</label><input id="paystack_mode" class="readonly" type="text" readonly value="Configured in Worker secrets" /></div>
+            <div class="field"><label for="worker_env">Worker environment</label><input id="worker_env" class="readonly" type="text" readonly value="Production" /></div>
+            <div class="field"><label for="r2_bucket">Media storage</label><input id="r2_bucket" class="readonly" type="text" readonly value="Cloudflare R2" /></div>
+            <p class="tiny faint" style="margin:0">PAYSTACK_SECRET_KEY, FIREBASE_ADMIN_CREDENTIALS, R2 keys and TURNSTILE_SECRET_KEY belong in Worker secrets - never in this page.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Owner account</h2></div>
+          <div class="panel-body">
+            <div class="row-flex" style="justify-content:space-between"><span class="small muted">Signed in as</span><strong id="ownerEmail">-</strong></div>
+            <div class="row-flex" style="justify-content:space-between;margin-top:8px"><span class="small muted">Role</span><strong id="ownerRole">-</strong></div>
+            <hr class="divider" />
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel" aria-labelledby="emailTitle" id="emailPanel">
+      <div class="panel-head">
+        <h2 id="emailTitle">Transactional email <span class="small muted" style="font-weight:400">powered by Brevo</span></h2>
+        <div class="row-flex">
+          <span class="badge neutral" id="emailBadge">Checking&hellip;</span>
+          <button class="btn btn-ghost btn-sm" type="button" id="emailRefresh">Refresh</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="stats">
+          <div class="stat"><span>Queued</span><strong id="stQueued">0</strong></div>
+          <div class="stat"><span>Sent</span><strong id="stSent">0</strong></div>
+          <div class="stat"><span>Failed</span><strong id="stFailed">0</strong></div>
+          <div class="stat"><span>Total</span><strong id="stTotal">0</strong></div>
+        </div>
+        <div style="margin-top:18px">
+            <p class="small muted" id="emailStatusLine" style="margin-bottom:12px">Loading email status&hellip;</p>
+            <div class="toolbar">
+              <div class="field" style="flex:1;min-width:220px"><label for="testTo">Send a test email</label><input id="testTo" type="email" maxlength="190" placeholder="you@example.com" /><p class="hint">Verifies BREVO_API_KEY, the sender address and the relay end to end.</p></div>
+              <button class="btn btn-primary" type="button" id="sendTestBtn">Send test</button>
+              <button class="btn btn-ghost" type="button" id="flushBtn">Flush queue now</button>
+            </div>
+            <p class="tiny faint" style="margin:10px 0 0">The API key itself is a Worker secret and is never shown here. Sender name/address, reply-to and the on/off switch live in Platform configuration fields <code>email_from_name</code>, <code>email_from_email</code>, <code>email_reply_to</code> and <code>email_enabled</code>.</p>
+        </div>
+        <div class="toolbar" style="margin-top:18px">
+          <div class="field"><label for="fstatus">Status</label><select id="fstatus"><option value="all">All statuses</option><option value="queued">Queued</option><option value="sent">Sent</option><option value="failed">Failed</option></select></div>
+          <div class="field"><label for="ftemplate">Template</label><select id="ftemplate"><option value="all">All templates</option></select></div>
+          <div class="field" style="flex:1;min-width:200px"><label for="fquery">Search</label><input id="fquery" type="search" maxlength="80" placeholder="Recipient, subject or order&hellip;" /></div>
+          <button class="btn btn-ghost" type="button" id="applyFilters">Apply</button>
+        </div>
+        <div class="tablewrap" style="margin-top:12px">
+          <table class="tbl" id="emailTable">
+            <thead><tr><th>Recipient</th><th>Subject</th><th>Template</th><th>Status</th><th>Queued at</th><th class="t-right">Actions</th></tr></thead>
+            <tbody id="emailRows"><tr><td colspan="6" class="small muted">Loading the outbox&hellip;</td></tr></tbody>
+          </table>
+        </div>
+        <div class="row-flex" style="justify-content:space-between;margin-top:12px">
+          <span class="small muted" id="emailPageInfo">&nbsp;</span>
+          <button class="btn btn-ghost btn-sm" type="button" id="emailMore" hidden>See more</button>
+        </div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="ownerPayTitle" id="paymentPanel">
+      <div class="panel-head">
+        <h2 id="ownerPayTitle">Owner payment settings <span class="small muted" style="font-weight:400">collect on behalf of organizers</span></h2>
+        <div class="row-flex"><span class="small muted">Active provider</span><span id="opStatusValue">-</span></div>
+      </div>
+      <div class="panel-body">
+        <div id="opAlert" class="alert hidden" role="alert"></div>
+        <p class="small muted" style="margin-top:0">Connect the platform's own merchant accounts here. Organizers can then choose to collect through the owner's account (<strong>owner payment mode</strong>) for their events. Only the <strong>active</strong> owner provider is used, and buyers never see or choose a gateway. Credentials are encrypted (AES-GCM) by the Worker and are never sent back to this page.</p>
+        <div class="field" style="max-width:460px">
+          <label for="opEnabled">Allow organizers to use the owner account</label>
+          <select id="opEnabled"><option value="true">Allowed - organizers may choose owner payment mode</option><option value="false">Not allowed - organizers must use their own account</option></select>
+          <p class="hint">Turning this off immediately closes owner payment mode for new checkouts. Existing paid orders and issued tickets are unchanged.</p>
+        </div>
+        <div id="opCards" class="owner-pay-cards" role="group" aria-label="Owner payment providers"></div>
+        <div class="field" style="margin-top:18px;max-width:460px">
+          <label for="opActive">Active owner provider</label>
+          <select id="opActive"></select>
+          <p class="hint">Every event in owner payment mode is sold through this provider.</p>
+        </div>
+        <p class="tiny faint" style="margin:12px 0 0">Worker secrets (<code>PAYSTACK_SECRET_KEY</code>, <code>PESAPAL_CONSUMER_KEY</code>, <code>PAYHERO_API_USERNAME</code>) still act as a fallback when no owner account is saved here.</p>
+      </div>
+    </section>
+
+  </main>
+</div></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<script src="/firebase.js"></script>
+<script>/* #APPKIT-START#
+   ============================================================
+   Prince Alex TicketHub - shared application kit (vanilla JS).
+   Every app page inlines this kit; there is no build step.
+
+   1) CONFIGURATION - replace these with your live values.
+      SECRETS NEVER GO HERE: the Paystack secret key, Firebase
+      Admin credentials, R2 keys and Cloudflare API tokens live
+      only in Cloudflare Worker environment variables / secrets.
+   ============================================================ */
+const API_BASE = "https://princealextickethub.princealexdigital.workers.dev";
+const FIREBASE_CONFIG = window.PAT_FIREBASE_CONFIG;
+const TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY";
+const FIREBASE_SDK = window.PAT_FIREBASE_SDK;
+const API_READY = !/YOUR-WORKER-DOMAIN/i.test(API_BASE);
+const BRAND = { product: "Prince Alex TicketHub", parent: "Powered by Prince Alex Digital" };
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(v){ return String(v == null ? "" : v).replace(/[&<>"\u0027]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+function safeUrl(u){ return /^https?:\/\//i.test(String(u || "")) ? String(u) : ""; }
+const KES = n => "KSh " + Number(n || 0).toLocaleString("en-KE");
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+/* ---------- Kenya time (EAT, UTC+3 all year, no DST) ----------
+   Two kinds of value come back from the API and they are never mixed up:
+     - a TIMESTAMP - created_at, paid_at, checked_in_at, updated_at ... - is UTC
+       ("2026-09-28 19:04:11" is 19:04 UTC = 22:04 in Nairobi);
+     - a CALENDAR value is what the organizer typed in Kenyan time and is never
+       converted: event_date "2026-09-28", start_time "18:00", a sale window
+       "2026-10-05 21:00".
+   toDate() reads a timestamp, wallDate() reads a calendar value, and every
+   formatter below prints in Africa/Nairobi - so the page shows Kenyan time even
+   when the device is set to another timezone. */
+const KE_TZ = "Africa/Nairobi";
+const KE_OFFSET_MS = 3 * 60 * 60 * 1000;
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
+const ZONE_RE = /([zZ]|[+-]\d{2}:?\d{2})$/;
+function toDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  const iso = s.indexOf("T") > -1 ? s : s.replace(" ", "T");
+  const d = new Date(STAMP_RE.test(s) && !ZONE_RE.test(iso) ? iso + "Z" : iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* A calendar value is already Kenyan wall clock: read the digits, never shift. */
+function wallDate(v){
+  if(!v) return null;
+  const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)) - KE_OFFSET_MS);
+  return isNaN(d.getTime()) ? null : d;
+}
+/* "YYYY-MM-DDTHH:MM" for a date / datetime input: the stored value, as typed. */
+function wallInput(v){
+  const m = String(v == null ? "" : v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if(!m) return "";
+  return m[1] + "-" + m[2] + "-" + m[3] + "T" + (m[4] || "00") + ":" + (m[5] || "00");
+}
+/* The Kenyan wall clock of an instant, for day/month figures (device-independent). */
+function keShift(d){ return new Date(d.getTime() + KE_OFFSET_MS); }
+function keToday(d){ const base = d ? (d instanceof Date ? d : new Date(d)) : new Date(); return keShift(base).toISOString().slice(0, 10); }
+function fmtDate(v){ const d = toDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function fmtWallDate(v){ const d = wallDate(v); return d ? d.toLocaleDateString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric" }) : "-"; }
+function dateParts(v){ const d = toDate(v); if(!d) return { day: "--", mon: "---" }; const k = keShift(d); return { day: String(k.getUTCDate()).padStart(2,"0"), mon: MON[k.getUTCMonth()] }; }
+function fmtTime(v){ if(!v) return ""; const m = String(v).match(/^(\d{1,2}):(\d{2})/); if(!m) return String(v); let h = Number(m[1]); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+function fmtDateTime(v){ const d = toDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function fmtWallDateTime(v){ const d = wallDate(v); return d ? d.toLocaleString("en-GB", { timeZone: KE_TZ, day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "-"; }
+function qs(o){ const p = new URLSearchParams(); Object.keys(o || {}).forEach(k => { const v = o[k]; if(v !== undefined && v !== null && v !== "") p.set(k, v); }); return p.toString(); }
+function param(k){ return new URLSearchParams(location.search).get(k) || ""; }
+function toast(msg, kind){ const box = $("#toasts"); if(!box) return; const t = document.createElement("div"); t.className = "toast " + (kind || ""); t.textContent = msg; box.appendChild(t); setTimeout(() => t.remove(), 5200); }
+function normList(p, key){ if(Array.isArray(p)) return p; if(p && Array.isArray(p[key])) return p[key]; if(p && Array.isArray(p.data)) return p.data; if(p && Array.isArray(p.results)) return p.results; return []; }
+function stateBox(title, text, actionHtml){ return "<div class=\"state\"><h3>" + esc(title) + "</h3><p>" + esc(text) + "</p>" + (actionHtml || "") + "</div>"; }
+function badge(status){
+  const s = String(status || "").toLowerCase();
+  const map = { active:"ok", paid:"ok", confirmed:"ok", valid:"ok", checked_in:"ok", completed:"ok", pending:"warn", paused:"warn", draft:"neutral", sold_out:"neutral", used:"warn", failed:"err", cancelled:"err", refunded:"err", ended:"neutral", expired:"err", suspended:"err" };
+  return "<span class=\"badge " + (map[s] || "neutral") + "\">" + esc((s || "unknown").replace(/_/g, " ")) + "</span>";
+}
+function csvDownload(filename, rows){
+  const body = rows.map(r => r.map(cell => {
+    const v = String(cell == null ? "" : cell);
+    return /[",\n]/.test(v) ? "\"" + v.replace(/"/g, "\"\"") + "\"" : v;
+  }).join(",")).join("\r\n");
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+/* ---------- API client: every sensitive call goes through the Worker ---------- */
+class ApiError extends Error {
+  constructor(message, status, code){ super(message); this.name = "ApiError"; this.status = status || 0; this.code = code || ""; }
+}
+async function api(path, opts){
+  const o = opts || {};
+  const headers = { "Accept": "application/json" };
+  const init = { method: o.method || "GET", headers: headers };
+  if(o.body !== undefined){ if(o.form){ init.body = o.body; } else { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(o.body); } }
+  if(o.auth !== false){
+    const token = await Auth.getIdToken();
+    if(!token) throw new ApiError("Please sign in to continue.", 401, "UNAUTHENTICATED");
+    headers["Authorization"] = "Bearer " + token;
+  }
+  if(!API_READY) throw new ApiError("The ticketing service is not connected yet. Set API_BASE in this page to your Cloudflare Worker URL.", 0, "NOT_CONFIGURED");
+  let res;
+  try { res = await fetch(API_BASE.replace(/\/+$/, "") + path, init); }
+  catch (err) { throw new ApiError("Network problem. Check your connection and try again.", 0, "NETWORK"); }
+  let data = null;
+  if((res.headers.get("content-type") || "").indexOf("application/json") > -1){ try { data = await res.json(); } catch (err) { data = null; } }
+  if(!res.ok){
+    const raw = data && (data.message || data.error);
+    const friendly = (res.status >= 500 || !raw) ? "Something went wrong. Please try again." : raw;
+    throw new ApiError(friendly, res.status, (data && data.code) || "");
+  }
+  return data === null ? {} : data;
+}
+
+function authMessage(err){
+  const map = {
+    "auth/invalid-api-key": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/api-key-not-valid": "Sign-in is not configured yet (Firebase credentials are missing).",
+    "auth/invalid-email": "That email address does not look valid.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "We could not find an account with that email.",
+    "auth/wrong-password": "The password you entered is incorrect.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/email-already-in-use": "An account with that email already exists.",
+    "auth/weak-password": "Choose a password with at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again."
+  };
+  return map[(err && err.code) || ""] || "We could not complete that request. Please try again.";
+}
+async function getSession(){
+  try { return await api("/api/me"); } catch (err) { return null; }
+}
+/* Role guard: the Worker is the real authority, this is only UX. */
+async function requireSession(allowedRoles){
+  const token = await Auth.getIdToken();
+  const next = encodeURIComponent(location.pathname + location.search);
+  if(!token){ location.replace("/login/?next=" + next); return null; }
+  let me;
+  try { me = await api("/api/me"); }
+  catch (err){
+    if(err.status === 401 || err.status === 403){
+      try { await Auth.signOut(); } catch(e){}
+      location.replace("/login/?error=session");
+      return null;
+    }
+    if(err.code === "NOT_CONFIGURED"){ showAlert("info", err.message); return null; }
+    showAlert("err", err.message);
+    return null;
+  }
+  const role = me.role || (me.user && me.user.role) || "";
+  const status = me.status || (me.user && me.user.status) || "active";
+  if(allowedRoles && allowedRoles.length && allowedRoles.indexOf(role) === -1){ location.replace("/login/?error=forbidden"); return null; }
+  if(status && ["suspended","disabled","rejected"].indexOf(status) > -1){ location.replace("/login/?error=suspended"); return null; }
+  return me;
+}
+/* ---------- Cloudflare Turnstile (used where a form needs bot protection) ---------- */
+const Turnstile = {
+  id: null,
+  load(){
+    if(!TURNSTILE_SITE_KEY || /^YOUR_/i.test(TURNSTILE_SITE_KEY)) return Promise.resolve(false);
+    return new Promise((res, rej) => {
+      if(window.turnstile) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true; s.onload = () => res(true); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+  async mount(host){
+    const el = typeof host === "string" ? $(host) : host;
+    if(!el) return null;
+    try {
+      if(!await this.load()){ el.innerHTML = "<p class=\"tiny faint\" style=\"margin:0\">Bot protection is not configured on this environment.</p>"; return null; }
+      this.id = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, theme: "light" });
+      return this.id;
+    } catch(err){ return null; }
+  },
+  token(){ try { return this.id ? window.turnstile.getResponse(this.id) : ""; } catch(err){ return ""; } },
+  reset(){ try { if(this.id) window.turnstile.reset(this.id); } catch(err){} }
+};
+
+/* ---------- shared UI shell ---------- */
+function initShell(){
+  const burger = $("#burger"), nav = $("#mainNav");
+  if(burger && nav){
+    burger.addEventListener("click", () => { const open = nav.classList.toggle("open"); burger.setAttribute("aria-expanded", open ? "true" : "false"); });
+    nav.addEventListener("click", e => { if(e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); } });
+  }
+  const y = $("#year"); if(y) y.textContent = String(new Date().getFullYear());
+}
+function showAlert(kind, msg, host){
+  const box = host ? host : $("#pageAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function hideAlert(host){
+  const box = host ? host : $("#pageAlert");
+  if(box){ box.classList.add("hidden"); box.textContent = ""; }
+}
+function paintUser(me){
+  const name = (me && (me.full_name || me.fullName || me.name)) || (me && me.organizer && me.organizer.business_name) || "Account";
+  const n = $("#whoName"); if(n) n.textContent = name;
+  const a = $("#whoAvatar");
+  if(a) a.textContent = name.split(/\s+/).map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase();
+  const out = $("#signOutBtn");
+  if(out) out.addEventListener("click", async ev => {
+    ev.preventDefault();
+    try { await Auth.signOut(); } catch(err){}
+    location.href = "/login/";
+  });
+}
+function setText(sel, value){ const el = $(sel); if(el) el.textContent = value; }
+/* #APPKIT-END# */
+/* ============================================================
+   Owner: platform settings
+   ============================================================ */
+function setField(id, value, fallback){
+  const el = $("#" + id);
+  if(!el) return;
+  if(el.tagName === "SELECT") el.value = String(value);
+  else el.value = value == null ? (fallback || "") : String(value);
+}
+function paintSettings(s){
+  setField("platform_name", s.platform_name, BRAND.product);
+  setField("brand_line", s.brand_line, BRAND.parent);
+  setField("support_email", s.support_email);
+  setField("support_phone", s.support_phone);
+  setField("platform_fee_percent", s.platform_fee_percent, 0);
+  setField("payment_fee_percent", s.payment_fee_percent, 0);
+  setField("ticket_prefix", s.ticket_prefix, "PAT-");
+  setField("featured_limit", s.featured_limit, 3);
+  setField("turnstile_enabled", s.turnstile_enabled === false ? "false" : "true");
+  setField("maintenance_mode", s.maintenance_mode === true ? "true" : "false");
+  setField("email_from_name", s.email_from_name, BRAND.product);
+  setField("email_from_email", s.email_from_email);
+  setField("email_reply_to", s.email_reply_to);
+  setField("email_enabled", s.email_enabled === false || s.email_enabled === "false" ? "false" : "true");
+}
+async function load(){
+  try {
+    const payload = await api("/api/owner/settings");
+    paintSettings(payload.settings || payload.data || payload);
+  } catch (err) {
+    if(err.code === "NOT_CONFIGURED" || err.status === 404){
+      paintSettings({});
+      showAlert("info", err.code === "NOT_CONFIGURED" ? err.message : "Platform settings are not available yet. Showing defaults.");
+    } else { showAlert("err", err.message); }
+  }
+}
+function validate(){
+  let ok = true;
+  ["support_email","platform_fee_percent","email_from_email","email_reply_to"].forEach(id => setErr(id, ""));
+  const email = $("#support_email").value.trim();
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ setErr("support_email", "Enter a valid support email."); ok = false; }
+  const fee = Number($("#platform_fee_percent").value || 0);
+  if(isNaN(fee) || fee < 0 || fee > 50){ setErr("platform_fee_percent", "Enter a fee between 0 and 50 percent."); ok = false; }
+  const fromEmail = $("#email_from_email").value.trim();
+  if(!fromEmail){ setErr("email_from_email", "A sender address is required - without it no email can be sent."); ok = false; }
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(fromEmail)){ setErr("email_from_email", "Enter a valid sender email address."); ok = false; }
+  const replyTo = $("#email_reply_to").value.trim();
+  if(replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(replyTo)){ setErr("email_reply_to", "Enter a valid reply-to address or leave it blank."); ok = false; }
+  return ok;
+}
+function setErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+async function save(){
+  if(!validate()){ showAlert("err", "Please check the highlighted fields and try again."); return; }
+  const btn = $("#saveSettings"); btn.disabled = true; btn.textContent = "Saving..."; hideAlert();
+  try {
+    const body = {
+      platform_name: $("#platform_name").value.trim(),
+      brand_line: $("#brand_line").value.trim(),
+      support_email: $("#support_email").value.trim(),
+      support_phone: $("#support_phone").value.trim(),
+      platform_fee_percent: Number($("#platform_fee_percent").value || 0),
+      payment_fee_percent: Number($("#payment_fee_percent").value || 0),
+      ticket_prefix: $("#ticket_prefix").value.trim(),
+      featured_limit: Number($("#featured_limit").value || 0),
+      turnstile_enabled: $("#turnstile_enabled").value === "true",
+      maintenance_mode: $("#maintenance_mode").value === "true",
+      email_from_name: $("#email_from_name").value.trim(),
+      email_from_email: $("#email_from_email").value.trim(),
+      email_reply_to: $("#email_reply_to").value.trim(),
+      email_enabled: $("#email_enabled").value === "true"
+    };
+    const payload = await api("/api/owner/settings", { method: "PUT", body: body });
+    paintSettings(payload.settings || payload.data || body);
+    showAlert("ok", "Platform settings saved.");
+    toast("Settings saved", "ok");
+  } catch (err) { showAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message); }
+  finally { btn.disabled = false; btn.textContent = "Save settings"; }
+}
+/* ============================================================
+   Owner: Brevo transactional email admin (outbox, test, queue)
+   ============================================================ */
+const EMAIL_UI = { page: 1, pages: 1, limit: 6, loading: false };
+function escMail(v){
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function paintEmailStatus(s){
+  const badge = $("#emailBadge"), line = $("#emailStatusLine");
+  if(!s){ if(badge){ badge.className = "badge err"; badge.textContent = "Unknown"; } return; }
+  if(badge){
+    if(!s.configured){ badge.className = "badge warn"; badge.textContent = "No API key"; }
+    else if(!s.enabled){ badge.className = "badge neutral"; badge.textContent = "Paused"; }
+    else { badge.className = "badge ok"; badge.textContent = "Live"; }
+  }
+  if(line){
+    const parts = [];
+    parts.push("Provider: " + escMail(s.provider || "brevo") + ".");
+    parts.push("Sender: " + (s.sender ? escMail((s.sender_name ? s.sender_name + " <" : "<") + s.sender + (s.sender_name ? ">" : "")) : "not set yet") + ".");
+    if(s.reply_to) parts.push("Reply-to: " + escMail(s.reply_to) + ".");
+    parts.push((s.templates || 0) + " templates.");
+    if(!s.configured) parts.push("Set the BREVO_API_KEY Worker secret (wrangler secret put BREVO_API_KEY) to start sending.");
+    else if(!s.enabled) parts.push("Sending is paused (email_enabled = false or EMAIL_DISABLED set).");
+    line.innerHTML = escMail(parts.join(" "));
+  }
+}
+function paintEmailStats(st){
+  if(!st) return;
+  setText("#stQueued", String(st.queued || 0));
+  setText("#stSent", String(st.sent || 0));
+  setText("#stFailed", String(st.failed || 0));
+  setText("#stTotal", String(st.total || 0));
+}
+function paintTemplateFilter(list, fselect){
+  if(fselect){
+    const keep = fselect.value;
+    fselect.innerHTML = '<option value="all">All templates</option>' + (list || []).map(t => '<option value="' + escMail(t.key) + '">' + escMail(t.key) + '</option>').join("");
+    if(keep) fselect.value = keep;
+  }
+}
+function paintEmailRows(rows, meta, append){
+  const tbody = $("#emailRows");
+  if(!tbody) return;
+  if(!rows || !rows.length){
+    if(!append) tbody.innerHTML = '<tr><td colspan="6" class="small muted">No emails match these filters yet. Emails are queued here the moment a payment succeeds, an order fails, an event changes status and so on.</td></tr>';
+  } else {
+    const html = rows.map(r => {
+      const cls = r.status === "sent" ? "ok" : (r.status === "failed" ? "err" : "warn");
+      const canResend = r.status === "failed";
+      return '<tr>' +
+        '<td><strong>' + escMail(r.to) + '</strong><br><span class="tiny muted">' + escMail(r.order_number || r.event_title || r.to_name || "") + '</span></td>' +
+        '<td>' + escMail(r.subject) + '</td>' +
+        '<td><span class="badge neutral">' + escMail(r.template) + '</span></td>' +
+        '<td><span class="badge ' + cls + '">' + escMail(r.status) + '</span>' + (r.error ? '<br><span class="tiny" style="color:var(--errink)">' + escMail(String(r.error).slice(0, 90)) + '</span>' : '') + '</td>' +
+        '<td class="small muted">' + escMail(r.created_at || "") + '</td>' +
+        '<td class="t-right">' + (canResend
+          ? '<button class="btn btn-ghost btn-sm" type="button" data-resend="' + escMail(r.id) + '">Retry</button>'
+          : '<span class="tiny muted">&mdash;</span>') + '</td>' +
+        '</tr>';
+    }).join("");
+    if(append) tbody.insertAdjacentHTML("beforeend", html);
+    else tbody.innerHTML = html;
+  }
+  EMAIL_UI.page = (meta && meta.page) || 1;
+  EMAIL_UI.pages = Math.max(1, (meta && meta.pages) || 1);
+  const total = Number((meta && meta.total) || 0);
+  const shown = Math.min(EMAIL_UI.page * EMAIL_UI.limit, total);
+  setText("#emailPageInfo", total ? "Showing " + shown + " of " + total + " emails, newest first" : "");
+  const more = $("#emailMore");
+  if(more){
+    more.hidden = EMAIL_UI.page >= EMAIL_UI.pages;
+    more.disabled = EMAIL_UI.loading;
+  }
+}
+async function loadEmails(opts){
+  const o = opts || {};
+  if(EMAIL_UI.loading) return;
+  const append = o.append === true;
+  if(!append) EMAIL_UI.page = 1;
+  EMAIL_UI.loading = true;
+  const more = $("#emailMore");
+  if(more) more.disabled = true;
+  try {
+    const status = $("#fstatus").value, template = $("#ftemplate").value, q = $("#fquery").value.trim();
+    const page = append ? EMAIL_UI.page + 1 : 1;
+    const qs = new URLSearchParams({ page: String(page), limit: String(EMAIL_UI.limit) });
+    if(status && status !== "all") qs.set("status", status);
+    if(template && template !== "all") qs.set("template", template);
+    if(q) qs.set("q", q);
+    /* One call returns everything the panel needs: status, stats, the template
+       registry and the paged outbox. */
+    const data = await api("/api/owner/emails?" + qs.toString());
+    if(data.provider) paintEmailStatus(data.provider);
+    if(data.stats) paintEmailStats(data.stats);
+    if(data.templates) paintTemplateFilter(data.templates, $("#ftemplate"));
+    paintEmailRows(data.emails || [], data.meta, append);
+  } catch (err) {
+    showAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  } finally {
+    EMAIL_UI.loading = false;
+    if(more) more.disabled = false;
+    if(more) more.hidden = EMAIL_UI.page >= EMAIL_UI.pages;
+  }
+}
+function wireEmailAdmin(){
+  const refresh = $("#emailRefresh");
+  if(refresh) refresh.addEventListener("click", () => { EMAIL_UI.page = 1; loadEmails(); });
+  const apply = $("#applyFilters");
+  if(apply) apply.addEventListener("click", () => { EMAIL_UI.page = 1; loadEmails(); });
+  const fquery = $("#fquery");
+  if(fquery) fquery.addEventListener("keydown", e => { if(e.key === "Enter"){ EMAIL_UI.page = 1; loadEmails(); } });
+  const more = $("#emailMore");
+  if(more) more.addEventListener("click", () => loadEmails({ append: true }));
+  const rows = $("#emailRows");
+  if(rows) rows.addEventListener("click", async e => {
+    const btn = e.target.closest("[data-resend]");
+    if(!btn) return;
+    const id = btn.getAttribute("data-resend");
+    btn.disabled = true;
+    try {
+      const payload = await api("/api/owner/emails/" + encodeURIComponent(id) + "/resend", { method: "POST" });
+      toast(payload.message || "Email re-queued for the next flush", "ok");
+      await loadEmails();
+    } catch (err) { showAlert("err", err.message); toast(err.message, "err"); }
+    finally { btn.disabled = false; }
+  });
+  const testBtn = $("#sendTestBtn");
+  if(testBtn) testBtn.addEventListener("click", async () => {
+    const to = $("#testTo").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)){ showAlert("err", "Enter a valid email address for the test."); return; }
+    testBtn.disabled = true; testBtn.textContent = "Sending..."; hideAlert();
+    try {
+      const payload = await api("/api/owner/emails/test", { method: "POST", body: { to } });
+      showAlert("ok", payload.message || ("Test email sent to " + to + "."));
+      toast("Test email sent", "ok");
+      await loadEmails();
+    } catch (err) { showAlert("err", err.message); toast(err.message, "err"); }
+    finally { testBtn.disabled = false; testBtn.textContent = "Send test"; }
+  });
+  const flushBtn = $("#flushBtn");
+  if(flushBtn) flushBtn.addEventListener("click", async () => {
+    flushBtn.disabled = true; flushBtn.textContent = "Flushing...";
+    try {
+      const payload = await api("/api/owner/emails/dispatch", { method: "POST", body: {} });
+      const d = payload.dispatch || {};
+      showAlert("ok", "Queue flush: sent " + (d.sent || 0) + ", failed " + (d.failed || 0) + " of " + (d.processed || 0) + " processed.");
+      toast("Queue flushed", (d.sent || 0) > 0 ? "ok" : "info");
+      await loadEmails();
+    } catch (err) { showAlert("err", err.message); toast(err.message, "err"); }
+    finally { flushBtn.disabled = false; flushBtn.textContent = "Flush queue now"; }
+  });
+}
+/* ============================================================
+   Owner: platform payment accounts (owner payment mode)
+   ------------------------------------------------------------
+   GET    /api/owner/payment-providers            all three + state
+   POST   /api/owner/payment-providers/:key       save that one
+   DELETE /api/owner/payment-providers/:key       disconnect that one
+   POST   /api/owner/payment-providers/:key/test  test that one
+   POST   /api/owner/payment-provider/select      set the active owner provider
+   Credentials are encrypted by the Worker and never returned: only "has_..."
+   indicators come back to this page.
+   ============================================================ */
+const OP_PROVIDERS = { paystack: "Paystack", pesapal: "Pesapal", payhero: "PayHero" };
+const OP_INPUTS = {
+  paystack: [
+    { id: "public_key", label: "Paystack public key", type: "text", max: 200, placeholder: "pk_live_...", hint: "Paystack dashboard -> Settings -> API Keys & Webhooks.", secret: false },
+    { id: "secret_key", label: "Paystack secret key", type: "password", max: 400, placeholder: "sk_live_...", hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true }
+  ],
+  pesapal: [
+    { id: "consumer_key", label: "Pesapal consumer key", type: "text", max: 200, secret: false },
+    { id: "consumer_secret", label: "Pesapal consumer secret", type: "password", max: 400, hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true }
+  ],
+  payhero: [
+    { id: "api_username", label: "PayHero API username", type: "text", max: 120, hint: "PayHero account -> Settings -> API.", secret: false },
+    { id: "password", label: "PayHero API password", type: "password", max: 400, hint: "Sent once and stored encrypted. Never shown again after saving.", secret: true },
+    { id: "channel_id", label: "PayHero channel id", type: "text", max: 40, placeholder: "133", hint: "The M-Pesa paybill or till that receives the money.", secret: false }
+  ]
+};
+let OP_STATE = { providers: [], active: null, enabled: true };
+function opLabel(k){ return OP_PROVIDERS[String(k || "").toLowerCase()] || String(k || ""); }
+function opBadge(status){
+  const s = String(status || "not_connected").toLowerCase();
+  const cls = s === "connected" ? "ok" : (s === "error" ? "err" : "neutral");
+  return "<span class=\"badge " + cls + "\">" + esc(s.replace(/_/g, " ")) + "</span>";
+}
+function opInputId(key, field){ return "op-" + key + "-" + field; }
+function opCard(key){ return OP_STATE.providers.filter(c => c.key === key)[0] || null; }
+function opActiveKey(){ return (OP_STATE.active && OP_STATE.active.provider) || ""; }
+function opShowAlert(kind, msg){
+  const box = $("#opAlert");
+  if(!box) return;
+  box.className = "alert " + kind;
+  box.textContent = msg;
+  box.classList.remove("hidden");
+}
+function opSetErr(id, msg){
+  const input = $("#" + id);
+  const err = document.querySelector(".err[data-for=\"" + id + "\"]");
+  if(input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+  if(err){ err.textContent = msg || ""; err.classList.toggle("hidden", !msg); }
+}
+
+/* One card per provider, rendered from the API. */
+function opCardHtml(card){
+  const key = card.key;
+  const fields = card.fields || {};
+  const inputs = OP_INPUTS[key] || [];
+  const isActive = opActiveKey() === key;
+  const rows = inputs.map(function(f){
+    const id = opInputId(key, f.id);
+    const saved = f.secret ? fields["has_" + f.id] : false;
+    const hint = (f.secret && saved)
+      ? "A value is already saved (hidden). Leave this blank to keep it, or type a new one to replace it."
+      : (f.hint || "");
+    return "      <div class=\"field\">\n" +
+      "        <label for=\"" + esc(id) + "\">" + esc(f.label) + "</label>\n" +
+      "        <input id=\"" + esc(id) + "\" type=\"" + esc(f.type) + "\" maxlength=\"" + f.max + "\" " +
+      "autocomplete=\"" + (f.secret ? "new-password" : "off") + "\" " +
+      (f.placeholder ? "placeholder=\"" + esc(f.placeholder) + "\" " : "") +
+      "value=\"" + esc(f.secret ? "" : (fields[f.id] || "")) + "\" />\n" +
+      (hint ? "        <p class=\"hint\">" + esc(hint) + "</p>\n" : "") +
+      "        <p class=\"err hidden\" data-for=\"" + esc(id) + "\"></p>\n" +
+      "      </div>";
+  }).join("\n");
+  const mode = card.checkout_mode === "stk_push"
+    ? "Buyers get an M-Pesa prompt on their phone and confirm it during checkout."
+    : "Buyers are redirected to " + esc(opLabel(key)) + " to complete payment.";
+  const tested = card.last_tested_at ? "Last tested " + esc(fmtDateTime(card.last_tested_at)) : "Not tested yet";
+  const err = (card.status === "error" && card.last_error) ? "<p class=\"err\">" + esc(card.last_error) + "</p>" : "";
+  return "" +
+  "    <article class=\"card owner-pay-card\" data-key=\"" + esc(key) + "\">\n" +
+  "      <header class=\"owner-pay-card-head\">\n" +
+  "        <strong>" + esc(card.label) + "</strong>\n" +
+  "        " + (isActive ? "<span class=\"badge ok\">Active</span>" : opBadge(card.status)) + "\n" +
+  "      </header>\n" +
+  "      <p class=\"tiny faint\" style=\"margin:6px 0 0\">" + tested + "</p>\n" +
+  "      <details class=\"owner-pay-config\">\n" +
+  "        <summary>Configure account</summary>\n" +
+  "        <p class=\"tiny muted\" style=\"margin:0 0 10px\">" + mode + "</p>\n" + err +
+  "        <div class=\"form-grid\" style=\"grid-template-columns:1fr\">\n" + rows + "\n        </div>\n" +
+  "        <div class=\"toolbar\">\n" +
+  "        <button class=\"btn btn-primary btn-sm\" type=\"button\" data-opact=\"save\" data-key=\"" + esc(key) + "\">Save</button>\n" +
+  "        <button class=\"btn btn-ghost btn-sm\" type=\"button\" data-opact=\"test\" data-key=\"" + esc(key) + "\">Test</button>\n" +
+  (isActive ? "" : "        <button class=\"btn btn-ghost btn-sm\" type=\"button\" data-opact=\"activate\" data-key=\"" + esc(key) + "\"" +
+    (card.available ? "" : " disabled title=\"Connect this provider and pass its connection test first\"") + ">Make active</button>\n") +
+  "        <button class=\"btn btn-ghost btn-sm\" type=\"button\" data-opact=\"disconnect\" data-key=\"" + esc(key) + "\">Disconnect</button>\n" +
+  "        </div>\n" +
+  "      </details>\n" +
+  "    </article>";
+}
+function opPaintCards(){
+  const host = $("#opCards");
+  if(!host) return;
+  host.innerHTML = OP_STATE.providers.map(opCardHtml).join("");
+}
+function opPaintActive(){
+  const sel = $("#opActive");
+  if(!sel) return;
+  const active = opActiveKey();
+  const connected = OP_STATE.providers.filter(c => c.available);
+  const options = connected.length ? connected : OP_STATE.providers;
+  sel.innerHTML = options.map(function(c){
+    return "<option value=\"" + esc(c.key) + "\"" + (c.key === active ? " selected" : "") + ">" +
+      esc(c.label) + (c.available ? "" : " (needs configuration)") + "</option>";
+  }).join("");
+  sel.disabled = !connected.length;
+}
+function opPaint(view){
+  const v = view || {};
+  /* Not every route echoes owner_payment_enabled (the test route does not), so
+     the last known value is kept instead of resetting the switch. */
+  const enabled = (v.owner_payment_enabled === undefined) ? OP_STATE.enabled : (v.owner_payment_enabled !== false);
+  OP_STATE = { providers: v.providers || v.payment_providers || [], active: v.active_provider || null,
+    enabled: enabled };
+  opPaintCards();
+  opPaintActive();
+  const key = opActiveKey();
+  const card = opCard(key);
+  const badge = $("#opStatusValue");
+  if(badge) badge.innerHTML = key ? opBadge(card ? card.status : "not_connected") : "None";
+  const toggle = $("#opEnabled");
+  if(toggle && v.owner_payment_enabled !== undefined) toggle.value = v.owner_payment_enabled ? "true" : "false";
+  const connected = OP_STATE.providers.filter(c => c.available);
+  if(!OP_STATE.enabled){
+    opShowAlert("info", "Owner payment mode is switched OFF, so organizers cannot collect through the owner account. Switch it on above to allow it.");
+  } else if(!connected.length){
+    opShowAlert("info", "No owner payment account is connected yet, so owner payment mode cannot collect anything. Connect one below, run its connection test, then make it active.");
+  } else if(key){
+    opShowAlert("ok", opLabel(key) + " is the platform's active payment provider. Organizers in owner payment mode are sold through it.");
+  } else {
+    opShowAlert("info", "You have a connected owner account but none is active yet. Choose the active owner provider below.");
+  }
+}
+
+async function opLoad(){
+  try {
+    const res = await api("/api/owner/payment-providers");
+    opPaint((res && res.data) ? res.data : res);
+  } catch (err) {
+    opShowAlert(err.code === "NOT_CONFIGURED" ? "info" : "err", err.message);
+  }
+}
+function opDraft(key){
+  const out = {};
+  (OP_INPUTS[key] || []).forEach(function(f){
+    const el = $("#" + opInputId(key, f.id));
+    const val = el ? String(el.value || "").trim() : "";
+    if(val) out[f.id] = val;
+  });
+  return out;
+}
+function opValidate(key, draft){
+  const card = opCard(key);
+  const fields = (card && card.fields) || {};
+  let ok = true;
+  (OP_INPUTS[key] || []).forEach(function(f){ opSetErr(opInputId(key, f.id), ""); });
+  (OP_INPUTS[key] || []).forEach(function(f){
+    if(!f.secret || draft[f.id] || fields["has_" + f.id]) return;
+    opSetErr(opInputId(key, f.id), "Enter the " + f.label.toLowerCase() + ".");
+    ok = false;
+  });
+  return ok;
+}
+async function opAction(act, key, btn){
+  if(act === "disconnect"){
+    if(!window.confirm("Disconnect the owner's " + opLabel(key) + " account? Past orders and tickets stay untouched, but owner payment mode will close until another account is active.")) return;
+  }
+  const label = btn ? btn.textContent : "";
+  if(btn){ btn.disabled = true; btn.textContent = "Working..."; }
+  try {
+    if(act === "save"){
+      const draft = opDraft(key);
+      if(!opValidate(key, draft)){ opShowAlert("err", "Please check the highlighted fields in the " + opLabel(key) + " card."); return; }
+      const res = await api("/api/owner/payment-providers/" + key, { method: "POST", body: draft });
+      opPaint(res);
+      toast(opLabel(key) + " owner account saved", "ok");
+      return;
+    }
+    if(act === "test"){
+      const res = await api("/api/owner/payment-providers/" + key + "/test", { method: "POST", body: opDraft(key) });
+      opPaint(res);
+      if(res && res.ok){ toast(opLabel(key) + " connection test passed", "ok"); opShowAlert("ok", res.message || (opLabel(key) + " accepted these credentials."));
+      } else { toast(opLabel(key) + " connection test failed", "err"); opShowAlert("err", (res && res.message) || "The connection test failed."); }
+      return;
+    }
+    if(act === "activate"){
+      const res = await api("/api/owner/payment-provider/select", { method: "POST", body: { provider: key } });
+      opPaint(res);
+      toast(opLabel(key) + " is now active", "ok");
+      return;
+    }
+    if(act === "disconnect"){
+      const res = await api("/api/owner/payment-providers/" + key, { method: "DELETE" });
+      opPaint(res);
+      toast(opLabel(key) + " owner account disconnected", "ok");
+    }
+  } catch (err) {
+    opShowAlert("err", err.message);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+  }
+}
+function opWire(){
+  const cards = $("#opCards");
+  if(cards){
+    cards.addEventListener("click", function(e){
+      const btn = e.target.closest("[data-opact]");
+      if(!btn) return;
+      opAction(btn.getAttribute("data-opact"), btn.getAttribute("data-key"), btn);
+    });
+  }
+  const sel = $("#opActive");
+  if(sel){
+    sel.addEventListener("change", async function(){
+      try { const res = await api("/api/owner/payment-provider/select", { method: "POST", body: { provider: sel.value } }); opPaint(res); }
+      catch (err) { opShowAlert("err", err.message); }
+    });
+  }
+  const toggle = $("#opEnabled");
+  if(toggle){
+    toggle.addEventListener("change", async function(){
+      try {
+        await api("/api/owner/settings", { method: "PUT", body: { owner_payment_enabled: toggle.value === "true" } });
+        toast("Owner payment mode " + (toggle.value === "true" ? "enabled" : "disabled"), "ok");
+        await opLoad();
+      } catch (err) { opShowAlert("err", err.message); }
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  initShell();
+  const me = await requireSession(["owner"]);
+  if(!me) return;
+  paintUser(me);
+  $("#ownerEmail").textContent = me.email || "-";
+  $("#ownerRole").textContent = me.role || "owner";
+  $("#settingsForm").addEventListener("submit", e => { e.preventDefault(); save(); });
+  $("#signOutBtn").addEventListener("click", async () => { try { await Auth.signOut(); } catch(err){} location.href = "/login/"; });
+  wireEmailAdmin();
+  opWire();
+  await load();
+  await loadEmails();
+  await opLoad();
+});
+</script>
+</body>
+</html>

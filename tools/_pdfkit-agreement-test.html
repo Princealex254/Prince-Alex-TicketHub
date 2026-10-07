@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>agreement pdf test</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head>
+<body>
+<pre id="report">pending</pre>
+<pre id="b64"></pre>
+<script src="../pdfkit.js"></script>
+<script src="./_pdfkit-agreement.js"></script>
+<script>
+/* A realistic fixture shaped exactly like the Worker's GET
+   /api/organizer/agreement response (routeOrganizerAgreement + agreementFeeView),
+   including the rich-text features the owner's editor can produce. */
+var AG_FIXTURE = {
+  state: { status: "signed", required: false, can_publish: true },
+  organizer: { id: 7, business_name: "Rembobwe Arts & Events Kenya Ltd", email: "accounts@rembobwe.co.ke" },
+  agreement: {
+    id: 3, version: "2.1", title: "Organizer Agreement and Platform Fee Terms",
+    summary: "This agreement governs the sale of event tickets through Prince Alex TicketHub.",
+    effective_date: "2026-01-15", status: "active",
+    created_at: "2026-01-10 08:00:00", activated_at: "2026-01-15 06:30:00"
+  },
+  signature: {
+    reference: "AGR-2026-7KQ4M2XP", agreement_id: 3, agreement_version: "2.1",
+    signatory_name: "Jane Wanjiku Kamau", signatory_email: "jane.kamau@rembobwe.co.ke",
+    signatory_role: "Director and authorised representative", status: "accepted",
+    accepted_at: "2026-09-28 19:04:11",
+    verification_method: "firebase_authenticated_email_and_single_use_token",
+    document_ready: true, confirmation_email_status: "queued"
+  },
+  fee: {
+    config: { commission_percent: 5, commission_fixed: 50, commission_basis: "ticket_subtotal",
+      payment_fees: "Mobile money and card processing charges are shown to the buyer at checkout and are borne by the buyer, not deducted from the organizer's payout.",
+      payout_terms: "Payouts are made to the registered mobile money account within seven (7) days of an event settling.",
+      refund_policy: "Refunds are available up to 48 hours before the event start time, less any third-party processing charge already incurred.",
+      cancellation_policy: "If an event is cancelled by the organizer, buyers are refunded in full and the platform fee is waived.",
+      chargeback_policy: "Disputed payments are held while the organizer is contacted; unresolved disputes are decided by the payment provider's scheme.",
+      organizer_responsibilities: "You confirm that event details, ticket limits and timings are accurate, and that you hold the rights to sell the tickets.",
+      tickethub_responsibilities: "We publish your listing, process payments securely, issue tickets and settle payouts as described here.",
+      termination_conditions: "Either party may terminate this agreement on thirty (30) days written notice, and immediately for material breach.",
+      effective_note: "These terms apply to all events published from the effective date shown above." },
+    rows: [
+      { label: "Platform commission", value: "5% of the ticket subtotal" },
+      { label: "Fixed platform fee", value: "KSh 50 per order" },
+      { label: "Commission basis", value: "ticket_subtotal" },
+      { label: "Payment processing fees", value: "Mobile money and card processing charges are shown to the buyer at checkout and are borne by the buyer, not deducted from the organizer's payout." },
+      { label: "Payout terms", value: "Payouts are made to the registered mobile money account within seven (7) days of an event settling." },
+      { label: "Refunds", value: "Refunds are available up to 48 hours before the event start time, less any third-party processing charge already incurred." },
+      { label: "Cancellation", value: "If an event is cancelled by the organizer, buyers are refunded in full and the platform fee is waived." },
+      { label: "Chargebacks and disputes", value: "Disputed payments are held while the organizer is contacted; unresolved disputes are decided by the payment provider's scheme." },
+      { label: "Organizer responsibilities", value: "You confirm that event details, ticket limits and timings are accurate, and that you hold the rights to sell the tickets." },
+      { label: "TicketHub responsibilities", value: "We publish your listing, process payments securely, issue tickets and settle payouts as described here." },
+      { label: "Termination", value: "Either party may terminate this agreement on thirty (30) days written notice, and immediately for material breach." },
+      { label: "Notes", value: "These terms apply to all events published from the effective date shown above." }
+    ],
+    example: { base_amount: 1000, commission_percent: 5, commission_amount: 50,
+      fixed_fee: 50, platform_fee: 100, organizer_net: 900, basis: "ticket_subtotal" }
+  },
+  content: "<h3>1. Appointment and scope</h3>"
+    + "<p><strong>1.1</strong> This agreement appoints <em>Rembobwe Arts &amp; Events Kenya Ltd</em> (the \u201cOrganizer\u201d) to sell event tickets through the Prince Alex TicketHub platform (the \u201cPlatform\u201d).</p>"
+    + "<p>1.2 The Organizer grants the Platform a non-exclusive right to market and sell tickets for events listed on the Organizer's behalf \u2014 <u>including the event name, imagery and description</u> \u2014 for the term of this agreement.</p>"
+    + "<h3>2. Organizer obligations</h3><p>The Organizer undertakes that:</p>"
+    + "<ul><li>all event information supplied is accurate and not misleading;</li>"
+    + "<li>it holds the rights necessary to sell the tickets, including any venue consents;</li>"
+    + "<li>it will not list content that is unlawful, hateful, or infringes another party's rights.</li></ul>"
+    + "<blockquote>Where an event is materially misdescribed, the Platform may suspend publication pending correction, and will notify the Organizer promptly.</blockquote>"
+    + "<h3>3. Fees, settlement and records</h3>"
+    + "<ol><li>The Platform deducts the fees set out in Part 02 at the point of sale.</li>"
+    + "<li>Settlement is made to the registered mobile money account on the schedule stated above.</li>"
+    + "<li>The Platform keeps a record of each sale and makes it available on request.</li></ol>"
+    + "<p>Long clauses exist to prove greedy line breaking works: this text continues well past the right-hand margin and must wrap cleanly onto the following line, and again onto the one after that, without any word being split or pushed outside the printable area of the page.</p>"
+    + "<hr><h3>4. Data and privacy</h3>"
+    + "<p>Personal data is processed to issue tickets, deliver entry information and settle payouts. See the <a href=\"#\">privacy notice</a> for the full position.</p>"
+    + "<h3>5. Liability</h3>"
+    + "<p>5.1 Neither party excludes liability that cannot lawfully be excluded. 5.2 Subject to that, each party's total liability is limited to the total fees paid through the Platform in the twelve (12) months before the claim arose.</p>"
+    + "<h3>6. General</h3>"
+    + "<p>This agreement is governed by the laws of Kenya. Any dispute is subject to the courts of Nairobi. It may be signed electronically, and a printed copy is equally valid.</p>"
+};
+(function () {
+  var out = [], ok = 0, bad = 0;
+  function ck(name, cond, extra){
+    if (cond) ok++;
+    else { bad++; out.push("FAIL  " + name + (extra ? " :: " + extra : "")); return; }
+    out.push("ok    " + name);
+  }
+  try {
+    var H = window.__harness;
+    ck("harness exposes the real page code", !!(H && H.buildAgreementPdf && H.downloadPdf));
+    H.setAG(AG_FIXTURE);
+
+    var doc = H.buildAgreementPdf("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+    ck("buildAgreementPdf returns a doc", !!(doc && doc.build));
+    ck("more than one page", doc.pages.length > 1, "pages=" + doc.pages.length);
+
+    var bytes = doc.build();
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+
+    ck("valid PDF header", s.indexOf("%PDF-1.4") === 0);
+    ck("ends with EOF", /%%EOF\s*$/.test(s));
+    ck("no NaN", s.indexOf("NaN") === -1);
+    ck("no undefined", s.indexOf("undefined") === -1);
+    ck("reasonable size", bytes.length > 8000 && bytes.length < 400000, bytes.length + " bytes");
+    /* --- the information that must be in the document ---
+       Words are shown with their own Tj operator inside one text object, so the
+       phrases are checked against the extracted text rather than the raw bytes. */
+    var shown = "";
+    var tre = /\(((?:\\.|[^\\()])*)\)\s*Tj/g, tm;
+    while ((tm = tre.exec(s))) shown += tm[1].replace(/\\(.)/g, "$1") + " ";
+    var hay = (" " + shown + " ").toLowerCase();
+    var must = [
+      "prince alex tickethub", "agr-2026-7kq4m2xp", "rembobwe arts",
+      "jane wanjiku kamau", "director and authorised representative",
+      "accounts@rembobwe.co.ke", "organizer agreement and platform fee terms",
+      "part 01", "part 02", "part 03", "parties and record",
+      "platform fee terms", "agreement terms as accepted",
+      "executed agreement", "signed and accepted", "accepted electronically by",
+      "verification", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "1. appointment and scope", "6. general", "page 1 of", "signature of record",
+      "ksh 50", "5%", "worked example", "platform commission", "payout terms",
+      "termination", "this agreement is governed by the laws of kenya",
+      "organizer undertakes that", "where an event is materially misdescribed"
+    ];
+    var missing = must.filter(function (m) { return hay.indexOf(m) === -1; });
+    ck("every expected phrase is in the document", missing.length === 0, "missing: " + missing.join(" | "));
+
+    /* --- footers on every page --- */
+    var pageFooters = (s.match(/Page \d+ of \d+/g) || []);
+    ck("a footer per page", pageFooters.length === doc.pages.length,
+      pageFooters.length + " vs " + doc.pages.length);
+    ck("footer numbering runs 1..N", pageFooters[0] === "Page 1 of " + doc.pages.length
+      && pageFooters[pageFooters.length - 1] === "Page " + doc.pages.length + " of " + doc.pages.length,
+      pageFooters.join(","));
+
+    /* --- xref integrity --- */
+    var xp = parseInt(/startxref\s+(\d+)/.exec(s)[1], 10);
+    ck("startxref points at the xref table", s.slice(xp, xp + 4) === "xref");
+    var count = parseInt(/^xref\s+0\s+(\d+)\s/.exec(s.slice(xp))[1], 10);
+    var entries = s.slice(xp).replace(/^xref\s+0\s+\d+\s/, "").substr(0, count * 20).match(/[\s\S]{20}/g) || [];
+    ck("one xref entry per object", entries.length === count);
+    var broken = [];
+    for (var o = 1; o < count; o++) {
+      if (entries[o].charAt(17) !== "n") { broken.push(o + ":flag"); continue; }
+      var off = parseInt(entries[o].slice(0, 10), 10);
+      if (s.slice(off, off + String(o).length + 6) !== o + " 0 obj") broken.push(o + "@" + off);
+    }
+    ck("every xref offset resolves", broken.length === 0, broken.slice(0, 5).join(","));
+    var lenBad = [], re = /<< \/Length (\d+) >>\s*stream\r?\n/g, mm;
+    while ((mm = re.exec(s))) {
+      if (s.substr(mm.index + mm[0].length + parseInt(mm[1], 10), 9) !== "\nendstrea") lenBad.push(mm[1]);
+    }
+    ck("every stream /Length is exact", lenBad.length === 0, lenBad.join(","));
+
+    /* --- nothing may be painted outside the printable page --- */
+    var oob = [];
+    var rx = /\s(-?[\d.]+)\s(-?[\d.]+)\s(-?[\d.]+)\s(-?[\d.]+)\sre f/g, r;
+    while ((r = rx.exec(s))) {
+      var bx = parseFloat(r[1]), by = parseFloat(r[2]), bw = parseFloat(r[3]), bh = parseFloat(r[4]);
+      if (bx < -0.5 || by < -0.5 || bx + bw > 595.79 || by + bh > 842.4) oob.push([bx, by, bw, bh].join(","));
+    }
+    ck("no filled rectangle escapes the page", oob.length === 0, oob.slice(0, 4).join(" | "));
+
+    /* --- no text may start beyond the right margin --- */
+    var wide = [];
+    var tx = /\/F\d [\d.]+ Tf [\d.]+ [\d.]+ [\d.]+ rg 1 0 0 1 (-?[\d.]+) ([\d.]+) Tm/g, t;
+    while ((t = tx.exec(s))) {
+      if (parseFloat(t[1]) < -0.5 || parseFloat(t[1]) > 547.5) wide.push(t[1]);
+    }
+    ck("no text starts outside the margins", wide.length === 0, wide.slice(0, 6).join(","));
+
+    /* --- the whole download path, fingerprint included --- */
+    var saved = null;
+    var realSave = window.PdfKit.PdfDoc.prototype.save;
+    window.PdfKit.PdfDoc.prototype.save = function (name){ saved = name; return 4242; };
+    var asyncErr = "";
+    document.getElementById("report");  /* no-op, keeps the harness honest */
+    window.__pdfDone = null;
+    H.downloadPdf().then(function () {
+      window.__pdfDone = saved || "";
+    }).catch(function (e) { asyncErr = String(e && e.message); window.__pdfDone = "ERR:" + asyncErr; });
+    /* hand back the bytes for offline inspection */
+    var CH = 0x7FFE, parts = [];
+    for (var k = 0; k < s.length; k += CH) parts.push(btoa(s.slice(k, k + CH)));
+    document.getElementById("b64").textContent = parts.join("");
+  } catch (e) {
+    bad++;
+    out.push("THREW " + (e && e.message) + " :: " + (e && e.stack));
+  }
+  function finish(){
+    var done = window.__pdfDone;
+    if (done === null){ window.setTimeout(finish, 50); return; }
+    window.PdfKit.PdfDoc.prototype.save = realSave;
+    ck("downloadPdf completes and names the file",
+      done === "organizer-agreement-AGR-2026-7KQ4M2XP.pdf", String(done));
+    document.getElementById("report").textContent =
+      "RESULT " + (bad === 0 ? "ALLPASS" : "HASFAILURES") + " ok=" + ok + " fail=" + bad + "\n" + out.join("\n");
+  }
+  window.setTimeout(finish, 50);
+})();
+</script>
+</body></html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>pdfkit test</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head>
+<body>
+<pre id="report">pending</pre>
+<pre id="b64"></pre>
+<script src="../pdfkit.js"></script>
+<script>
+(function () {
+  var out = [], ok = 0, bad = 0;
+  function ck(name, cond, extra){
+    if (cond) ok++;
+    else { bad++; out.push("FAIL  " + name + (extra ? " :: " + extra : "")); return; }
+    out.push("ok    " + name);
+  }
+  try {
+    var K = window.PdfKit;
+    ck("PdfKit global exists", !!K);
+    ck("PdfDoc constructor", typeof K.PdfDoc === "function");
+
+    /* --- encoding + metrics --- */
+    ck("measure returns a number", isFinite(K.measure("Hello", false, 10)) && K.measure("Hello", false, 10) > 10);
+    var wi = K.measure("resume", false, 10);
+    var wj = K.measure("r\u00E9sum\u00E9", false, 10);
+    ck("accented text measures like its twin", Math.abs(wi - wj) < 0.001, wi + " vs " + wj);
+    ck("bold is wider than regular", K.measure("Hello", true, 10) > K.measure("Hello", false, 10));
+    ck("entities decode", K.decodeEntities("a &amp; b &mdash; c &#8212; d") === "a & b \u2014 c \u2014 d", K.decodeEntities("a &amp; b &mdash; c &#8212; d"));
+
+    /* --- rich html parsing (real DOMParser) --- */
+    var blocks = K.parseHtmlBlocks(
+      "<h3>Clause 1</h3><p>Some <strong>bold</strong> and <em>italic</em> text.</p>"
+      + "<ul><li>First item</li><li>Second item</li></ul><ol><li>One</li><li>Two</li></ol>"
+      + "<blockquote>Quoted clause</blockquote><hr><p>After <u>underline</u>.</p>", { size: 10 });
+    var types = blocks.map(function (x) { return x.type; });
+    ck("parses headings", types.indexOf("head") > -1, types.join(","));
+    ck("parses paragraphs", types.indexOf("p") > -1);
+    ck("parses list items", types.indexOf("li") > -1);
+    ck("parses quotes", types.indexOf("quote") > -1);
+    ck("parses rules", types.indexOf("rule") > -1);
+    var head = blocks.filter(function (x) { return x.type === "head"; })[0];
+    ck("heading has runs", !!(head && head.runs && head.runs.length));
+    ck("bold inside a paragraph survives", blocks.filter(function (x) { return x.type === "p"; }).some(function (x) {
+      return x.runs.some(function (r) { return r.bold; });
+    }));
+    ck("italic survives", blocks.filter(function (x) { return x.type === "p"; }).some(function (x) {
+      return x.runs.some(function (r) { return r.italic; });
+    }));
+    var lis = blocks.filter(function (x) { return x.type === "li"; });
+    ck("ordered items are numbered", lis.filter(function (x) { return x.ordered; }).length === 2,
+      JSON.stringify(lis.map(function (x) { return [x.ordered, x.index]; })));
+    ck("no block has a NaN size", blocks.every(function (x) {
+      return (x.runs || []).every(function (r) { return isFinite(r.size); });
+    }));
+    ck("unknown tags are unwrapped, words kept",
+      K.parseHtmlBlocks("<p>a <span>b <marquee>c</marquee></span> d</p>", { size: 10 })
+        .map(function (x) { return x.runs.map(function (r) { return r.text; }).join(""); }).join("") === "a b c d");
+    /* NOTE: the closing tags below are slash-escaped on purpose. A literal
+       closing script tag written in this file would end the element early. */
+    ck("script content never reaches the document",
+      K.parseHtmlBlocks("<p>ok</p><script>alert(1)<\/script>", { size: 10 })
+        .map(function (x) { return (x.runs || []).map(function (r) { return r.text; }).join(""); }).join("") === "ok");
+
+    /* --- build a multi-page, agreement-shaped document --- */
+    var footerCalls = [];
+    var doc = new K.PdfDoc({
+      title: "Organizer Agreement",
+      author: "Prince Alex TicketHub",
+      onFirstPage: function (d) {
+        d.rect(0, 0, 595, 86, "#0B1220");
+        d.caps("Signed copy", 48, 44, { color: "FFFFFF", bold: true });
+        d.y = 110;
+      },
+      onPage: function (d) { d.line(48, 40, 547, 40, "#E6E8F0", 0.7); d.y = 56; },
+      onFooter: function (d, i, total) {
+        footerCalls.push(i + "/" + total);
+        d.line(48, 800, 547, 800, "#E6E8F0", 0.7);
+        d.textRight("Page " + i + " of " + total, 547, 816, { size: 8, color: "#5A6478" });
+      }
+    });
+    doc.section("Agreement record", { eyebrow: "PART 01" });
+    doc.defList([
+      { label: "Organizer", value: "Acme Events Kenya Limited" },
+      { label: "Signatory", value: "Jane Wanjiku Kamau" },
+      { label: "Reference", value: "AGR-2026-AB12CD34", mono: true },
+      { label: "Signed at (UTC)", value: "2026-09-28 19:04:11" }
+    ]);
+    doc.section("Platform fee terms", { eyebrow: "PART 02" });
+    doc.statTiles([
+      { label: "Commission", value: "5%", sub: "of the ticket subtotal" },
+      { label: "Fixed fee", value: "KSh 50", sub: "per order" }
+    ]);
+    doc.table({
+      columns: [{ width: 1 }, { width: 2.2 }],
+      head: ["Term", "Detail"],
+      rows: [["Payout terms", "Settled to your registered mobile money account within seven (7) days."],
+             ["Refunds", "Refunds follow the policy stated above."],
+             ["Chargebacks", "Disputed payments are held pending review."],
+             ["Organizer duties", "You confirm the event details are accurate."],
+             ["Cancellation", "Cancellations are refunded less the platform fee."],
+             ["Termination", "Either party may terminate on thirty days notice."]]
+    });
+    doc.section("Agreement terms as accepted", { eyebrow: "PART 03" });
+    doc.html(blocks, { x: 48, width: 499, size: 10 });
+    for (var i = 0; i < 60; i++) {
+      doc.para("Filler clause paragraph number " + i + " used to exercise pagination across several pages.",
+        48, doc.y, 499, { size: 10 });
+    }
+    doc.callout({ label: "Verification", value: "Generated for the organizer named above. Reference AGR-2026-AB12CD34." });
+
+    var bytes = doc.build();
+    var s = "";
+    for (var i2 = 0; i2 < bytes.length; i2++) s += String.fromCharCode(bytes[i2]);
+
+    ck("page count > 1", doc.pages.length > 1, "pages " + doc.pages.length);
+    ck("footer ran once per page", footerCalls.length === doc.pages.length, footerCalls.join(","));
+    ck("footer totals are consistent", footerCalls.every(function (f) { return f.split("/")[1] === String(doc.pages.length); }));
+    ck("starts with %PDF-1.4", s.indexOf("%PDF-1.4") === 0, JSON.stringify(s.slice(0, 12)));
+    ck("ends with %%EOF", /%%EOF\s*$/.test(s));
+    ck("no NaN in the stream", s.indexOf("NaN") === -1);
+    ck("no undefined in the stream", s.indexOf("undefined") === -1);
+    ck("trailer names the catalog root", s.indexOf("/Root 1 0 R") > -1);
+    ck("WinAnsi declared for every face", (s.match(/\/WinAnsiEncoding/g) || []).length >= 6);
+    ck("Courier present for the hash", s.indexOf("/Courier ") > -1);
+    ck("page count in the tree matches", s.indexOf("/Count " + doc.pages.length + " ") > -1
+      || s.indexOf("/Count " + doc.pages.length) > -1, doc.pages.length);
+
+    /* --- xref integrity: every offset must land on "N 0 obj" --- */
+    var xrefPos = parseInt(/startxref\s+(\d+)/.exec(s)[1], 10);
+    ck("startxref points at the xref table", s.slice(xrefPos, xrefPos + 4) === "xref",
+      JSON.stringify(s.slice(xrefPos, xrefPos + 10)));
+    var xrefBlock = s.slice(xrefPos);
+    var m = /^xref\s+0\s+(\d+)\s/.exec(xrefBlock);
+    ck("xref declares an object count", !!m);
+    var count = m ? parseInt(m[1], 10) : 0;
+    var body = xrefBlock.replace(/^xref\s+0\s+\d+\s/, "");
+    /* A subsection "0 N" lists objects 0..N-1, so there are exactly N entries.
+       Each entry is 20 bytes and ends in \n, so "." would never match. */
+    var entries = body.substr(0, count * 20).match(/[\s\S]{20}/g) || [];
+    ck("one xref entry per object", entries.length === count, entries.length + " vs " + count);
+    ck("the free entry is marked", entries[0] === "0000000000 65535 f \n", JSON.stringify(entries[0]));
+    var broken = [];
+    for (var o = 1; o < count; o++) {
+      var e = entries[o];
+      if (!e) { broken.push(o + ":missing"); continue; }
+      if (e.charAt(17) !== "n") { broken.push(o + ":" + JSON.stringify(e)); continue; }
+      var off = parseInt(e.slice(0, 10), 10);
+      if (s.slice(off, off + String(o).length + 6) !== o + " 0 obj") broken.push(o + "@" + off + "=" + JSON.stringify(s.slice(off, off + 10)));
+    }
+    ck("every xref offset resolves to its object", broken.length === 0, broken.slice(0, 6).join(","));
+
+    /* every stream /Length must match the real byte count */
+    var lenBad = [], re = /<< \/Length (\d+) >>\s*stream\r?\n/g, mm;
+    while ((mm = re.exec(s))) {
+      var declared = parseInt(mm[1], 10);
+      if (s.substr(mm.index + mm[0].length + declared, 9) !== "\nendstrea") lenBad.push(declared);
+    }
+    ck("every stream /Length is exact", lenBad.length === 0, lenBad.join(","));
+
+    /* a second build() must not paint the footer twice */
+    ck("build() is idempotent", doc.build().length === bytes.length, bytes.length + " vs " + doc.build().length);
+
+    /* hand back the bytes so the file can be saved and inspected offline.
+       The chunk MUST be a multiple of 3 or btoa pads mid-string. */
+    var CH = 0x7FFE, parts = [];
+    for (var k = 0; k < s.length; k += CH) parts.push(btoa(s.slice(k, k + CH)));
+    document.getElementById("b64").textContent = parts.join("");
+  } catch (e) {
+    bad++;
+    out.push("THREW " + (e && e.message) + " :: " + (e && e.stack));
+  }
+  document.getElementById("report").textContent =
+    "RESULT " + (bad === 0 ? "ALLPASS" : "HASFAILURES") + " ok=" + ok + " fail=" + bad + "\n" + out.join("\n");
+})();
+</script>
+</body></html>

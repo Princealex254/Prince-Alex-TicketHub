@@ -1,0 +1,28 @@
+<!-- ===== Free-ticket email verification (see the checkout logic below) ===== -->
+      <div id="otpBlock" class="hidden">
+        <hr class="divider" />
+        <h3 style="font-size:1rem">Verify your email</h3>
+        <p class="small muted" style="margin-bottom:12px">We sent a 6-digit verification code to <strong id="otpEmail">your email address</strong>. Enter it below to claim your free ticket.</p>
+        <div class="field">
+          <label for="otpCode">Verification code</label>
+          <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="max-width:230px;letter-spacing:7px;font-weight:700;font-size:1.1rem" />
+          <p class="hint" id="otpHint">The code expires in 5 minutes and can only be used once.</p>
+          <p class="err hidden" data-for="otpCode"></p>
+        </div>
+        <div id="otpAlert" class="alert hidden" role="alert"></div>
+        <button class="btn btn-primary btn-block" type="button" id="otpVerifyBtn">Verify and get my ticket</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" type="button" id="otpResendBtn">Resend code</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="otpBackBtn">Change my details</button>
+        </div>
+        <p class="tiny faint" style="margin:12px 0 0">Free tickets are limited per email address for this event, and repeated requests from one connection are throttled automatically.</p>
+      </div>
+      <div id="doneBlock" class="hidden">
+        <hr class="divider" />
+        <h3 style="font-size:1rem" id="doneTitle">Your free ticket is confirmed</h3>
+        <p class="small muted" id="doneText">A copy has been emailed to you with the QR code for entry.</p>
+        <div id="doneTickets"></div>
+        <a class="btn btn-primary btn-block" href="/ticket/" style="margin-top:14px">Open my ticket</a>
+      </div>
+      <div class="alert info hidden" id="freeNote" role="status"></div>
+      <div id="payBlock">

@@ -1,0 +1,153 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>payment cards check</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head><body>
+<div id="out">running</div>
+<script>
+window.addEventListener("error", function(e){
+  var b = document.getElementById("out");
+  if(b) b.textContent = "JS ERROR: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || 0);
+});
+window.addEventListener("unhandledrejection", function(e){
+  var b = document.getElementById("out");
+  var r = e && e.reason;
+  if(b) b.textContent = "REJECTED: " + ((r && (r.stack || r.message)) || r);
+});
+</script>
+<script>
+/* ===========================================================================
+   Payment Settings card check
+   ---------------------------------------------------------------------------
+   Takes the real payment block out of organizer-settings/index.html, runs it
+   against a minimal DOM and a stubbed api(), and checks what an organizer
+   actually sees: three cards, the right fields per provider, a disabled
+   "Make active" until a provider is connected, and no secret ever written
+   into the page.
+   ========================================================================= */
+var R = { tests: [] };
+var KEEP = setInterval(function(){ }, 100);
+function ck(name, pass, detail){
+  R.tests.push({ name: name, pass: !!pass, detail: detail === undefined ? "" : String(detail) });
+  document.getElementById("out").textContent = "PROGRESS " + R.tests.length + ": " + name;
+}
+function finish(){
+  R.summary = { total: R.tests.length, passed: R.tests.filter(function(t){ return t.pass; }).length,
+                failed: R.tests.filter(function(t){ return !t.pass; }).length };
+  clearInterval(KEEP);
+  var text = "RESULTS_JSON:" + JSON.stringify(R);
+  document.getElementById("out").textContent = text;
+  try { fetch("/__result", { method: "POST", body: JSON.stringify(R) }); } catch(e){ }
+}
+
+/* --- a DOM just big enough for the payment block ------------------------- */
+function makeEl(tag){
+  return {
+    tagName: String(tag || "div").toUpperCase(), children: [], attrs: {}, style: {}, value: "",
+    className: "", textContent: "", innerHTML: "", disabled: false, type: "",
+    classList: { add: function(){}, remove: function(){}, toggle: function(){}, contains: function(){ return false; } },
+    setAttribute: function(k, v){ this.attrs[k] = v; },
+    getAttribute: function(k){ return this.attrs[k]; },
+    appendChild: function(c){ this.children.push(c); return c; },
+    addEventListener: function(){}, closest: function(){ return null; }
+  };
+}
+var NODES = {};
+["payCards", "payActive", "payAlert", "payNotice", "payStatusValue", "payStatusBadgeSide",
+ "payProviderValue", "payProviderSide", "paySecretValue", "payTestedValue", "paySideHint"].forEach(function(id){
+  NODES[id] = makeEl(id === "payActive" ? "select" : "div");
+  NODES[id].id = id;
+});
+function inputEl(id){ NODES[id] = makeEl("input"); NODES[id].id = id; return NODES[id]; }
+var ERRORS = {};
+var CALLS = [];
+var NEXT_RESPONSE = null;
+function stubApi(path, init){
+  CALLS.push({ path: path, method: (init && init.method) || "GET", body: (init && init.body) || null });
+  return Promise.resolve(NEXT_RESPONSE || PAYMENT_FIXTURE);
+}
+function stubSetText(sel, value){ var n = NODES[String(sel).replace("#", "")]; if(n) n.textContent = value; }
+function stubSetErr(id, message){ ERRORS[id] = message; }
+/* The exact shape GET /api/organizer/payment-providers returns. */
+var PAYMENT_FIXTURE = {
+  providers: [
+    { key: "paystack", label: "Paystack", logo_mark: "PS", logo_color: "#00C3F7",
+      methods: "M-Pesa, cards and the other methods on your Paystack account",
+      required_fields: ["secret_key"], test_supported: true, checkout_mode: "redirect",
+      refund_supported: false, platform_credentials: false, status: "connected",
+      configured: true, credentials_source: "organizer", enabled: true,
+      last_tested_at: "2026-02-02 10:00:00", last_error: null,
+      fields: { public_key: "pk_live_x", has_secret_key: true, has_consumer_secret: false, has_password: false },
+      has_own_credentials: true, legacy_configured: false, available: true },
+    { key: "pesapal", label: "Pesapal", logo_mark: "PE", logo_color: "#0B4DA2",
+      methods: "M-Pesa, cards and the other methods on your Pesapal account",
+      required_fields: ["consumer_key", "consumer_secret"], test_supported: true, checkout_mode: "redirect",
+      refund_supported: false, platform_credentials: true, status: "not_connected",
+      configured: false, credentials_source: null, enabled: true, last_tested_at: null, last_error: null,
+      fields: { consumer_key: null, has_secret_key: false, has_consumer_secret: false, has_password: false },
+      has_own_credentials: false, legacy_configured: false, available: false },
+    { key: "payhero", label: "PayHero", logo_mark: "PH", logo_color: "#0AA679",
+      methods: "M-Pesa (STK) and the Kenyan channels on your PayHero account",
+      required_fields: ["api_username", "password", "channel_id"], test_supported: true,
+      checkout_mode: "stk_push", refund_supported: false, platform_credentials: false,
+      status: "configuration_required", configured: false, credentials_source: null,
+      enabled: true, last_tested_at: null, last_error: null,
+      fields: { api_username: "ph-user", channel_id: "133", has_secret_key: false, has_consumer_secret: false, has_password: false },
+      has_own_credentials: true, legacy_configured: false, available: false }
+  ],
+  active_provider: { provider: "paystack", provider_label: "Paystack", connected: true,
+    credentials_source: "organizer", resolved_provider: "paystack", available_providers: ["paystack"], message: null }
+};
+
+(async function(){
+  try {
+    var html = await (await fetch("/organizer-settings/index.html")).text();
+    var from = html.indexOf("const PAY_PROVIDERS");
+    var to = html.indexOf("document.addEventListener(\"DOMContentLoaded\"");
+    ck("the payment block is extractable from the page", from > 0 && to > from, from + ".." + to);
+    var src = html.slice(from, to);
+    /* The block uses page helpers; give it exactly those. */
+    var sandbox =
+      "var HAS_ORG = true,\n" +
+      "$ = function(sel){ return NODES[sel.replace('#','')] || null; },\n" +
+      "esc = function(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); },\n" +
+      "setText = stubSetText, setErr = stubSetErr, api = stubApi, fmtDateTime = function(v){ return String(v); },\n" +
+      "toast = function(){}, showAlert = function(){};\n" + src + "\n" +
+      "return { paintPayment: paintPayment, payDraft: payDraft, payValidate: payValidate, payAction: payAction };";
+    var fn = new Function("NODES", "ERRORS", "CALLS", "stubApi", "stubSetText", "stubSetErr", "PAYMENT_FIXTURE", sandbox);
+    var api = fn(NODES, ERRORS, CALLS, stubApi, stubSetText, stubSetErr, PAYMENT_FIXTURE);
+    ck("the payment block compiles and exposes its functions", typeof api.paintPayment === "function", "");
+
+    api.paintPayment(PAYMENT_FIXTURE);
+    var cards = NODES.payCards.innerHTML;
+    ck("three provider cards are rendered",
+       /data-key="paystack"/.test(cards) && /data-key="pesapal"/.test(cards) && /data-key="payhero"/.test(cards), "");
+    ck("each card shows the provider name and methods from the API",
+       /Paystack/.test(cards) && /Pesapal/.test(cards) && /PayHero/.test(cards) &&
+       /M-Pesa \(STK\)/.test(cards), "");
+    ck("the PayHero card asks for its three documented fields",
+       /pay-payhero-api_username/.test(cards) && /pay-payhero-password/.test(cards) && /pay-payhero-channel_id/.test(cards), "");
+    ck("the PayHero card explains the phone prompt instead of a redirect",
+       /M-Pesa prompt on their phone/.test(cards) && !/PayHero to complete payment/.test(cards), "");
+    ck("the active provider is marked as Active",
+       /pay-card is-active" data-key="paystack"/.test(cards) && /badge ok">Active</.test(cards), "");
+    ck("'Make active' is hidden on the active card and disabled on unconnected ones",
+       (cards.match(/data-act="activate"/g) || []).length === 2 &&
+       /data-act="activate" data-key="pesapal" disabled/.test(cards) &&
+       /data-act="activate" data-key="payhero" disabled/.test(cards), "");
+    ck("a stored secret is never written into the page as a value",
+       !/type="password"[^>]*value="[^"]+"/.test(cards) &&
+       cards.indexOf("already saved (hidden)") > -1, "");
+    ck("non-secret values are shown so they can be checked",
+       /value="pk_live_x"/.test(cards) && /value="133"/.test(cards) && /value="ph-user"/.test(cards), "");
+    ck("the summary shows the connected accounts and the last test",
+       NODES.paySecretValue.textContent === "Paystack" && /Paystack - 2026-02-02/.test(NODES.payTestedValue.textContent),
+       NODES.paySecretValue.textContent + " / " + NODES.payTestedValue.textContent);
+    ck("the status line names the active provider",
+       /Active Payment Provider/.test(NODES.payAlert.textContent), NODES.payAlert.textContent);
+    ck("the active-provider list only offers connected providers",
+       /value="paystack"/.test(NODES.payActive.innerHTML) && !/value="payhero"/.test(NODES.payActive.innerHTML),
+       NODES.payActive.innerHTML);
+  } catch(e){ ck("settings render harness", false, (e && e.stack) || String(e)); }
+  finish();
+})();
+</script>
+</body></html>

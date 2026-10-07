@@ -1,0 +1,130 @@
+# ============================================================================
+#  Prince Alex TicketHub API - Cloudflare Worker configuration (Wrangler)
+#  ---------------------------------------------------------------------------
+#  This Worker is a MODULE (ESM): index.js does `import { ... } from "./emails.js"`.
+#  `wrangler deploy` bundles the relative import automatically - no build step.
+#
+#  Deploy:   cd worker && wrangler deploy
+#  Secrets:  wrangler secret put BREVO_API_KEY     (see worker/README.md section 1.4)
+#
+#  Using the DASHBOARD code editor instead? It deploys a single module, so a
+#  relative import fails with 'No such module "emails.js"'. Run
+#  worker\build-single-file.ps1 and paste worker/worker.js there.
+# ============================================================================
+
+name = "princealextickethub"
+main = "index.js"
+compatibility_date = "2024-11-06"
+workers_dev = true
+
+# --- Plain-text variables ----------------------------------------------------
+# [vars]
+# ALLOWED_ORIGINS = "https://tickethub.princealex.digital"
+# FRONTEND_URL = "https://tickethub.princealex.digital"
+# PESAPAL_ENV = "sandbox"                  # or "live"
+# EMAIL_FROM = "tickets@your-domain"       # optional: fallback sender
+# EMAIL_FROM_NAME = "Prince Alex TicketHub"
+# EMAIL_REPLY_TO = "support@your-domain"
+# EMAIL_DISABLED = "false"
+# TURNSTILE_HOSTNAMES = "tickethub.princealex.digital"   # optional: hosts allowed
+#                       # to solve a challenge (default: production host +
+#                       # workers.dev + localhost/127.0.0.1 for local dev)
+
+# --- Bindings (names must stay DB and BUCKET) --------------------------------
+# [d1_databases]
+# binding = "DB"
+# database_name = "princealextickethub"
+# database_id = "<paste the id from: wrangler d1 list>"
+
+# [r2_buckets]
+# binding = "BUCKET"
+# bucket_name = "princealextickethub-media"
+
+# --- Optional: retry queued transactional email every 5 minutes --------------
+# [triggers]
+# crons = ["*/5 * * * *"]
+
+# --- Optional: Cloudflare's NATIVE rate limiting binding --------------------
+# Preferred for broad traffic shaping: it is enforced at the edge, costs no D1
+# writes and the Worker consults it automatically as env.RATE_LIMITER (see
+# bindingBump in index.js). Needs a Workers Paid plan. Leave it commented out to
+# run on the in-memory + D1 tiers only - the application limits still apply.
+# [[rate_limits]]
+# name = "RATE_LIMITER"
+# namespace_id = "1001"          # any unique integer per Worker
+# simple = { limit = 60, period = 60 }
+
+# --- Optional: rate limit overrides (plain text vars) -----------------------
+# Defaults live in RATE_POLICIES (index.js); override per environment without a
+# code change. <ACTION>_LIMIT / <ACTION>_WINDOW set the first tier, and
+# <ACTION>_<TIER>_LIMIT / <ACTION>_<TIER>_WINDOW the extra tiers.
+# [vars]
+# LOGIN_LIMIT = "5"                 LOGIN_WINDOW = "900"          # per IP, 15 min
+# LOGIN_EMAIL_LIMIT = "10"          LOGIN_EMAIL_WINDOW = "900"   # per account
+# PASSWORD_RESET_LIMIT = "3"        PASSWORD_RESET_WINDOW = "3600"     # per email
+# PASSWORD_RESET_IP_LIMIT = "5"     PASSWORD_RESET_IP_WINDOW = "3600"  # per IP
+# CHECKOUT_LIMIT = "10"             CHECKOUT_WINDOW = "600"      # per IP, 10 min
+# CHECKOUT_REF_LIMIT = "5"                                          # per order ref
+# CONTACT_LIMIT = "5"               CONTACT_WINDOW = "3600"      # per IP, per hour
+# CONTACT_EMAIL_LIMIT = "3"                                          # per address
+# EVENT_CREATE_LIMIT = "10"         EVENT_CREATE_WINDOW = "3600" # per user, per hour
+# REGISTER_LIMIT = "5"              REGISTER_WINDOW = "3600"     # per IP, per hour
+# TICKET_EMAIL_LIMIT = "5"          TICKET_EMAIL_WINDOW = "600"  # per IP / order
+
+# --- Secrets are NEVER written in this file, use `wrangler secret put` --------
+# FIREBASE_PROJECT_ID            (required)
+# ALLOWED_ORIGINS / FRONTEND_URL (required - or set them in [vars] above)
+# PAYMENT_ENCRYPTION_KEY         (required before an organizer connects payments)
+# BREVO_API_KEY                  (required to send any email)
+# PAYSTACK_SECRET_KEY            (optional platform fallback)
+# PESAPAL_CONSUMER_KEY           (optional platform fallback)
+# PESAPAL_CONSUMER_SECRET        (optional platform fallback)
+# TURNSTILE_SECRET               (bot protection: wrangler secret put TURNSTILE_SECRET
+#                                 pastes the value at the prompt - it is never
+#                                 written here. The old name TURNSTILE_SECRET_KEY
+#                                 is still read for existing deployments.)
+
+# --- PayHero -----------------------------------------------------------------
+# PayHero needs no Worker secret. Each organizer enters their own API username,
+# password and channel id in Payment Settings; the Worker encrypts them with
+# PAYMENT_ENCRYPTION_KEY before they reach D1 and never returns them.
+#
+# A deployment MAY instead offer a shared platform PayHero account as the same
+# documented fallback Paystack and Pesapal already have. Leave these unset to
+# keep every PayHero account strictly organizer-owned.
+# PAYHERO_API_USERNAME           (optional platform fallback)
+# PAYHERO_API_PASSWORD           (optional platform fallback)
+# PAYHERO_CHANNEL_ID             (optional platform fallback)
+#
+# Set the PayHero callback URL in the PayHero dashboard to:
+#   https://<your-worker-host>/api/webhooks/payhero
+# It is sent automatically with every STK request as `callback_url`. Callbacks
+# are never trusted on their own: the Worker answers PayHero's transaction-status
+# endpoint before it marks an order paid.
+
+# --- Database migrations ------------------------------------------------------
+# 0001_rate_limits.sql            rate limit table
+# 0002_payhero.sql                organizer_payment_providers, 'payhero' in the
+#                                 provider CHECK constraints, the payment
+#                                 failure columns and the optional
+#                                 events.payment_provider column
+# 0003_payhero_repair.sql         the same columns one statement at a time, for a
+#                                 database where 0002 stopped part-way: it adds
+#                                 only what is missing and never rebuilds a
+#                                 table, so a column that is already there
+#                                 cannot hold up the rest
+# 0004_payhero_check_rebuild.sql  rebuilds payments / payment_settings so their
+#                                 CHECK constraints accept 'payhero'; run it
+#                                 after 0003 on a database whose tables still
+#                                 predate the migration
+#
+# Apply before deploying a build that selects PayHero. On a database that was
+# created before PayHero existed:
+#   wrangler d1 execute princealextickethub --file=./migrations/0002_payhero.sql
+# and if that run stops at "duplicate column name", finish it in this order:
+#   wrangler d1 execute princealextickethub --file=./migrations/0003_payhero_repair.sql
+#   wrangler d1 execute princealextickethub --file=./migrations/0004_payhero_check_rebuild.sql
+# GET /api/health reports payment_schema.ready and names any file still to run,
+# and checkout answers MIGRATION_REQUIRED - never a bare 500 - until it is done.
+# The old /api/organizer/payment-settings routes still work, so a rolled-back
+# Worker keeps reading the same credentials.
